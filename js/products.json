@@ -1,0 +1,104 @@
+{
+  "products": [
+    {
+      "id": 1,
+      "name": "Star Fruit",
+  "image": "images/f4.png"
+    },
+    {
+      "id": 2,
+      "name": "Strawberry",
+  "image": "images/p1.png"
+    },
+    {
+      "id": 3,
+      "name": "Rose",
+  "image": "images/p2.png"
+    },
+    {
+      "id": 4,
+      "name": "Dried Tangerine Peel",
+  "image": "images/p3.png"
+    },
+    {
+      "id": 5,
+      "name": "Tomato",
+  "image": "images/p4.png"
+    },
+    {
+      "id": 6,
+      "name": "Papaya",
+  "image": "images/p5.png"
+    },
+    {
+      "id": 7,
+      "name": "Sampaguita",
+  "image": "images/f2.png"
+    },
+    {
+      "id": 8,
+      "name": "Clove",
+  "image": "images/f3.png"
+    },
+    {
+      "id": 9,
+      "name": "Hawthorn",
+  "image": "images/f1.png"
+    },
+    {
+      "id": 10,
+      "name": "Peach",
+  "image": "images/p6.png"
+    },
+    {
+      "id": 11,
+      "name": "Elderflower",
+  "image": "images/p7.png"
+    },
+    {
+      "id": 12,
+      "name": "Coconut",
+  "image": "images/p8.png"
+    },
+    {
+      "id": 13,
+      "name": "Calamansi",
+  "image": "images/p9.png"
+    },
+    {
+      "id": 14,
+      "name": "Passionfruit",
+  "image": "images/p10.png"
+    },
+    {
+      "id": 15,
+      "name": "Rambutan",
+  "image": "images/p11.png"
+    },
+    {
+      "id": 16,
+      "name": "Sumac",
+  "image": "images/p13.png"
+    },
+    {
+      "id": 17,
+      "name": "Lavender",
+  "image": "images/p12.png"
+    },
+    {
+      "id": 18,
+      "name": "Chamomile",
+  "image": "images/p14.png"
+    },
+    {
+      "id": 19,
+      "name": "test",
+  "image": "images/hero.png"
+    },
+    {
+      "id":20,
+      "name": "images/image.png",
+      "image":"images/image.png"
+    }
+  ]
+}

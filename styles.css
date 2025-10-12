@@ -1,0 +1,496 @@
+/**
+ * So Popped - Custom Styles
+ * 
+ * Table of Contents:
+ * 1. Bootstrap Import
+ * 2. Navigation
+ *    - Navbar Base
+ *    - Navigation Links
+ *    - Navbar Toggler
+ * 3. Buttons
+ *    - Base Button Styles
+ *    - Button Interactions
+ * 4. Cards
+ *    - Product Cards
+ *    - Card Hover Effects
+ *    - Card Images
+ *    - Featured Flavor Cards
+ *    - Card Animations
+ * 5. Forms
+ *    - Auth & Contact Form Styling
+ *    - Validation States
+ * 6. Animations
+ *    - Keyframe Animations
+ * 7. Additional Components
+ *    - Pagination
+ *    - Other Elements
+ * 8. Dialogs
+ *    - Modal Styling
+ */
+
+/* ==========================================================================
+   1. Bootstrap Import
+   ========================================================================== */
+@import "./node_modules/bootstrap/dist/css/bootstrap.min.css";
+
+/* ==========================================================================
+   2. Navigation - Frosted glass navbar with interactive elements
+   ========================================================================== */
+
+/* Navbar Base - Creates a frosted glass effect */
+.navbar {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Navigation Links - Interactive hover effects */
+.nav-link {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: scale(1);
+}
+
+.nav-link:hover {
+  transform: scale(0.98);
+  color: var(--bs-primary) !important;
+  text-decoration: underline;
+  text-shadow: 0px 3px 3px #0000007c;
+  font-weight: 550;
+}
+
+.nav-link:active {
+  transform: scale(0.95);
+  font-style: italic;
+  font-family: pix;
+  color: var(--bs-warning) !important;
+  text-shadow: 0px 3px 3px #0000007c;
+  text-decoration: underline;
+}
+
+/* Navbar Toggler - Mobile menu button */
+.navbar-toggler {
+  transition: transform 0.15s ease-in-out;
+}
+
+.navbar-toggler:active {
+  transform: scale(0.97);
+  font-style: italic;
+}
+
+/* Navbar Brand - Logo styling */
+.navbar-brand img {
+  border-radius: 20%;
+}
+
+.navbar-brand:active {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: scale(0.87);
+}
+
+/* Navigation Home Link - Animated effect */
+#navHome {
+  transition: all 0.3s ease;
+  animation-name: slideUp;
+  animation-direction: alternate-reverse;
+  animation-duration: 2s;
+  animation-play-state: running;
+  animation-timing-function: cubic-bezier(0.18, 0.99, 0.88, 0.13);
+}
+
+/* Cart Icon - Styling */
+.cart img {
+  border-radius: 15%;
+}
+
+/* ==========================================================================
+   3. Buttons - Interactive button elements
+   ========================================================================== */
+
+/* Button Base - Smooth transitions */
+.btn {
+  transition: all 0.3s ease; /* Smooth revert when button is released */
+  transition-property: transform, box-shadow, font-weight, font-family, font-style, text-shadow;
+}
+
+.btn:active {
+  transform: scale(0.95);
+  font-weight: bolder;
+  font-family: pix;
+  font-style: italic;
+  text-shadow: 0px 3px 3px #0000007c;
+  transition: all 0.1s ease; /* Quick pop when pressed */
+}
+
+/* ==========================================================================
+   4. Cards - Interactive product display cards
+   ========================================================================== */
+
+/* Card Base - Smooth transitions and border */
+.card {
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  opacity: 0; /* hidden initially */
+  transform: translateY(80px) scale(0.5);
+}
+
+/* Card Hover State - Lift effect */
+.card:hover {
+  transform: translateY(-5px) scale(1);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+  border-color: var(--bs-warning);
+}
+
+/* Card Active State - Press effect */
+.card:active {
+  font-style: italic;
+  color: var(--bs-warning);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.05);
+  border-color: var(--bs-primary);
+}
+
+/* Card Images - Smooth image transitions */
+.card img {
+  transition: transform 0.3s ease;
+}
+
+/* Card Image Hover - Scale effect */
+.card:hover img {
+  transform: scale(0.95);
+}
+
+/* Card Image Active - Invert effect */
+.card:active img {
+  filter: invert(100%);
+}
+
+/* Featured Flavor Cards - Gradient overlay */
+.card-img-overlay {
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.5) 0%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  transition: background 0.3s ease;
+}
+
+/* Featured Flavor Hover - Enhanced overlay */
+.card:hover .card-img-overlay {
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.7) 0%,
+    rgba(0, 0, 0, 0.1) 100%
+  );
+}
+
+/* Image Fluid - Animated effect */
+.img-fluid {
+  transition: all 0.3s ease;
+  animation-name: slideDown;
+  animation-direction: alternate-reverse;
+  animation-duration: 2s;
+  animation-play-state: running;
+  animation-timing-function: cubic-bezier(0.18, 0.99, 0.88, 0.13);
+}
+
+.img-fluid:active {
+  transform: scale(0.2);
+  filter: invert(100%);
+  animation-name: roShrink;
+  animation-duration: 6s;
+  animation-iteration-count: infinite;
+}
+
+/* Card Animations - Scroll-driven animation for modern browsers */
+@keyframes cardAppear {
+  0% {
+    opacity: 0;
+    transform: translateY(80px) scale(0.5);
+    filter: blur(100px);
+  }
+  40% {
+    opacity: 0.4;
+    transform: translateY(40px) scale(0.7);
+  }
+  70% {
+    opacity: 0.7;
+    transform: translateY(20px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* Scroll-driven properties (only work in Chrome/Edge/Android) */
+.card {
+  view-timeline-name: --card-timeline;
+  view-timeline-axis: block;
+  animation: cardAppear cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation-timeline: --card-timeline;
+  animation-range: entry 30% cover 30%;
+  transform-origin: center bottom;
+}
+
+/* Dynamic card animation delays */
+.col .card {
+  animation-delay: calc(var(--card-index, 0) * 200ms + 100ms);
+}
+
+/* Fallback: animate class for iOS Safari */
+.card.animate {
+  animation: cardAppear 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* ==========================================================================
+   5. Forms - Auth & Contact Form Styling
+   ========================================================================== */
+
+/* AUTH & CONTACT FORMS - focus and validation styling */
+.auth-form .form-control:focus,
+#contactForm .form-control:focus {
+  border-color: var(--bs-warning) !important;
+  box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.15) !important; /* warning tone */
+}
+
+/* Form Labels - ensure visibility in all themes (global) */
+.form-label {
+  color: var(--bs-emphasis-color) !important;
+  font-weight: 500;
+}
+
+/* Dialog-specific form labels - white text for dialogs only */
+#loginDialog .form-label,
+#signupDialog .form-label {
+  margin-bottom: 0.25rem !important;
+  font-weight: 550;
+  color: white !important;
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.form-label label {
+  display: block;
+  cursor: pointer;
+}
+
+/* invalid state should use danger color */
+.auth-form .form-control.is-invalid,
+#contactForm .form-control.is-invalid {
+  border-color: var(--bs-danger) !important;
+  box-shadow: none !important;
+}
+
+.invalid-feedback {
+  color: var(--bs-danger) !important;
+}
+
+/* Contact container border */
+.contact-card {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 0.5rem;
+  background: var(--bs-body-bg);
+}
+
+
+/* ==========================================================================
+   6. Animations - Keyframe animations for various elements
+   ========================================================================== */
+
+/* Slide Down Animation */
+@keyframes slideDown {
+  0% {
+    transform: translateY(0);
+    filter: blur(0); /* no blur at start */
+  }
+  50% {
+    filter: blur(5px); /* blur in middle of motion */
+  }
+  100% {
+    transform: translateY(100%);
+    filter: blur(0); /* sharp again at end */
+  }
+}
+
+/* Slide Up Animation */
+@keyframes slideUp {
+  0% {
+    transform: translateY(0);
+    filter: blur(0);
+  }
+  50% {
+    filter: blur(5px);
+  }
+  100% {
+    transform: translateY(-100%);
+    filter: blur(0);
+  }
+}
+
+/* Rotate and Shrink Animation */
+@keyframes roShrink {
+  0% {
+    transform: scale(0.9) rotate(0deg);
+  }
+  20% {
+    transform: scale(0.5) rotate(0deg);
+  }
+  40% {
+    transform: scale(0.8) rotate(180deg);
+  }
+  60% {
+    transform: scale(0.8) rotate(270deg);
+  }
+  80% {
+    transform: scale(0.5) rotate(360deg);
+  }
+  100% {
+    transform: scale(0.8) rotate(0deg);
+  }
+}
+
+/* ==========================================================================
+   7. Additional Components - Pagination and other elements
+   ========================================================================== */
+
+/* Pagination Links - Match navbar interaction style */
+.page-link {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: scale(1);
+}
+
+.page-link:hover {
+  transform: scale(0.98);
+  color: var(--bs-warning) !important;
+  text-decoration: underline;
+}
+
+.page-link:active {
+  transform: scale(0.95);
+  font-style: italic;
+  color: var(--bs-warning) !important;
+  text-decoration: underline;
+  background-color: transparent;
+}
+
+/* Disabled state should not have hover effects */
+.page-item.disabled .page-link {
+  transform: none;
+  text-decoration: none;
+}
+
+/* Selection styling for the entire system */
+::selection {
+  background-color: #dae139;
+}
+
+/* fonts */
+@font-face {
+  font-family: pix;
+  src: url(./fonts/RubikPuddles-Regular.ttf);
+}
+@font-face {
+  font-family: snymo;
+  src: url(./fonts/SyneMono-Regular.ttf);
+}
+
+h1.display-4{
+  font-family: pix; /* Replace with your desired font */
+  font-weight: bolder;
+  font-size: 60px;
+  font-style: italic;
+  color: #0d6dfd;
+  text-shadow: 0px 3px 5px #0000007c;
+}
+
+h2.display-4{
+  font-family: pix; /* Replace with your desired font */
+  font-weight: bolder;
+  /* font-style: italic; */
+  color: #0d6dfd;
+  text-shadow: 0px 3px 5px #0000007c;
+}
+p {
+  font-family: Arial, Helvetica, sans-serif;
+  color: var(--bs-secondary);
+}
+
+/* ==========================================================================
+   8. Dialogs - Modal Styling
+   ========================================================================== */
+
+/* This targets the jQuery UI modal overlay (the darkened layer behind the dialog) */
+body .ui-widget-overlay {
+  background-color: rgba(0, 0, 0, 0.2) !important;
+  opacity: 1 !important;
+}
+
+/* Ensure dialog remains clear and focused */
+.ui-dialog {
+  box-shadow: 12px 12px 80px #ffffff50, -12px -12px 80px #ffffff50 !important;
+  border-radius: 6px !important;
+  border: 1px solid rgb(255, 255, 255) !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: blur(9px) !important;
+  -webkit-backdrop-filter: blur(9px) !important;
+}
+
+/* Ensure dialog content adjustments */
+.ui-dialog .ui-dialog-content {
+  background: rgba(255, 255, 255, 0) !important;
+}
+
+/* Ensure dialog title bar remains clear */
+.ui-dialog .ui-dialog-titlebar {
+  background: #0d6dfd !important;
+  color: #d7df23 !important;
+  font-size: large;
+  text-shadow: 0px 1px 3px #ffffff;
+  border-bottom: 1px solid #ffffff !important;
+  border-radius: 3px !important;
+}
+
+/* Close button styling */
+.ui-dialog .ui-dialog-titlebar-close {
+  background: rgb(255, 255, 255) !important;
+  border: 1px solid #ffffff !important;
+  border-radius: 20% !important;
+  transition: all 0.2s ease !important;
+}
+
+.ui-dialog .ui-dialog-titlebar-close:hover {
+  background: #ffca2c !important;
+  transform: scale(1.1) !important;
+}
+
+/* Target the existing X symbol */
+.ui-dialog .ui-dialog-titlebar-close .ui-button-text {
+  color: #0d6dfd !important; /* Change X color to match your blue theme */
+  font-weight: bold !important;
+  font-size: 1.2rem !important;
+}
+
+/* Sign up link in login dialog - match navbar link animation */
+#loginDialog a {
+  transition: all 0.3s ease !important;
+  transform: scale(1) !important;
+  color: var(--bs-primary) !important;
+  text-decoration: none !important;
+}
+
+#loginDialog a:hover {
+  transform: scale(0.98) !important;
+  font-weight: 550;
+  text-shadow:  3px 3px 20px white, -3px -3px 20px white !important;
+  color: var(--bs-primary) !important;
+  text-decoration: underline !important;
+}
+
+#loginDialog a:active {
+  transform: scale(0.95) !important;
+  text-shadow:  3px 3px 20px white, -3px -3px 20px white !important;
+  font-style: italic !important;
+  color: var(--bs-warning) !important;
+  text-decoration: underline !important;
+}
+
