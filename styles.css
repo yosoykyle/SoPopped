@@ -463,6 +463,58 @@ body .ui-widget-overlay {
   transform: scale(1.1) !important;
 }
 
+/* ==========================================================================
+   Modal image overrides
+   Keep images inside the product modal static (disable global img animations).
+   Layout and spacing are handled by Bootstrap grid and utilities (no custom
+   modal sizing rules here).
+   ========================================================================== */
+#productModal .img-fluid,
+#productModal img {
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+/* Glassmorphism / blurred backdrop for product modal */
+#productModal .modal-content {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.808), rgba(255, 255, 255, 0.808));
+  border: 1px solid rgba(255, 255, 255, 0.955);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.45);
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+  color: var(--bs-body-color);
+  overflow: hidden;
+}
+
+#productModal .modal-header {
+  background: transparent;
+  border-bottom: none;
+}
+
+#productModal .modal-body {
+  padding-top: 0.6rem;
+  padding-bottom: 0.8rem;
+}
+
+
+/* Gentle entrance for the modal content */
+@keyframes modalGlassIn {
+  from { transform: translateY(8px) scale(0.995); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+#productModal .modal-content {
+  animation: modalGlassIn 220ms ease-out;
+}
+
+/* Constrain the modal to approximately 7 Bootstrap columns on large screens */
+@media (min-width: 992px) {
+  .modal-lg-7col {
+    max-width: 70% !important; /* roughly 7 of 12 columns */
+  }
+}
+
 /* Target the existing X symbol */
 .ui-dialog .ui-dialog-titlebar-close .ui-button-text {
   color: #0d6dfd !important; /* Change X color to match your blue theme */

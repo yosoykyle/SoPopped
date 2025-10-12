@@ -48,7 +48,9 @@
       </div>
     </main>
     <?php include_once __DIR__ . '/components/pagination.php'; ?>
-    <!-- FOOTER  -->
+  <!-- Product modal (server-side include) -->
+  <?php include_once __DIR__ . '/components/product_modal.php'; ?>
+  <!-- FOOTER  -->
     <?php include_once __DIR__ . '/components/footer.php'; ?>
 
     <!-- Auth dialogs (login/signup) -->
@@ -59,5 +61,6 @@
     <script src="./js/loadComponents.js"></script>
     <script src="./js/authDialogs.js"></script>
     <script src="./js/productLoader.js"></script>
+    <script src="./js/productModal.js"></script>
   </body>
 </html>

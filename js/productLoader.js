@@ -61,9 +61,13 @@ $(document).ready(function() {
                 resolvedSrc = new URL(trimmed, window.location.href).href;
             }
 
+            // ensure price and description fields exist to avoid undefined
+            const safePrice = typeof product.price !== 'undefined' ? product.price : 0;
+            const safeDesc = product.description ? product.description : '';
+
             const productCard = `
                 <div class="col">
-                    <div class="card mx-auto mt-2 rounded-4">
+                    <div class="card product-card mx-auto mt-2 rounded-4" data-product-id="${product.id}" data-price="${safePrice}" data-description="${safeDesc}" style="cursor: pointer;">
                         <img class="mx-auto card-img rounded-4"
                             src="${resolvedSrc}"
                             width="auto"
@@ -78,6 +82,9 @@ $(document).ready(function() {
             `;
             productContainer.append(productCard);
         });
+
+        // Expose products to global scope for productModal to use
+        window.__sopopped_products = products;
 
         // Scroll to top of products section
         $('.container-fluid.bg-body').get(0)?.scrollIntoView({ behavior: 'smooth' });
