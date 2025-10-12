@@ -1,5 +1,6 @@
 -- sopopped.sql
--- revisions needed for sopopped.sql first draft
+-- revisions needed for sopopped.sql first draft meant to be a 
+-- reference schema for So Popped webapp
 -- GENERATED WITH HELP OF CHATGPT
 -- 
 -- Schema for So Popped webapp
