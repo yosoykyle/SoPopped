@@ -24,7 +24,7 @@
   <!-- NAV (server-side include) -->
   <?php include_once __DIR__ . '/components/navbar.php'; ?>
     <main>
-      <div class="container mt-5 pt-5 mt">
+      <div class="container mt-5 pt-5 mt ">
         <div class="text-center cart border-bottom pb-5">
             <img
             src="images/cart.png"
@@ -36,7 +36,7 @@
           <h1 class="display-4 mt-2">Your Cart</h1>
         </div>
         <!-- Cart Content Container -->
-        <div class="row g-5 mt-1">
+        <div class="row g-5 mt-1 d-flex justify-content-center">
           <!-- Cart Summary Column -->
           <div id="cart-summary-col" class="col-lg-7">
             <h2 class="d-flex justify-content-between align-items-center mb-3">
@@ -114,8 +114,8 @@
 
         <!-- Empty Cart Message -->
         <div class="row mt-4">
-          <div class="col-12">
-            <div class="emptyCart p-4 text-center border-secondary-subtle border rounded-3">
+          <div class="col-12 d-flex justify-content-center">
+            <div class="emptyCart p-4 text-center border-secondary-subtle border rounded-3 col-12 col-md-8 col-lg-6">
               <h2 class="pt-3 text-primary">Cart's Empty</h2>
               <p class="lead text-body-secondary">
                 Looks like you haven't added any flavors to your cart yet.
