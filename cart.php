@@ -43,17 +43,28 @@
                 <span class="text-warning">Flavors</span>
                 <span class="flavorCoutCart badge bg-warning rounded-pill">0</span>
               </h2>
-              <ul class="list-group mb-3">
-                <li class="list-group-item d-flex justify-content-between lh-sm">
+              <ul class="list-group mb-3" id="cart-items">
+                <li class="list-group-item d-flex justify-content-between align-items-center lh-sm" data-product-id="1" data-price="12.00">
                   <div>
                     <h6 class="my-0">Product name</h6>
                     <small class="text-body-secondary">Brief description</small>
                   </div>
-                  <span class="text-body-secondary">$12</span>
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="input-group input-group-sm" style="width:130px;">
+                      <button class="btn btn-outline-secondary btn-decrease" type="button">-</button>
+                      <input type="number" class="form-control text-center item-qty" value="1" min="1" />
+                      <button class="btn btn-outline-secondary btn-increase" type="button">+</button>
+                    </div>
+                    <div class="text-end me-2">
+                      <div class="small text-muted">Subtotal</div>
+                      <div class="fw-bold item-subtotal">$12.00</div>
+                    </div>
+                    <button class="btn btn-sm btn-link text-danger btn-remove" type="button">Remove</button>
+                  </div>
                 </li>
                 <li class="list-group-item d-flex justify-content-between">
                   <span>Total (USD)</span>
-                  <strong>$20</strong>
+                  <strong id="cart-total">$12.00</strong>
                 </li>
               </ul>
           </div>
@@ -143,5 +154,6 @@
     <script src="./js/loadComponents.js"></script>
     <script src="./js/countryState.js"></script>
     <script src="./js/authDialogs.js"></script>
+    <script src="./js/cart.js"></script>
   </body>
 </html>
