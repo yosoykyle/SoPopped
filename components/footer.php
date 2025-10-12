@@ -28,3 +28,6 @@
     </p>
   </div>
 </footer>
+<!-- Scripts that should be loaded at end of body -->
+<script src="./js/cart.js"></script>
+<script src="./js/cart-badge.js"></script>

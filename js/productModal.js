@@ -46,8 +46,16 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('pm-add-cart').addEventListener('click', ()=>{
     const id = modalEl.dataset.productId;
     const qty = Number(document.getElementById('pm-qty').value) || 1;
-    // Dispatch a custom event so site code can listen for it
-    document.dispatchEvent(new CustomEvent('product-add-to-cart', { detail: { id, qty } }));
+    // Add to local cart using cart API if present, otherwise dispatch event
+    const product = { id, qty };
+    if (window.sopoppedCart && typeof window.sopoppedCart.add === 'function'){
+      // Try to map to full product details from loaded products if available
+      const p = (window.__sopopped_products || []).find(x => String(x.id) === String(id));
+      if (p){ product.name = p.name; product.price = Number(p.price||0); product.description = p.description||''; }
+      window.sopoppedCart.add(product);
+    } else {
+      document.dispatchEvent(new CustomEvent('product-add-to-cart', { detail: { id, qty } }));
+    }
     // Close modal
     bsModal.hide();
   });
@@ -55,9 +63,17 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('pm-buy-now').addEventListener('click', ()=>{
     const id = modalEl.dataset.productId;
     const qty = Number(document.getElementById('pm-qty').value) || 1;
-    document.dispatchEvent(new CustomEvent('product-buy-now', { detail: { id, qty } }));
-    // Example: redirect to cart/checkout could be implemented by listening for this event
-    bsModal.hide();
+    const product = { id, qty };
+    if (window.sopoppedCart && typeof window.sopoppedCart.add === 'function'){
+      const p = (window.__sopopped_products || []).find(x => String(x.id) === String(id));
+      if (p){ product.name = p.name; product.price = Number(p.price||0); product.description = p.description||''; }
+      window.sopoppedCart.add(product);
+      // Redirect to cart page
+      window.location.href = 'cart.php';
+    } else {
+      document.dispatchEvent(new CustomEvent('product-buy-now', { detail: { id, qty } }));
+      bsModal.hide();
+    }
   });
 
   // Delegate clicks on product cards created by productLoader

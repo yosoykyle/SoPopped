@@ -29,7 +29,7 @@ $current = basename($_SERVER['SCRIPT_NAME']);
       <div class="navbar-nav me-auto mb-2 mb-lg-0">
         <a class="nav-link <?= $current === 'home.php' ? 'active text-warning' : '' ?>" aria-current="page" href="home.php">Home</a>
         <a class="nav-link <?= $current === 'products.php' ? 'active text-warning' : '' ?>" href="products.php">Products</a>
-        <a class="nav-link <?= $current === 'cart.php' ? 'active text-warning' : '' ?>" href="cart.php">Cart</a>
+  <a class="nav-link <?= $current === 'cart.php' ? 'active text-warning' : '' ?>" href="cart.php">Cart <span class="flavorCoutCart badge bg-warning rounded-pill ms-1">0</span></a>
         <a class="nav-link <?= $current === 'aboutUs.php' ? 'active text-warning' : '' ?>" href="aboutUs.php">About Us</a>
       </div>
       <form method="#" action="#" class="d-flex gap-2" role="search">
@@ -51,5 +51,6 @@ $current = basename($_SERVER['SCRIPT_NAME']);
         </button>
       </form>
     </div>
+    <!-- cart scripts moved to footer for end-of-body loading -->
   </div>
 </nav>
