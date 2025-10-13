@@ -7,6 +7,16 @@
 -- Generated: 2025-10-12
 -- NOTE: Review types, lengths and engine settings before running in production.
 
+-- -----------------------------------------------------------------
+-- NOTE: This is the full schema reference. A trimmed subset that
+-- includes only tables required by the currently implemented
+-- front-end forms/components has been created at:
+--   sopoppedDB/frontend_reference_tables.sql
+-- That trimmed file is intended as a reference scaffold for quickly
+-- connecting front-end forms (login, signup, contact, products, cart)
+-- to MySQL. It MUST be reviewed and verified before use in any env.
+-- -----------------------------------------------------------------
+
 -- Disable FK checks for safe recreation
 SET FOREIGN_KEY_CHECKS = 0;
 
