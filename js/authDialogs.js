@@ -309,12 +309,31 @@
             },
           },
           submitHandler: function (form) {
-            // placeholder: send contact message
-            alert("Message sent — Salamats Ateee!");
-            form.reset();
-            // Hide the validate-msg div after successful submission
-            $("#validate-msg").addClass("d-none").hide();
-          },
+              // Send contact message via AJAX to server endpoint
+              var $form = $(form);
+              var $validateMsg = $form.find('#validate-msg');
+              $.ajax({
+                url: './api/contact_submit.php',
+                method: 'POST',
+                data: $form.serialize(),
+                dataType: 'json'
+              }).done(function(resp){
+                if (resp && resp.success) {
+                  $validateMsg.removeClass('d-none alert-danger').addClass('alert alert-success').text('Message sent — thank you!').show();
+                  form.reset();
+                  // hide after a short delay
+                  setTimeout(function(){ $validateMsg.addClass('d-none').hide().removeClass('alert-success').text(''); }, 3500);
+                } else if (resp && resp.errors) {
+                  // Show first error message
+                  var first = Object.keys(resp.errors)[0];
+                  $validateMsg.removeClass('d-none alert-success').addClass('alert alert-danger').text(resp.errors[first]).show();
+                } else {
+                  $validateMsg.removeClass('d-none alert-success').addClass('alert alert-danger').text('Unable to send message. Please try again later.').show();
+                }
+              }).fail(function(){
+                $validateMsg.removeClass('d-none alert-success').addClass('alert alert-danger').text('Network or server error. Please try again later.').show();
+              });
+            },
         });
 
         // 1.12 - Setup checkout form (cart) validation rules and messages

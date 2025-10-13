@@ -158,10 +158,10 @@
   transform: scale(0.95);
 }
 
-/* Card Image Active - Invert effect */
+/* Card Image Active - Invert effect
 .card:active img {
   filter: invert(100%);
-}
+} */
 
 /* Featured Flavor Cards - Gradient overlay */
 .card-img-overlay {
@@ -194,7 +194,7 @@
 
 .img-fluid:active {
   transform: scale(0.2);
-  filter: invert(100%);
+
   animation-name: roShrink;
   animation-duration: 6s;
   animation-iteration-count: infinite;
@@ -427,7 +427,7 @@ body .ui-widget-overlay {
 
 /* Ensure dialog remains clear and focused */
 .ui-dialog {
-  box-shadow: 12px 12px 80px #ffffff50, -12px -12px 80px #ffffff50 !important;
+  box-shadow: 12px 12px 80px #ffffff3b, -12px -12px 80px #ffffff50 !important;
   border-radius: 6px !important;
   border: 1px solid rgb(255, 255, 255) !important;
   background: rgba(255, 255, 255, 0.2) !important;
@@ -479,11 +479,11 @@ body .ui-widget-overlay {
 
 /* Glassmorphism / blurred backdrop for product modal */
 #productModal .modal-content {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.808), rgba(255, 255, 255, 0.808));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.549), rgba(255, 255, 255, 0.27));
   border: 1px solid rgba(255, 255, 255, 0.955);
-  box-shadow: 0 10px 40px rgba(0,0,0,0.45);
-  backdrop-filter: blur(10px) saturate(120%);
-  -webkit-backdrop-filter: blur(10px) saturate(120%);
+  box-shadow: 0 10px 40px rgba(255, 255, 255, 0.296);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   color: var(--bs-body-color);
   overflow: hidden;
 }
@@ -505,7 +505,7 @@ body .ui-widget-overlay {
   to { transform: translateY(0) scale(1); opacity: 1; }
 }
 #productModal .modal-content {
-  animation: modalGlassIn 220ms ease-out;
+  animation: modalGlassIn 120ms ease-out;
 }
 
 /* Constrain the modal to approximately 7 Bootstrap columns on large screens */

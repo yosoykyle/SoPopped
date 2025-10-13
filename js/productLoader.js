@@ -65,18 +65,25 @@ $(document).ready(function() {
             const safePrice = typeof product.price !== 'undefined' ? product.price : 0;
             const safeDesc = product.description ? product.description : '';
 
+            const outOfStock = Number(product.quantity || 0) <= 0;
+            const cardClasses = `card product-card mx-auto mt-2 rounded-4 ${outOfStock ? 'out-of-stock' : ''}`;
             const productCard = `
                 <div class="col">
-                    <div class="card product-card mx-auto mt-2 rounded-4" data-product-id="${product.id}" data-price="${safePrice}" data-description="${safeDesc}" style="cursor: pointer;">
+                    <div class="${cardClasses}" data-product-id="${product.id}" data-price="${safePrice}" data-description="${safeDesc}" data-quantity="${product.quantity || 0}" style="cursor: pointer; position:relative;">
                         <img class="mx-auto card-img rounded-4"
                             src="${resolvedSrc}"
                             width="auto"
                             height="auto"
                             alt="${product.name}"
                         />
-                        <div class="card-body text-center mx-auto">
-                            <h5 class="card-title display-7">${product.name}</h5>
-                        </div>
+                                                <div class="card-body text-center mx-auto">
+                                                        <h5 class="card-title display-7">${product.name}</h5>
+                                                </div>
+                                                ${outOfStock ? `
+                                                <div class="position-absolute top-0 start-0 m-2">
+                                                    <span class="badge bg-danger">Out of stock</span>
+                                                </div>
+                                                ` : ''}
                     </div>
                 </div>
             `;

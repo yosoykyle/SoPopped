@@ -101,7 +101,7 @@
               <div class="my-3">
                 <div class="form-check">
                   <input id="credit" name="paymentMethod" type="radio" class="form-check-input" checked required/>
-                  <label class="form-check-label" for="credit">COD</label>
+                  <label class="form-check-label" for="cod">COD</label>
                 </div>
               </div>
               <hr class="my-4"/>

@@ -79,7 +79,7 @@
       <section class="px-2">
         <div class="container contact-card pt-4 mt-2 pb-4">
           <h2 class="display-4 text-center">Contact Us</h2>
-          <form method="POST" action="#" id="contactForm" class="auth-form" novalidate>
+          <form method="POST" action="./api/contact_submit.php" id="contactForm" class="auth-form" novalidate>
             <div class="row">
               <div class="col-lg-6">
                 <div class="mb- 2">

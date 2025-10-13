@@ -25,7 +25,28 @@ document.addEventListener('DOMContentLoaded', () => {
     name.textContent = product.name || '';
     desc.textContent = product.description || '';
     price.textContent = formatPrice(product.price || 0);
-    qty.value = 1;
+    // product.quantity may be undefined; treat as 0 when missing
+    const stock = typeof product.quantity !== 'undefined' ? Number(product.quantity) : 0;
+    qty.value = stock > 0 ? 1 : 0;
+    // set min/max on input and add data attribute
+    qty.min = 1;
+    qty.max = Math.max(0, stock);
+    qty.setAttribute('data-stock', String(stock));
+
+    // update stock display if present
+    const stockCountEl = document.getElementById('pm-stock-count');
+    if (stockCountEl) stockCountEl.textContent = String(stock);
+
+    // disable add/buy when out of stock
+    const addBtn = document.getElementById('pm-add-cart');
+    const buyBtn = document.getElementById('pm-buy-now');
+    if (stock <= 0){
+      if (addBtn) addBtn.setAttribute('disabled','disabled');
+      if (buyBtn) buyBtn.setAttribute('disabled','disabled');
+    } else {
+      if (addBtn) addBtn.removeAttribute('disabled');
+      if (buyBtn) buyBtn.removeAttribute('disabled');
+    }
 
     // store current product id on modal for handlers
     modalEl.dataset.productId = product.id;
@@ -35,11 +56,35 @@ document.addEventListener('DOMContentLoaded', () => {
   // Increase/decrease buttons
   document.getElementById('pm-qty-increase').addEventListener('click', ()=>{
     const n = document.getElementById('pm-qty');
-    n.value = Math.max(1, Number(n.value || 0) + 1);
+    const stock = Number(n.getAttribute('data-stock') || 0);
+    const next = Math.max(1, Number(n.value || 0) + 1);
+    n.value = Math.min(next, Math.max(1, stock));
   });
   document.getElementById('pm-qty-decrease').addEventListener('click', ()=>{
     const n = document.getElementById('pm-qty');
-    n.value = Math.max(1, Number(n.value || 0) - 1);
+    const stock = Number(n.getAttribute('data-stock') || 0);
+    const next = Math.max(0, Number(n.value || 0) - 1);
+    // if stock is zero, keep at 0, otherwise min 1
+    if (stock <= 0) {
+      n.value = 0;
+    } else {
+      n.value = Math.max(1, next);
+    }
+  });
+
+  // Clamp manual input and enforce min/max when user types
+  document.getElementById('pm-qty').addEventListener('input', (e)=>{
+    const n = e.target;
+    let val = Number(n.value || 0);
+    const stock = Number(n.getAttribute('data-stock') || 0);
+    if (isNaN(val)) val = 0;
+    if (stock <= 0){
+      n.value = 0;
+    } else {
+      if (val < 1) val = 1;
+      if (val > stock) val = stock;
+      n.value = val;
+    }
   });
 
   // Wire Add to cart / Buy now with simple events (user can replace with real handlers)
