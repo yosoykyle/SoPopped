@@ -1,3 +1,6 @@
+-- Create database if not exists
+CREATE DATABASE IF NOT EXISTS sopopped;
+
 -- Users table
 CREATE TABLE IF NOT EXISTS `users` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
