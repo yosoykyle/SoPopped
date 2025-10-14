@@ -1,169 +1,169 @@
 // productModal.js
-// Listens for clicks on product cards, opens the Bootstrap modal and populates it.
+// Opens product modal when a product card is clicked.
 document.addEventListener('DOMContentLoaded', () => {
   const modalEl = document.getElementById('productModal');
   if (!modalEl) return;
 
   const bsModal = new bootstrap.Modal(modalEl);
 
-  function formatPrice(v){
-    // ensure number
-    const n = Number(v) || 0;
-    return `$${n.toFixed(2)}`;
+  // Utility to resolve relative image paths safely
+  function resolveImagePath(path) {
+    if (!path) return '';
+    try {
+      return new URL(path.replace(/^\/+/, ''), window.location.href).href;
+    } catch (err) {
+      console.warn('[productModal] Invalid image path:', path, err);
+      return '';
+    }
   }
 
-  // Populate fields
-  function openProduct(product){
-    const img = document.getElementById('pm-image');
-    const name = document.getElementById('pm-name');
-    const desc = document.getElementById('pm-desc');
-    const price = document.getElementById('pm-price');
-    const qty = document.getElementById('pm-qty');
+  function formatPrice(value) {
+    const num = Number(value) || 0;
+    return `$${num.toFixed(2)}`;
+  }
 
-      // Resolve image path relative to the current page and assign to the modal image.
-      let resolvedSrc = '';
-      if (product.image) {
-        try {
-          resolvedSrc = new URL(product.image.replace(/^\/+/, ''), window.location.href).href;
-        } catch (err) {
-          // If URL construction fails, leave src empty and log a warning
-          console.warn('[productModal] invalid product image URL:', product, err);
-          resolvedSrc = '';
-        }
-      } else {
-        // no image specified; leave src empty so the browser handles it normally
-        resolvedSrc = '';
-      }
-      img.src = resolvedSrc;
-    img.alt = product.name || 'Product';
-    name.textContent = product.name || '';
-    desc.textContent = product.description || '';
-    price.textContent = formatPrice(product.price || 0);
-    // product.quantity may be undefined; treat as 0 when missing
+  function openProduct(product) {
     const stock = typeof product.quantity !== 'undefined' ? Number(product.quantity) : 0;
-    qty.value = stock > 0 ? 1 : 0;
-    // set min/max on input and add data attribute
-    qty.min = 1;
-    qty.max = Math.max(0, stock);
-    qty.setAttribute('data-stock', String(stock));
+    const isAvailable = stock > 0;
 
-    // update stock display if present
+    // Update image
+    const img = document.getElementById('pm-image');
+    img.src = resolveImagePath(product.image);
+    img.alt = product.name || 'Product';
+
+    // Update text content
+    document.getElementById('pm-name').textContent = product.name || '';
+    document.getElementById('pm-desc').textContent = product.description || '';
+    document.getElementById('pm-price').textContent = formatPrice(product.price);
+
+    // Update quantity input
+    const qtyInput = document.getElementById('pm-qty');
+    qtyInput.value = isAvailable ? 1 : 0;
+    qtyInput.min = '1';
+    qtyInput.max = String(Math.max(0, stock));
+    qtyInput.setAttribute('data-stock', String(stock));
+
+    // Update stock count
     const stockCountEl = document.getElementById('pm-stock-count');
     if (stockCountEl) stockCountEl.textContent = String(stock);
 
-    // disable add/buy when out of stock
+    // Toggle buttons
     const addBtn = document.getElementById('pm-add-cart');
     const buyBtn = document.getElementById('pm-buy-now');
-    if (stock <= 0){
-      if (addBtn) addBtn.setAttribute('disabled','disabled');
-      if (buyBtn) buyBtn.setAttribute('disabled','disabled');
-    } else {
-      if (addBtn) addBtn.removeAttribute('disabled');
-      if (buyBtn) buyBtn.removeAttribute('disabled');
-    }
+    if (addBtn) addBtn.toggleAttribute('disabled', !isAvailable);
+    if (buyBtn) buyBtn.toggleAttribute('disabled', !isAvailable);
 
-    // store current product id on modal for handlers
-    modalEl.dataset.productId = product.id;
+    // Store ID for cart handlers
+    modalEl.dataset.productId = String(product.id);
     bsModal.show();
   }
 
-  // Increase/decrease buttons
-  document.getElementById('pm-qty-increase').addEventListener('click', ()=>{
-    const n = document.getElementById('pm-qty');
-    const stock = Number(n.getAttribute('data-stock') || 0);
-    const next = Math.max(1, Number(n.value || 0) + 1);
-    n.value = Math.min(next, Math.max(1, stock));
-  });
-  document.getElementById('pm-qty-decrease').addEventListener('click', ()=>{
-    const n = document.getElementById('pm-qty');
-    const stock = Number(n.getAttribute('data-stock') || 0);
-    const next = Math.max(0, Number(n.value || 0) - 1);
-    // if stock is zero, keep at 0, otherwise min 1
-    if (stock <= 0) {
-      n.value = 0;
-    } else {
-      n.value = Math.max(1, next);
-    }
-  });
+  // Quantity controls
+  const qtyInput = document.getElementById('pm-qty');
+  const increaseBtn = document.getElementById('pm-qty-increase');
+  const decreaseBtn = document.getElementById('pm-qty-decrease');
 
-  // Clamp manual input and enforce min/max when user types
-  document.getElementById('pm-qty').addEventListener('input', (e)=>{
-    const n = e.target;
-    let val = Number(n.value || 0);
-    const stock = Number(n.getAttribute('data-stock') || 0);
-    if (isNaN(val)) val = 0;
-    if (stock <= 0){
-      n.value = 0;
-    } else {
-      if (val < 1) val = 1;
+  if (increaseBtn) {
+    increaseBtn.addEventListener('click', () => {
+      const stock = Number(qtyInput.getAttribute('data-stock') || 0);
+      if (stock <= 0) return;
+      const current = Number(qtyInput.value) || 0;
+      qtyInput.value = Math.min(current + 1, stock);
+    });
+  }
+
+  if (decreaseBtn) {
+    decreaseBtn.addEventListener('click', () => {
+      const stock = Number(qtyInput.getAttribute('data-stock') || 0);
+      if (stock <= 0) {
+        qtyInput.value = 0;
+        return;
+      }
+      const current = Number(qtyInput.value) || 1;
+      qtyInput.value = Math.max(1, current - 1);
+    });
+  }
+
+  if (qtyInput) {
+    qtyInput.addEventListener('input', (e) => {
+      let val = Number(e.target.value);
+      const stock = Number(qtyInput.getAttribute('data-stock') || 0);
+
+      if (stock <= 0) {
+        e.target.value = 0;
+        return;
+      }
+
+      if (isNaN(val) || val < 1) val = 1;
       if (val > stock) val = stock;
-      n.value = val;
-    }
-  });
+      e.target.value = val;
+    });
+  }
 
-  // Wire Add to cart / Buy now with simple events (user can replace with real handlers)
-  document.getElementById('pm-add-cart').addEventListener('click', ()=>{
+  // Cart actions
+  function addToCart(qty) {
     const id = modalEl.dataset.productId;
-    const qty = Number(document.getElementById('pm-qty').value) || 1;
-    // Add to local cart using cart API if present, otherwise dispatch event
+    if (!id) return;
+
     const product = { id, qty };
-    if (window.sopoppedCart && typeof window.sopoppedCart.add === 'function'){
-      // Try to map to full product details from loaded products if available
-      const p = (window.__sopopped_products || []).find(x => String(x.id) === String(id));
-      if (p){ product.name = p.name; product.price = Number(p.price||0); product.description = p.description||''; }
+    const fullProduct = (window.__sopopped_products || [])
+      .find(p => String(p.id) === id);
+
+    if (fullProduct) {
+      product.name = fullProduct.name;
+      product.price = Number(fullProduct.price) || 0;
+      product.description = fullProduct.description || '';
+    }
+
+    if (window.sopoppedCart?.add) {
       window.sopoppedCart.add(product);
     } else {
       document.dispatchEvent(new CustomEvent('product-add-to-cart', { detail: { id, qty } }));
     }
-    // Close modal
-    bsModal.hide();
-  });
+  }
 
-  document.getElementById('pm-buy-now').addEventListener('click', ()=>{
-    const id = modalEl.dataset.productId;
-    const qty = Number(document.getElementById('pm-qty').value) || 1;
-    const product = { id, qty };
-    if (window.sopoppedCart && typeof window.sopoppedCart.add === 'function'){
-      const p = (window.__sopopped_products || []).find(x => String(x.id) === String(id));
-      if (p){ product.name = p.name; product.price = Number(p.price||0); product.description = p.description||''; }
-      window.sopoppedCart.add(product);
-      // Redirect to cart page
-      window.location.href = 'cart.php';
-    } else {
-      document.dispatchEvent(new CustomEvent('product-buy-now', { detail: { id, qty } }));
+  const addCartBtn = document.getElementById('pm-add-cart');
+  const buyNowBtn = document.getElementById('pm-buy-now');
+
+  if (addCartBtn) {
+    addCartBtn.addEventListener('click', () => {
+      const qty = Number(qtyInput?.value) || 1;
+      addToCart(qty);
       bsModal.hide();
-    }
-  });
+    });
+  }
 
-  // Delegate clicks on product cards created by productLoader
-  document.addEventListener('click', (e)=>{
-    // Only respond when a product-card (explicit class) or a card with data-product-id is clicked
-    const card = e.target.closest('.product-card, .card[data-product-id]');
+  if (buyNowBtn) {
+    buyNowBtn.addEventListener('click', () => {
+      const qty = Number(qtyInput?.value) || 1;
+      addToCart(qty);
+      if (window.sopoppedCart?.add) {
+        window.location.href = 'cart.php';
+      } else {
+        document.dispatchEvent(new CustomEvent('product-buy-now', { detail: { id: modalEl.dataset.productId, qty } }));
+        bsModal.hide();
+      }
+    });
+  }
+
+  // Click delegation: only use data-product-id + global array
+  document.addEventListener('click', (e) => {
+    const card = e.target.closest('.product-card');
     if (!card) return;
 
-    // If product id attribute exists, prefer using it
-    const pid = card.dataset.productId;
-    if (pid && window.__sopopped_products && Array.isArray(window.__sopopped_products)){
-      const foundById = window.__sopopped_products.find(p => String(p.id) === String(pid));
-      if (foundById) { openProduct(foundById); return; }
+    const productId = card.dataset.productId;
+    if (!productId) {
+      console.warn('[productModal] Product card missing data-product-id');
+      return;
     }
 
-    // Fallback: try to match by name or image
-    const img = card.querySelector('img');
-    const name = card.querySelector('.card-title')?.textContent?.trim();
-    if (window.__sopopped_products && Array.isArray(window.__sopopped_products)){
-      const found = window.__sopopped_products.find(p => p.name === name || (img && p.image && (new URL(p.image.replace(/^\/+/, ''), window.location.href).href === img.src)));
-      if (found) { openProduct(found); return; }
-    }
+    const allProducts = window.__sopopped_products || [];
+    const product = allProducts.find(p => String(p.id) === productId);
 
-    // Final fallback: read fields from DOM attributes and construct product object
-    const product = {
-      id: card.dataset.productId || null,
-      name: name || img?.alt || '',
-      image: img?.src || '',
-      price: card.dataset.price ? Number(card.dataset.price) : 0,
-      description: card.dataset.description || ''
-    };
-    openProduct(product);
+    if (product) {
+      openProduct(product);
+    } else {
+      console.error(`[productModal] Product not found with ID: ${productId}`);
+    }
   });
 });
