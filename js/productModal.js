@@ -20,7 +20,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const price = document.getElementById('pm-price');
     const qty = document.getElementById('pm-qty');
 
-    img.src = product.image ? new URL(product.image.replace(/^\/+/, ''), window.location.href).href : '';
+      // Resolve image path relative to the current page and assign to the modal image.
+      let resolvedSrc = '';
+      if (product.image) {
+        try {
+          resolvedSrc = new URL(product.image.replace(/^\/+/, ''), window.location.href).href;
+        } catch (err) {
+          // If URL construction fails, leave src empty and log a warning
+          console.warn('[productModal] invalid product image URL:', product, err);
+          resolvedSrc = '';
+        }
+      } else {
+        // no image specified; leave src empty so the browser handles it normally
+        resolvedSrc = '';
+      }
+      img.src = resolvedSrc;
     img.alt = product.name || 'Product';
     name.textContent = product.name || '';
     desc.textContent = product.description || '';
