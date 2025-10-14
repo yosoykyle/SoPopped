@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-require_once __DIR__ . '/../sopoppedDB/sopoppedDB.php';
+require_once __DIR__ . './db/sopoppedDB.php';
 
 $name = isset($_POST['name']) ? trim((string)$_POST['name']) : '';
 $email = isset($_POST['email']) ? trim((string)$_POST['email']) : '';
