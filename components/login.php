@@ -1,6 +1,6 @@
 <!-- Login dialog fragment (jQuery UI) -->
 <div id="loginDialog" title="Login to So Popped" style="display:none; max-height: calc(100vh - 160px); overflow:auto;">
-  <form method="POST" action="#" id="loginForm" novalidate>
+  <form method="POST" action="./api/login_submit.php" id="loginForm" novalidate>
     <div class="mt-4">
       <input id="loginEmail" name="email" type="email" class="form-control" required />
       <p class="form-label mt-1"><label for="loginEmail">Email</label></p>

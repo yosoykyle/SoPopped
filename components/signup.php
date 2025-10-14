@@ -1,6 +1,6 @@
 <!-- Signup dialog fragment (jQuery UI) -->
 <div id="signupDialog" title="Create an account" style="display:none; max-height: calc(100vh - 120px); overflow:auto;">
-  <form method="POST" action="#" id="signupForm" novalidate>
+  <form method="POST" action="./api/signup_submit.php" id="signupForm" novalidate>
     <div class="mt-4">
       <input id="signupName" name="name" type="text" class="form-control" required />
       <p class="form-label pt-1"><label for="signupName">Name</label></p>
