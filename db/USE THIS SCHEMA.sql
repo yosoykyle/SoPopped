@@ -10,17 +10,17 @@ CREATE TABLE IF NOT EXISTS `users` (
   `last_name` VARCHAR(100) NOT NULL DEFAULT '',
   `phone` VARCHAR(30) NOT NULL DEFAULT '',
   `role` ENUM('customer','admin') NOT NULL DEFAULT 'customer',
-  `is_archived` TINYINT(1) NOT NULL DEFAULT 0,
+  `is_archived` TINYINT NOT NULL DEFAULT 0,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_users_email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-
--- Products table
+-- products table
 CREATE TABLE IF NOT EXISTS `products` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `sku` VARCHAR(100) NOT NULL DEFAULT '',
   `name` VARCHAR(255) NOT NULL DEFAULT '',
   `description` TEXT NULL,
   `price` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS `products` (
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_products_sku` (`sku`),
   KEY `idx_products_name` (`name`),
   CONSTRAINT `chk_products_price_nonneg` CHECK (`price` >= 0),
   CONSTRAINT `chk_products_quantity_nonneg` CHECK (`quantity` >= 0)
