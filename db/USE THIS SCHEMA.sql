@@ -26,13 +26,11 @@ CREATE TABLE IF NOT EXISTS `products` (
   `price` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   `quantity` INT UNSIGNED NOT NULL DEFAULT 0,
   `image_path` VARCHAR(512) NOT NULL DEFAULT '',
-  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `is_active` TINYINT NOT NULL DEFAULT 1 COMMENT '1 = active, 0 = inactive',
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_products_sku` (`sku`),
-  KEY `idx_products_name` (`name`)
-  ,
+  KEY `idx_products_name` (`name`),
   CONSTRAINT `chk_products_price_nonneg` CHECK (`price` >= 0),
   CONSTRAINT `chk_products_quantity_nonneg` CHECK (`quantity` >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
