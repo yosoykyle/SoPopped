@@ -1,6 +1,9 @@
 <?php
 // navbar.php - server-side navbar with active link highlighting
+session_start();
 $current = basename($_SERVER['SCRIPT_NAME']);
+$isLoggedIn = isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true;
+$userName = $isLoggedIn ? $_SESSION['user_name'] : '';
 ?>
 <nav class="navbar navbar-expand-md fixed-top bg-body border-bottom">
   <div class="container">
@@ -42,15 +45,56 @@ $current = basename($_SERVER['SCRIPT_NAME']);
         <button class="btn btn-outline-primary" type="submit">
           Search
         </button>
-        <button
-          id="loginBtn"
-          class="btn btn-warning"
-          type="button"
-        >
-          <i class="bi bi-person-circle me-1"></i>Login
-        </button>
+        <?php if ($isLoggedIn): ?>
+          <div class="dropdown">
+            <button
+              class="btn btn-warning dropdown-toggle"
+              type="button"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >
+              <i class="bi bi-person-circle me-1"></i><?= htmlspecialchars($userName) ?>
+            </button>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="#" onclick="logout()">Logout</a></li>
+            </ul>
+          </div>
+        <?php else: ?>
+          <button
+            id="loginBtn"
+            class="btn btn-warning"
+            type="button"
+          >
+            <i class="bi bi-person-circle me-1"></i>Login
+          </button>
+        <?php endif; ?>
       </form>
     </div>
     <!-- cart scripts moved to footer for end-of-body loading -->
   </div>
 </nav>
+
+<script>
+// Handle logout functionality
+function logout() {
+  if (confirm('Are you sure you want to logout?')) {
+    window.location.href = 'api/logout.php';
+  }
+}
+
+// Handle logout response
+$(document).ready(function() {
+  // Check for URL parameters indicating logout result
+  const urlParams = new URLSearchParams(window.location.search);
+  const logoutResult = urlParams.get('logout_result');
+  const logoutMessage = urlParams.get('logout_message');
+  
+  if (logoutResult === 'success') {
+    // Show success message (you might want to show this in a toast or alert)
+    console.log(logoutMessage || 'Logged out successfully');
+    
+    // Clean URL
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+});
+</script>

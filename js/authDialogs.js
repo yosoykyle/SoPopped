@@ -186,9 +186,16 @@
             },
           },
           submitHandler: function (form) {
-            // placeholder - perform login
-            alert("Login submitted");
-            $("#loginDialog").dialog("close");
+            // Show loading state
+            const submitBtn = $("#loginSubmit");
+            const originalText = submitBtn.text();
+            submitBtn.prop('disabled', true).text('Logging in...');
+            
+            // Hide any previous error messages
+            $("#validate-msg").addClass('d-none').text('');
+            
+            // Submit the form
+            form.submit();
           },
         });
 
@@ -260,8 +267,16 @@
             },
           },
           submitHandler: function (form) {
-            alert("Signup submitted");
-            $("#signupDialog").dialog("close");
+            // Show loading state
+            const submitBtn = $("#signupSubmit");
+            const originalText = submitBtn.text();
+            submitBtn.prop('disabled', true).text('Creating Account...');
+            
+            // Hide any previous error messages
+            $("#validate-msg").addClass('d-none').text('');
+            
+            // Submit the form
+            form.submit();
           },
         });
 
