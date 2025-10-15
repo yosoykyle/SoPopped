@@ -118,6 +118,7 @@ CREATE TABLE IF NOT EXISTS `audit_logs` (
   CONSTRAINT `fk_audit_actor_user` FOREIGN KEY (`actor_user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+
 -- Seed: admin user (replace password_hash with real hash in production)
 INSERT INTO `users` (`email`, `password_hash`, `first_name`, `last_name`, `phone`, `role`) VALUES
 ('admin@example.com', '$2y$10$EXAMPLEPASSWORDHASHSHOULDBEREPLACED', 'Admin', 'User', '', 'admin')

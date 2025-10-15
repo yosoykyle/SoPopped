@@ -59,7 +59,7 @@
           <div id="billing-col" class="col-lg-5">
             <h4 class="mb-3 text-warning">Billing address</h4>
             <!-- Add novalidate attribute -->
-            <form method="POST" action="#" id="checkoutForm" class="needs-validation" novalidate>
+            <form method="POST" action="./api/checkout_submit.php" id="checkoutForm" class="needs-validation" novalidate>
               <div class="row g-3">
                 <div class="col-sm-6">
                   <label for="firstName" class="form-label">First name</label>
