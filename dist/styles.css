@@ -1349,29 +1349,8 @@ textarea.form-control-lg{min-height:calc(1.5em + 1rem + calc(var(--bs-border-wid
 .navbar {
    backdrop-filter: contrast(110%) blur(9px);
   -webkit-backdrop-filter: contrast(110%) blur(9px);
-
-  /* Use a vertical gradient mask: white = fully visible, black = hidden */
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    white 0%,      /* Top: fully visible → strong blur */
-    white 70%,     /* Middle: still visible */
-    black 90%,     /* Bottom: fading out */
-    transparent 100% /* Fully transparent at very bottom */
-  );
-  mask-image: linear-gradient(
-    to bottom,
-    white 0%,
-    white 70%,
-    black 90%,
-    transparent 100%
-  );
-
   /* Optional: background tint for glass effect */
   background-color: rgba(255, 255, 255, 0.2) !important;
-
-  /* Default is ~0.5rem – increase as needed */
-  padding-top: 1.1 rem;
-  padding-bottom: 1.7rem;
 }
 /* Navigation Links - Interactive hover effects */
 .nav-link {
