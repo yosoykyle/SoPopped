@@ -2,7 +2,7 @@
 $host = 'localhost';
 $db   = 'sopopped';
 $user = 'root';
-$pass = 'mysqlpass';
+$pass = '@59532258968';
 $charset = 'utf8mb4';
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
