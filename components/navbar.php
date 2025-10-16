@@ -5,7 +5,7 @@ $current = basename($_SERVER['SCRIPT_NAME']);
 $isLoggedIn = isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true;
 $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
 ?>
-<nav class="navbar navbar-expand-md fixed-top bg-body border-bottom">
+<nav class="navbar navbar-expand-md fixed-top">
   <div class="container">
     <a class="navbar-brand" id="<?= $current === 'home.php' ? 'navHome' : '' ?>" href="home.php">
       <img
