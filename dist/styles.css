@@ -1372,6 +1372,29 @@ textarea.form-control-lg{min-height:calc(1.5em + 1rem + calc(var(--bs-border-wid
   text-shadow: 0px 3px 3px #0000007c;
   text-decoration: underline;
 }
+/* Make dropdown menu items visually match navbar links */
+.dropdown-item {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: scale(1);
+  background: transparent;
+}
+.dropdown-item:hover {
+  transform: scale(0.98);
+  color: var(--bs-primary) !important;
+  text-decoration: underline;
+  text-shadow: 0px 3px 3px #0000007c;
+  font-weight: 550;
+  background: transparent;
+}
+.dropdown-item:active {
+  transform: scale(0.95);
+  font-style: italic;
+  font-family: pix;
+  color: var(--bs-warning) !important;
+  text-shadow: 0px 3px 3px #0000007c;
+  text-decoration: underline;
+  background: transparent;
+}
 /* Navbar Toggler - Mobile menu button */
 .navbar-toggler {
   transition: transform 0.15s ease-in-out;
