@@ -1,5 +1,6 @@
 -- Create database if not exists
 CREATE DATABASE IF NOT EXISTS sopopped;
+USE sopopped;
 
 -- Users table
 CREATE TABLE IF NOT EXISTS `users` (

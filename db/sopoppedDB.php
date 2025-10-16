@@ -2,17 +2,18 @@
 $host = 'localhost';
 $db   = 'sopopped';
 $user = 'root';
-$pass = '@59532258968';
+$pass = '@59532258968'; //@59532258968
 $charset = 'utf8mb4';
+$schemaFile = __DIR__ . '/USE THIS SCHEMA.sql';
+$dataFile = __DIR__ . '/sample_products.sql';
+
+$pdo = new PDO("mysql:host=$host;charset=utf8mb4", $user, $pass, $options);
+$pdo->exec(file_get_contents($schemaFile));
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
-$options = [
-    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-];
-try {
-    $pdo = new PDO($dsn, $user, $pass, $options);
-} catch (PDOException $e) {
-    die('Connection failed: ' . $e->getMessage());
+$pdo = new PDO($dsn, $user, $pass, $options);
+
+if (file_exists($dataFile)) {
+    $pdo->exec(file_get_contents($dataFile));
 }
 ?>
