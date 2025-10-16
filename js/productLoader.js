@@ -7,19 +7,34 @@ $(document).ready(function () {
   function resolveImagePath(path) {
     if (!path) return '';
     try {
-      return new URL(path.replace(/^\/+/, ''), window.location.href).href;
+      // Use origin so '/images/x.png' resolves to 'http(s)://host/images/x.png'
+      return new URL(path, window.location.origin).href;
     } catch (err) {
       console.warn('[productLoader] Invalid image path:', path, err);
       return '';
     }
   }
 
-  // Load products from JSON (cache-busted)
+  // Load products from DB API (cache-busted)
   function loadProducts() {
-    const url = `./js/products.json?t=${Date.now()}`;
+    const url = `./api/db_products.php?t=${Date.now()}`;
     $.getJSON(url)
       .done(function (data) {
-        products = Array.isArray(data?.products) ? data.products : [];
+        // db_products.php returns { success: true, products: [...], count: N }
+        const rows = Array.isArray(data?.products) ? data.products : [];
+
+        // Normalize API rows to the shape expected by the loader
+        products = rows.map(p => ({
+          id: p.id,
+          name: p.name,
+          description: p.description || '',
+          // ensure price is a number
+          price: (typeof p.price !== 'undefined' && p.price !== null) ? parseFloat(p.price) : 0,
+          quantity: (typeof p.quantity !== 'undefined' && p.quantity !== null) ? Number(p.quantity) : 0,
+          // Prefer absolute `image` provided by API; fall back to `image_path` or `image` from JSON
+          image: p.image || p.image_path || p.image || '',
+          is_active: p.is_active || 1
+        }));
 
         // Warn on duplicate IDs
         const ids = products.map(p => p.id).filter(id => id != null);
@@ -43,7 +58,7 @@ $(document).ready(function () {
         window.__sopopped_products = products;
       })
       .fail(function (jqXHR, textStatus, errorThrown) {
-        console.error('Failed to load products:', textStatus, errorThrown);
+        console.error('Failed to load products from API:', textStatus, errorThrown);
       });
   }
 
@@ -70,11 +85,11 @@ $(document).ready(function () {
                data-description="${safeDesc}" 
                data-quantity="${quantity}" 
                style="cursor:pointer; position:relative;">
-            <img class="mx-auto card-img rounded-4"
-                 src="${resolvedSrc}"
-                 alt="${product.name || 'Product'}"
-                 width="auto"
-                 height="auto" />
+      <img class="mx-auto card-img rounded-4"
+        src="${resolvedSrc}"
+        alt="${product.name || 'Product'}"
+        width="auto"
+        height="auto" onerror="this.onerror=null;this.src='/images/image.png'" />
             <div class="card-body text-center mx-auto">
               <h5 class="card-title display-7">${product.name}</h5>
             </div>

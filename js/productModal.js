@@ -10,7 +10,12 @@ document.addEventListener('DOMContentLoaded', () => {
   function resolveImagePath(path) {
     if (!path) return '';
     try {
-      return new URL(path.replace(/^\/+/, ''), window.location.href).href;
+      // If path is already absolute, return it
+      if (/^https?:\/\//i.test(path)) return path;
+      // Root-relative: prefix origin
+      if (path.startsWith('/')) return new URL(path, window.location.origin).href;
+      // Project-relative: resolve against current page URL so '/SoPopped/images/..' is preserved
+      return new URL(path, window.location.href).href;
     } catch (err) {
       console.warn('[productModal] Invalid image path:', path, err);
       return '';
@@ -28,8 +33,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Update image
     const img = document.getElementById('pm-image');
-    img.src = resolveImagePath(product.image);
-    img.alt = product.name || 'Product';
+    // Prefer `image`, fall back to `image_path`, then to a local placeholder
+    const rawPath = product.image || product.image_path || 'images/image.png';
+    const resolvedSrc = resolveImagePath(rawPath);
+    if (img) {
+      // Log for debugging
+      console.debug('[productModal] openProduct', { id: product.id, rawPath, resolvedSrc });
+      img.src = resolvedSrc;
+      img.alt = product.name || 'Product';
+
+      // Fallback handler: replace broken images with a local placeholder
+      img.onerror = () => {
+        const placeholder = resolveImagePath('images/image.png');
+        if (img.src !== placeholder) {
+          console.warn('[productModal] Image failed to load, using placeholder:', resolvedSrc);
+          img.src = placeholder;
+        }
+      };
+    }
 
     // Update text content
     document.getElementById('pm-name').textContent = product.name || '';

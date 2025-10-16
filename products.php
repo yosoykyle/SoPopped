@@ -69,7 +69,6 @@ function populateSampleProducts($pdo) {
 }
 
 // Get products from database
-populateSampleProducts($pdo);
 $products = getProducts($pdo);
 
 // Pagination settings
@@ -103,6 +102,8 @@ $pageProducts = array_slice($products, $offset, $itemsPerPage);
   <link rel="apple-touch-icon" href="images/So Popped Logo.png" />
   </head>
   <body>
+  <script src="./node_modules/jquery/dist/jquery.min.js"></script>
+  <script>window.jQuery || document.write('<script src="https://code.jquery.com/jquery-3.6.0.min.js"><\/script>');</script>
   <!-- NAV (server-side include) -->
   <?php include_once __DIR__ . '/components/navbar.php'; ?>
     <!-- FEATURED -->
@@ -136,8 +137,17 @@ $pageProducts = array_slice($products, $offset, $itemsPerPage);
                    data-description="<?= htmlspecialchars($product['description']) ?>" 
                    data-quantity="<?= htmlspecialchars($product['quantity']) ?>" 
                    style="cursor:pointer; position:relative;">
+                <?php
+                  $img = $product['image_path'] ?? '';
+                  if (preg_match('~^https?://~i', $img)) {
+                      $src = $img;
+                  } else {
+                      // Strip leading slashes so paths like '/images/x.png' become 'images/x.png'
+                      $src = ltrim($img, '/\\');
+                  }
+                ?>
                 <img class="mx-auto card-img rounded-4"
-                     src="<?= htmlspecialchars($product['image_path']) ?>"
+                     src="<?= htmlspecialchars($src) ?>"
                      alt="<?= htmlspecialchars($product['name']) ?>"
                      width="auto"
                      height="auto" />
@@ -164,15 +174,14 @@ $pageProducts = array_slice($products, $offset, $itemsPerPage);
     <!-- Auth dialogs (login/signup) -->
     <?php include_once __DIR__ . '/components/login.php'; ?>
     <?php include_once __DIR__ . '/components/signup.php'; ?>
-    <script src="./node_modules/jquery/dist/jquery.min.js"></script>
-    <script src="./node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="./js/loadComponents.js"></script>
-    <script src="./js/authDialogs.js"></script>
-    <script src="./js/productModal.js"></script>
+  <script src="./node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="./js/loadComponents.js"></script>
+  <script src="./js/authDialogs.js"></script>
+  <script src="./js/productModal.js"></script>
     
-    <script>
-    // Make products available for modal functionality
-    window.__sopopped_products = <?= json_encode($products) ?>;
-    </script>
+  <script>
+  // Make products available for modal functionality
+  window.__sopopped_products = <?= json_encode($products) ?>;
+  </script>
   </body>
 </html>
