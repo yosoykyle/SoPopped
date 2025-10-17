@@ -3,7 +3,7 @@
 ?>
 <div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down modal-lg-7col">
-    <div class="modal-content rounded-4">
+    <div class="modal-content rounded-5">
       <div class="modal-header border-0">
         <h2 class="modal-title text-white" id="productModalLabel">Flavor</h2>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -12,7 +12,7 @@
         <div class="container-fluid">
           <div class="row g-3 align-items-center">
             <div class="col-12 col-md-6 d-flex align-items-center justify-content-center py-2">
-              <img id="pm-image" src="" alt="Product image" class="img-fluid rounded-5" style="max-height:420px; object-fit:contain;  border: 1px solid #fff;" />
+              <img id="pm-image" src="" alt="Product image" class="img-fluid rounded-4" style="max-height:420px; object-fit:contain;  border: 1px solid #fff;" />
             </div>
             <div class="col-12 col-md-6 py-2">
               <h3 id="pm-name" class="fw-bold text-white"></h3>

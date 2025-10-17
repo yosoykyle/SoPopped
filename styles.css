@@ -39,9 +39,8 @@
 
 /* Navbar Base - Creates a frosted glass effect */
 .navbar {
-   backdrop-filter: contrast(110%) blur(9px);
-  -webkit-backdrop-filter: contrast(110%) blur(9px);
-  /* Optional: background tint for glass effect */
+   backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   background-color: rgba(255, 255, 255, 0.2) !important;
 }
 
@@ -507,10 +506,10 @@ body .ui-widget-overlay {
 
 /* Glassmorphism / blurred backdrop for product modal */
 #productModal .modal-content {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.549), rgba(255, 255, 255, 0.27));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.3));
   border: 1px solid rgba(255, 255, 255, 0.955);
   box-shadow: 0 10px 40px rgba(255, 255, 255, 0.296);
-  backdrop-filter: blur(10px);
+  backdrop-filter:  blur(10px);
   -webkit-backdrop-filter: blur(10px);
   color: var(--bs-body-color);
   overflow: hidden;
