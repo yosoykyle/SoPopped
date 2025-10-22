@@ -23,42 +23,4 @@
   </form>
 </div>
 
-<script>
-// Handle login form response
-$(document).ready(function() {
-  // Check for URL parameters indicating login result
-  const urlParams = new URLSearchParams(window.location.search);
-  const loginResult = urlParams.get('login_result');
-  const loginMessage = urlParams.get('login_message');
-  
-  if (loginResult === 'success') {
-    // Show success message
-    $('#success-msg').removeClass('d-none').text(loginMessage || 'Login successful!');
-    $('#loginDialog').dialog('open');
-    
-    // Clear form
-    $('#loginForm')[0].reset();
-    
-    // Close dialog after 2 seconds and reload page to show logged-in state
-    setTimeout(function() {
-      $('#loginDialog').dialog('close');
-      window.location.reload();
-    }, 2000);
-    
-    // Clean URL
-    window.history.replaceState({}, document.title, window.location.pathname);
-  } else if (loginResult === 'error') {
-    // Show error message
-    $('#validate-msg').removeClass('d-none').text(loginMessage || 'Login failed. Please try again.');
-    $('#loginDialog').dialog('open');
-    
-    // Clean URL
-    window.history.replaceState({}, document.title, window.location.pathname);
-  }
-  
-  // Reset button state when dialog opens
-  $('#loginDialog').on('dialogopen', function() {
-    $('#loginSubmit').prop('disabled', false).text('Login');
-  });
-});
-</script>
+<!-- Inline script moved to js/authDialogs.js to centralize dialog behavior -->

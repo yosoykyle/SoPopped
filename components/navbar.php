@@ -5,7 +5,7 @@ $current = basename($_SERVER['SCRIPT_NAME']);
 $isLoggedIn = isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true;
 $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
 ?>
-<nav class="navbar navbar-expand-md fixed-top">
+<nav class="navbar navbar-expand-md fixed-top border-bottom">
   <div class="container">
     <a class="navbar-brand" id="<?= $current === 'home.php' ? 'navHome' : '' ?>" href="home.php">
       <img
@@ -74,27 +74,4 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
   </div>
 </nav>
 
-<script>
-// Handle logout functionality
-function logout() {
-  if (confirm('Are you sure you want to logout?')) {
-    window.location.href = 'api/logout.php';
-  }
-}
-
-// Handle logout response
-$(document).ready(function() {
-  // Check for URL parameters indicating logout result
-  const urlParams = new URLSearchParams(window.location.search);
-  const logoutResult = urlParams.get('logout_result');
-  const logoutMessage = urlParams.get('logout_message');
-  
-  if (logoutResult === 'success') {
-    // Show success message (you might want to show this in a toast or alert)
-    console.log(logoutMessage || 'Logged out successfully');
-    
-    // Clean URL
-    window.history.replaceState({}, document.title, window.location.pathname);
-  }
-});
-</script>
+<!-- Navbar inline scripts moved to js/authDialogs.js -->

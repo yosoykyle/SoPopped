@@ -16,6 +16,9 @@ $phone = trim($_POST['phone'] ?? '');
 $password = $_POST['password'] ?? '';
 $password2 = $_POST['password2'] ?? '';
 
+// Normalize email
+$email = strtolower($email);
+
 // Validation
 $errors = [];
 
@@ -59,10 +62,14 @@ if (!empty($errors)) {
 
 try {
     // Check if email already exists
-    $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
+    $stmt = $pdo->prepare("SELECT id, is_archived FROM users WHERE email = ? LIMIT 1");
     $stmt->execute([$email]);
-    
-    if ($stmt->fetch()) {
+    $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($existing) {
+        if (!empty($existing['is_archived'])) {
+            header('Location: ../home.php?signup_result=error&signup_message=' . urlencode('An archived account already exists with this email. Creating a new account with the same email is not allowed.'));
+            exit;
+        }
         header('Location: ../home.php?signup_result=error&signup_message=' . urlencode('An account with this email already exists'));
         exit;
     }

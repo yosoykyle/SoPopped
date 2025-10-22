@@ -95,7 +95,7 @@ $(document).ready(function () {
             </div>
             ${outOfStock ? `
               <div class="position-absolute top-0 start-0 m-2">
-                <span class="badge bg-danger">Out of stock</span>
+                <span class="badge bg-danger ">Out of stock</span>
               </div>` : ''}
           </div>
         </div>

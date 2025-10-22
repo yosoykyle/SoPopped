@@ -43,40 +43,4 @@
   </form>
 </div>
 
-<script>
-  $(document).ready(function() {
-  // Check for URL parameters indicating signup result
-  const urlParams = new URLSearchParams(window.location.search);
-  const signupResult = urlParams.get('signup_result');
-  const signupMessage = urlParams.get('signup_message');
-  
-  if (signupResult === 'success') {
-    // Show success message
-    $('#success-msg').removeClass('d-none').text(signupMessage || 'Account created successfully! You can now log in.');
-    $('#signupDialog').dialog('open');
-    
-    // Clear form
-    $('#signupForm')[0].reset();
-    
-    // Close dialog after 3 seconds
-    setTimeout(function() {
-      $('#signupDialog').dialog('close');
-    }, 3000);
-    
-    // Clean URL
-    window.history.replaceState({}, document.title, window.location.pathname);
-  } else if (signupResult === 'error') {
-    // Show error message
-    $('#validate-msg').removeClass('d-none').text(signupMessage || 'An error occurred. Please try again.');
-    $('#signupDialog').dialog('open');
-    
-    // Clean URL
-    window.history.replaceState({}, document.title, window.location.pathname);
-  }
-  
-  // Reset button state when dialog opens
-  $('#signupDialog').on('dialogopen', function() {
-    $('#signupSubmit').prop('disabled', false).text('Sign Up');
-  });
-});
-</script>
+<!-- Inline signup script moved to js/authDialogs.js -->

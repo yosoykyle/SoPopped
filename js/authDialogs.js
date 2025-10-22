@@ -160,6 +160,84 @@
           },
         });
 
+        // 1.7.1 - Remote check for login email existence (improves UX)
+        $(document).on('blur', '#loginEmail', function () {
+          const $el = $(this);
+          const email = $el.val().trim();
+          const $form = $el.closest('form');
+          const $msg = $form.find('#validate-msg');
+          if (!email) { $el.data('exists', undefined); if ($msg && $msg.length) { $msg.addClass('d-none').text(''); } return; }
+          // Call API to check if user exists (POST to keep email out of URLs/logs)
+          fetch('./api/check_user_exists.php', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+            body: new URLSearchParams({ email: email })
+          }).then(r => r.json())
+            .then(json => {
+              if (json && json.exists) {
+                $el.data('exists', true);
+                if ($msg && $msg.length) { $msg.addClass('d-none').text(''); }
+                console.debug('check_user_exists: exists=true for', email);
+              } else {
+                // mark as not existing and show a friendly message targeting the validate-msg element in the login dialog
+                $el.data('exists', false);
+                // Ensure we have a visible target. If not found, fall back to global element (older pages)
+                if (!($msg && $msg.length)) {
+                  console.debug('check_user_exists: no form-local #validate-msg found, falling back to global');
+                  $msg = $('#validate-msg');
+                }
+                if ($msg && $msg.length) { $msg.removeClass('d-none').show().text('No account found with that email address.'); }
+                console.debug('check_user_exists: exists=false for', email);
+              }
+            }).catch(err => {
+              // ignore network errors here, server-side login will still validate
+              console.warn('check_user_exists failed', err);
+              $el.data('exists', undefined);
+            });
+        });
+
+        // 1.7.2 - Remote check for signup email to prevent duplicate registrations
+        $(document).on('blur', '#signupEmail', function () {
+          const $el = $(this);
+          const email = $el.val().trim();
+          const $form = $el.closest('form');
+          const $msg = $form.find('#validate-msg');
+          if (!email) { $el.data('exists', undefined); if ($msg && $msg.length) { $msg.addClass('d-none').text(''); } return; }
+          // Call API to check if user exists (POST to keep email out of URLs/logs)
+          fetch('./api/check_user_exists.php', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+            body: new URLSearchParams({ email: email })
+          }).then(r => r.json())
+            .then(json => {
+              if (json && json.exists) {
+                $el.data('exists', true);
+                // If account is archived, show a not-allowed message; otherwise show exists message
+                const archived = json.is_archived ? true : false;
+                if (!($msg && $msg.length)) { $msg = $('#validate-msg'); }
+                if (archived) {
+                  if ($msg && $msg.length) { $msg.removeClass('d-none').show().text('This email belongs to an archived account — creating a new account with the same email is not allowed.'); }
+                  $el.data('archived', true);
+                } else {
+                  if ($msg && $msg.length) { $msg.removeClass('d-none').show().text('An account already exists with that email address.'); }
+                  $el.data('archived', false);
+                }
+                console.debug('check_user_exists (signup): exists=true for', email, 'archived=', archived);
+              } else {
+                $el.data('exists', false);
+                $el.data('archived', false);
+                if ($msg && $msg.length) { $msg.addClass('d-none').text(''); }
+                console.debug('check_user_exists (signup): exists=false for', email);
+              }
+            }).catch(err => {
+              console.warn('check_user_exists (signup) failed', err);
+              $el.data('exists', undefined);
+              $el.data('archived', undefined);
+            });
+        });
+
         // 1.7 - Setup login form validation rules and messages
         $("#loginForm").validate({
           rules: {
@@ -191,9 +269,54 @@
             const originalText = submitBtn.text();
             submitBtn.prop('disabled', true).text('Logging in...');
             
-            // Hide any previous error messages
-            $("#validate-msg").addClass('d-none').text('');
-            
+            // Hide any previous error messages in this form
+            const $form = $(form);
+            const $msg = $form.find('#validate-msg');
+            if ($msg && $msg.length) { $msg.addClass('d-none').text(''); }
+
+            // If we have an explicit existence check and it says the account doesn't exist, block submit
+            const emailExists = $form.find('#loginEmail').data('exists');
+            if (typeof emailExists !== 'undefined' && emailExists === false) {
+              // If no local message element, fallback to global
+              if (!($msg && $msg.length)) { $msg = $('#validate-msg'); }
+              if ($msg && $msg.length) { $msg.removeClass('d-none').show().text('No account found with that email address.'); }
+              // Re-enable button
+              submitBtn.prop('disabled', false).text(originalText);
+              return false; // prevent submit
+            }
+
+            // If we don't have a cached existence result, perform a final check before submitting
+            if (typeof emailExists === 'undefined') {
+              const email = $form.find('#loginEmail').val().trim();
+              if (email) {
+                fetch('./api/check_user_exists.php', {
+                  method: 'POST',
+                  credentials: 'same-origin',
+                  headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+                  body: new URLSearchParams({ email: email })
+                }).then(r => r.json())
+                  .then(json => {
+                    if (json && json.exists) {
+                      // proceed to submit
+                      $form.find('#loginEmail').data('exists', true);
+                      form.submit();
+                    } else {
+                      $form.find('#loginEmail').data('exists', false);
+                      // fallback if needed
+                      if (!($msg && $msg.length)) { $msg = $('#validate-msg'); }
+                      if ($msg && $msg.length) { $msg.removeClass('d-none').show().text('No account found with that email address.'); }
+                      submitBtn.prop('disabled', false).text(originalText);
+                    }
+                  })
+                  .catch(err => {
+                    // On network error, allow submit and let server handle it
+                    console.warn('check_user_exists failed on submit', err);
+                    form.submit();
+                  });
+                return false; // we will submit (or block) after the async check
+              }
+            }
+
             // Submit the form
             form.submit();
           },
@@ -274,7 +397,49 @@
             
             // Hide any previous error messages
             $("#validate-msg").addClass('d-none').text('');
-            
+            // If we have an explicit existence check and it says the account exists, block submit
+            const $form = $(form);
+            const emailExists = $form.find('#signupEmail').data('exists');
+            if (typeof emailExists !== 'undefined' && emailExists === true) {
+              let $msg = $form.find('#validate-msg');
+              if (!($msg && $msg.length)) { $msg = $('#validate-msg'); }
+              if ($msg && $msg.length) { $msg.removeClass('d-none').show().text('An account already exists with that email address.'); }
+              submitBtn.prop('disabled', false).text(originalText);
+              return false; // prevent submit
+            }
+
+            // If we don't have a cached existence result, perform a final check before submitting
+            if (typeof emailExists === 'undefined') {
+              const email = $form.find('#signupEmail').val().trim();
+              if (email) {
+                fetch('./api/check_user_exists.php', {
+                  method: 'POST',
+                  credentials: 'same-origin',
+                  headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+                  body: new URLSearchParams({ email: email })
+                }).then(r => r.json())
+                  .then(json => {
+                    if (json && json.exists) {
+                      $form.find('#signupEmail').data('exists', true);
+                      let $msg = $form.find('#validate-msg');
+                      if (!($msg && $msg.length)) { $msg = $('#validate-msg'); }
+                      if ($msg && $msg.length) { $msg.removeClass('d-none').show().text('An account already exists with that email address.'); }
+                      submitBtn.prop('disabled', false).text(originalText);
+                    } else {
+                      // proceed to submit
+                      $form.find('#signupEmail').data('exists', false);
+                      form.submit();
+                    }
+                  })
+                  .catch(err => {
+                    console.warn('check_user_exists (signup) failed on submit', err);
+                    // On network error, allow submit and let server handle duplicate enforcement
+                    form.submit();
+                  });
+                return false; // will submit (or block) after async check
+              }
+            }
+
             // Submit the form
             form.submit();
           },
@@ -352,6 +517,7 @@
         });
 
         // 1.12 - Setup checkout form (cart) validation rules and messages
+        // Removed redundant errorClass, validClass, errorElement, errorPlacement, highlight, unhighlight options
         $("#checkoutForm").validate({
           rules: {
             firstName: { required: true, minlength: 2 },
@@ -399,70 +565,64 @@
             barangay: { required: "Please select a barangay" },
             paymentMethod: { required: "Please select a payment method" },
           },
-          errorClass: "is-invalid",
-          validClass: "is-valid",
-          errorElement: "div",
-          errorPlacement: function (error, element) {
-            // Add the error class to the input
-            element.addClass("is-invalid").removeClass("is-valid");
-
-            // Find the validate-msg div (specifically target the one with id="validate-msg")
-            let $validateMsg = element.closest("form").find("#validate-msg");
-
-            // If validate-msg div exists, use it
-            if ($validateMsg && $validateMsg.length) {
-              $validateMsg.text(error.text()).removeClass("d-none").show();
-            } else {
-              // Fallback to original placement if no validate-msg div found
-              error.addClass("invalid-feedback");
-              if (element.parent(".input-group").length) {
-                error.insertAfter(element.parent());
-              } else {
-                error.insertAfter(element);
-              }
-            }
-          },
-          highlight: function (element, errorClass, validClass) {
-            $(element).addClass(errorClass).removeClass(validClass);
-
-            // Show the validate-msg div if it exists
-            let $validateMsg = $(element).closest("form").find("#validate-msg");
-            if ($validateMsg && $validateMsg.length) {
-              $validateMsg.removeClass("d-none").show();
-            }
-          },
-          unhighlight: function (element, errorClass, validClass) {
-            $(element).removeClass(errorClass).addClass(validClass);
-
-            // Check if there are other errors in the form
-            let $form = $(element).closest("form");
-            let validator = $form.data("validator") || $form.validate();
-
-            if (validator && validator.numberOfInvalids() === 0) {
-              // Hide the validate-msg div if no more errors
-              let $validateMsg = $form.find("#validate-msg");
-              if ($validateMsg && $validateMsg.length) {
-                $validateMsg.addClass("d-none").hide();
-              }
-            }
-          },
           submitHandler: function (form) {
-            // For now, allow form submission to proceed normally.
-            // You can replace this with AJAX checkout logic later.
-            alert("Checkout form is valid! Proceeding with submission...");
-            // form.submit(); // Uncomment to actually submit
+            // Gather cart from localStorage and submit via AJAX to the checkout API
+            try {
+              const cartJson = localStorage.getItem('sopopped_cart_v1') || '[]';
+              const cart = JSON.parse(cartJson);
+              if (!Array.isArray(cart) || cart.length === 0) {
+                const $form = $(form);
+                const $msg = $form.find('#validate-msg');
+                $msg.removeClass('d-none').text('Your cart is empty. Add items before checkout.');
+                return false;
+              }
+
+              // Ensure hidden input exists and set value
+              const cartInput = form.querySelector('#cart_items_input');
+              if (cartInput) cartInput.value = JSON.stringify(cart);
+
+              // Submit form data via fetch so we can handle JSON response without navigating away
+              const fd = new FormData(form);
+              fetch(form.action, {
+                method: 'POST',
+                body: fd,
+                credentials: 'same-origin'
+              })
+                .then((r) => r.json())
+                .then((data) => {
+                  if (data && data.success) {
+                    // success - clear cart and redirect or show confirmation
+                    const orderId = data.order_id || data.id || '';
+                    alert('Order placed successfully.' + (orderId ? (' Order ID: ' + orderId) : ''));
+                    try { localStorage.removeItem('sopopped_cart_v1'); } catch (e) {}
+                    // Redirect to a simple confirmation page with order id
+                    if (orderId) {
+                      window.location.href = 'order_success.php?order_id=' + encodeURIComponent(orderId);
+                    } else {
+                      window.location.href = 'order_success.php';
+                    }
+                  } else {
+                    const $form = $(form);
+                    const $msg = $form.find('#validate-msg');
+                    const err = (data && (data.error || (data.errors && JSON.stringify(data.errors)))) || 'Failed to place order. Please try again.';
+                    $msg.removeClass('d-none').text(err);
+                  }
+                })
+                .catch((err) => {
+                  console.error('Checkout submit failed', err);
+                  const $form = $(form);
+                  const $msg = $form.find('#validate-msg');
+                  $msg.removeClass('d-none').text('Network error while submitting order. Please try again.');
+                });
+            } catch (e) {
+              console.error('Checkout submit error', e);
+              const $form = $(form);
+              const $msg = $form.find('#validate-msg');
+              $msg.removeClass('d-none').text('Unexpected error preparing order.');
+            }
+            // Prevent default form submission since we handled it via fetch
+            return false;
           },
-        });
-
-        // 1.10 - Handle form submission to hide validate-msg div and remove success colors
-        $(document).on("submit", "form", function (e) {
-          let $validateMsg = $(this).find("#validate-msg");
-          if ($validateMsg.length) {
-            $validateMsg.addClass("d-none").hide();
-          }
-
-          // Remove success colors from all inputs in the form
-          $(this).find("input, textarea, select").removeClass("is-valid");
         });
 
         // 1.11 - Handle input changes to remove success color when field is empty
@@ -526,6 +686,96 @@
       $("#loginDialog").dialog(dialogOptions(400));
       $("#signupDialog").dialog(dialogOptions(520));
 
+      // 2.4 - Process potential URL params for login result (moved from inline component script)
+      function processLoginUrlParams() {
+        try {
+          const urlParams = new URLSearchParams(window.location.search);
+          const loginResult = urlParams.get('login_result');
+          const loginMessage = urlParams.get('login_message');
+          const $loginDialog = $('#loginDialog');
+          const $form = $loginDialog.find('#loginForm');
+          const $validate = $form.find('#validate-msg');
+          const $success = $form.find('#success-msg');
+
+          if (loginResult === 'success') {
+            $success.removeClass('d-none').text(loginMessage || 'Login successful!');
+            $loginDialog.dialog('open');
+            if ($form && $form.length && $form[0].reset) $form[0].reset();
+            setTimeout(function() { $loginDialog.dialog('close'); window.location.reload(); }, 2000);
+            window.history.replaceState({}, document.title, window.location.pathname);
+          } else if (loginResult === 'error') {
+            // show error message in form-local validate-msg
+            if (!($validate && $validate.length)) { $validate = $('#validate-msg'); }
+            if ($validate && $validate.length) { $validate.removeClass('d-none').show().text(loginMessage || 'Login failed. Please try again.'); }
+            $loginDialog.dialog('open');
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        } catch (e) {
+          console.warn('processLoginUrlParams error', e);
+        }
+      }
+
+      // run at init in case the page was redirected
+      processLoginUrlParams();
+
+      // Process signup and logout URL params as well
+      function processSignupUrlParams() {
+        try {
+          const urlParams = new URLSearchParams(window.location.search);
+          const signupResult = urlParams.get('signup_result');
+          const signupMessage = urlParams.get('signup_message');
+          const $signupDialog = $('#signupDialog');
+          const $form = $signupDialog.find('#signupForm');
+          let $validate = $form.find('#validate-msg');
+          const $success = $form.find('#success-msg');
+
+          if (signupResult === 'success') {
+            if ($success && $success.length) { $success.removeClass('d-none').text(signupMessage || 'Account created successfully! You can now log in.'); }
+            $signupDialog.dialog('open');
+            if ($form && $form.length && $form[0].reset) $form[0].reset();
+            setTimeout(function() { $signupDialog.dialog('close'); }, 3000);
+            window.history.replaceState({}, document.title, window.location.pathname);
+          } else if (signupResult === 'error') {
+            if (!($validate && $validate.length)) { $validate = $('#validate-msg'); }
+            if ($validate && $validate.length) { $validate.removeClass('d-none').show().text(signupMessage || 'An error occurred. Please try again.'); }
+            $signupDialog.dialog('open');
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        } catch (e) {
+          console.warn('processSignupUrlParams error', e);
+        }
+      }
+
+      function processLogoutUrlParams() {
+        try {
+          const urlParams = new URLSearchParams(window.location.search);
+          const logoutResult = urlParams.get('logout_result');
+          const logoutMessage = urlParams.get('logout_message');
+          if (logoutResult === 'success') {
+            console.log(logoutMessage || 'Logged out successfully');
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        } catch (e) {
+          console.warn('processLogoutUrlParams error', e);
+        }
+      }
+
+      // expose a global logout function for navbar onclick
+      window.logout = function() {
+        if (confirm('Are you sure you want to logout?')) {
+          window.location.href = 'api/logout.php';
+        }
+      };
+
+      // run additional processors
+      processSignupUrlParams();
+      processLogoutUrlParams();
+
+      // Reset button state when dialog opens (moved from inline script)
+      $('#loginDialog').on('dialogopen', function() {
+        $('#loginSubmit').prop('disabled', false).text('Login');
+      });
+
       // ===== UI BEHAVIORS =====
       // 3.1 - Open login dialog when navbar button is clicked (delegated)
       $(document).on(
@@ -543,10 +793,6 @@
         $("#loginDialog").dialog("close");
         $("#signupDialog").dialog("open");
       });
-
-      // 3.3 - Toggle password visibility for login form (simplified)
-      // Moved out of setupDialogs to ensure handlers are bound even if jQuery UI
-      // isn't present at script execution time. See top-level bindings below.
 
       // 3.6 - Format phone input for signup form (user experience, not validation)
       $(document).on("input", "#signupPhone", function () {

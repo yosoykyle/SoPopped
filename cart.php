@@ -100,11 +100,12 @@
               <h4 class="mb-3">Payment</h4>
               <div class="my-3">
                 <div class="form-check">
-                  <input id="credit" name="paymentMethod" type="radio" class="form-check-input" checked required/>
+                  <input id="cod" name="paymentMethod" type="radio" value="cod" class="form-check-input" checked required />
                   <label class="form-check-label" for="cod">COD</label>
                 </div>
               </div>
               <hr class="my-4"/>
+              <input type="hidden" name="cart_items" id="cart_items_input" value="" />
               <button class="w-100 btn btn-primary btn-lg" type="submit">
                 Checkout
               </button>
@@ -140,6 +141,7 @@
     <script src="./node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="./js/loadComponents.js"></script>
     <script src="./js/countryState.js"></script>
+  <script src="./js/cartPrefetch.js"></script>
     <script src="./js/authDialogs.js"></script>
     
   </body>

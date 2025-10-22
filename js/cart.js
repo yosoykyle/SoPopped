@@ -86,17 +86,49 @@ document.addEventListener('DOMContentLoaded', () => {
   // Public api: add product
   window.sopoppedCart = {
     add(product){
+      // Enforce UI-level stock sanity: consult loaded products if available
+      const all = window.__sopopped_products || [];
+      const prodMeta = all.find(p => String(p.id) === String(product.id));
+      const requested = Math.max(1, Number(product.qty || 1));
       const items = readCart();
       const existing = findItem(items, product.id);
-      if (existing){ existing.qty = Math.max(1, existing.qty + (product.qty || 1)); }
-      else items.push({ id: product.id, name: product.name, description: product.description||'', price: Number(product.price||0), qty: product.qty || 1 });
+
+      const available = prodMeta ? Number(prodMeta.quantity || 0) : Infinity;
+
+      if (existing) {
+        const newQty = Math.min(available, existing.qty + requested);
+        if (newQty === existing.qty) {
+          // nothing changed — show message
+          const msgEl = document.querySelector('#validate-msg');
+          if (msgEl) { msgEl.classList.remove('d-none'); msgEl.textContent = 'Cannot add more items than available in stock.'; }
+          else alert('Cannot add more items than available in stock.');
+        } else {
+          existing.qty = newQty;
+        }
+      } else {
+        const initial = Math.min(available, requested);
+        if (initial <= 0) {
+          const msgEl = document.querySelector('#validate-msg');
+          if (msgEl) { msgEl.classList.remove('d-none'); msgEl.textContent = 'This product is out of stock.'; }
+          else alert('This product is out of stock.');
+          return;
+        }
+        items.push({ id: product.id, name: product.name, description: product.description||'', price: Number(product.price||0), qty: initial });
+      }
       writeCart(items); render();
     },
     remove(id){
       let items = readCart(); items = items.filter(i => String(i.id) !== String(id)); writeCart(items); render();
     },
     setQty(id, qty){
-      const items = readCart(); const it = findItem(items, id); if (it){ it.qty = Math.max(1, Number(qty)||1); writeCart(items); render(); }
+      const items = readCart(); const it = findItem(items, id);
+      if (!it) return;
+      const desired = Math.max(1, Number(qty) || 1);
+      const all = window.__sopopped_products || [];
+      const prodMeta = all.find(p => String(p.id) === String(id));
+      const available = prodMeta ? Number(prodMeta.quantity || 0) : Infinity;
+      it.qty = Math.min(desired, available);
+      writeCart(items); render();
     },
     clear(){ localStorage.removeItem(CART_KEY); render(); },
     getCount(){ return readCart().length; }
