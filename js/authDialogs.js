@@ -181,13 +181,7 @@
         }
 
         // Helper: show a message inside a form's #validate-msg (uses getValidateMsg)
-        // Delegate validate message display to centralized UI helpers when available
         function showValidateMsg($form, text, type = 'danger') {
-          try {
-            if (window.sopoppedUI && typeof window.sopoppedUI.showValidateMsg === 'function') {
-              return window.sopoppedUI.showValidateMsg($form, text, type);
-            }
-          } catch (e) {}
           const $msg = getValidateMsg($form);
           if ($msg) {
             $msg
@@ -202,11 +196,6 @@
         }
 
         function hideValidateMsg($form) {
-          try {
-            if (window.sopoppedUI && typeof window.sopoppedUI.hideValidateMsg === 'function') {
-              return window.sopoppedUI.hideValidateMsg($form);
-            }
-          } catch (e) {}
           const $msg = getValidateMsg($form);
           if ($msg) {
             $msg.addClass('d-none').removeClass('alert alert-success alert-danger alert-info').text('');
@@ -216,11 +205,6 @@
         }
 
         function revealValidateMsg($form) {
-          try {
-            if (window.sopoppedUI && typeof window.sopoppedUI.revealValidateMsg === 'function') {
-              return window.sopoppedUI.revealValidateMsg($form);
-            }
-          } catch (e) {}
           const $msg = getValidateMsg($form);
           if ($msg) {
             $msg.removeClass('d-none').show();
@@ -321,14 +305,13 @@
           Promise.resolve(_checkUserExistsFetcher).then((json) => {
               try {
                 const exists = json && typeof json.exists === 'boolean' ? json.exists : undefined;
-                const archived = json && typeof json.archived !== 'undefined' ? !!json.archived : false;
+                const archived = json && typeof json.is_archived !== 'undefined' ? !!json.is_archived : false;
                 if (exists === true) {
                   if ($field && $field.length) {
                     $field.data('exists', true);
                     $field.data('archived', archived);
                   }
-                  // For signup flow, show a helpful message. For login flow we keep
-                  // the UX minimal (server will validate on submit).
+                  // For signup flow, show a helpful message
                   if (context === 'signup') {
                     showValidateMsg($form,
                       archived
@@ -336,18 +319,27 @@
                         : "An account already exists with that email address.",
                       "danger"
                     );
-                    console.debug("check_user_exists (signup): exists=true for", email, "archived=", archived);
-                  } else {
-                    console.debug("check_user_exists (login): exists=true for", email, "archived=", archived);
+                  } else if (context === 'login') {
+                    // For login, show message if archived (non-archived active accounts can proceed)
+                    if (archived) {
+                      showValidateMsg($form, "This account has been deactivated. Please contact support to reactivate your account.", "danger");
+                    } else {
+                      // Active account - clear any previous messages
+                      hideValidateMsg($form);
+                    }
                   }
                 } else {
-                  // not existing
+                  // Account does not exist
                   if ($field && $field.length) {
                     $field.data('exists', false);
                     $field.data('archived', false);
                   }
-                  hideValidateMsg($form);
-                  if (context === 'signup') console.debug("check_user_exists (signup): exists=false for", email);
+                  // For login flow, show message that account doesn't exist
+                  if (context === 'login') {
+                    showValidateMsg($form, "No account found with that email address.", "danger");
+                  } else {
+                    hideValidateMsg($form);
+                  }
                 }
               } catch (e) {
                 console.warn("check_user_exists processing failed", e);
@@ -365,10 +357,35 @@
         }
 
         // 1.7.1 - Remote check for login email existence (improves UX)
+        // Use debouncing to prevent multiple rapid calls
+        let loginEmailCheckTimeout;
+        let loginEmailCheckPending = false;
         $(document).on("blur", "#loginEmail", function () {
           const $el = $(this);
           const email = $el.val().trim();
-          checkUserExists(email, null, { $field: $el, $form: $el.closest("form"), context: "login" });
+          const lastChecked = $el.data('last-checked-email');
+          
+          // Only check if email changed
+          if (email === lastChecked) {
+            return;
+          }
+          
+          // Clear any pending check
+          if (loginEmailCheckTimeout) clearTimeout(loginEmailCheckTimeout);
+          
+          // Store the email being checked
+          $el.data('last-checked-email', email);
+          
+          // Mark check as pending
+          loginEmailCheckPending = true;
+          
+          // Debounce: wait 300ms before checking
+          loginEmailCheckTimeout = setTimeout(function() {
+            checkUserExists(email, function() {
+              // Mark as complete when callback fires
+              loginEmailCheckPending = false;
+            }, { $field: $el, $form: $el.closest("form"), context: "login" });
+          }, 300);
         });
 
         // 1.7.2 - Remote check for signup email to prevent duplicate registrations
@@ -421,17 +438,36 @@
             const $form = $(form);
             hideValidateMsg($form);
 
-            // If we have an explicit existence check and it says the account doesn't exist, block submit
+            // Check if we already know the email doesn't exist (from blur validation)
             const emailExists = $form.find("#loginEmail").data("exists");
-            if (typeof emailExists !== "undefined" && emailExists === false) {
-              showValidateMsg($form, "No account found with that email address.", "danger");
-              // Re-enable button
+            const emailArchived = $form.find("#loginEmail").data("archived");
+            
+            // If check is still pending, wait for it
+            if (loginEmailCheckPending) {
               submitBtn.prop("disabled", false).text(originalText);
-              return false; // prevent submit
+              setTimeout(function() {
+                // Re-trigger submit after a short delay
+                $form.submit();
+              }, 500);
+              return false;
+            }
+            
+            if (emailExists === false) {
+              showValidateMsg($form, "No account found with that email address.", "danger");
+              submitBtn.prop("disabled", false).text(originalText);
+              return false;
+            }
+            
+            // Check if account is archived BEFORE submitting
+            if (emailExists === true && emailArchived === true) {
+              showValidateMsg($form, "This account has been deactivated. Please contact support to reactivate your account.", "danger");
+              submitBtn.prop("disabled", false).text(originalText);
+              return false;
             }
 
-            // Helper: perform AJAX login using new JSON endpoint
-            // Helper: cart merge utilities used after successful login
+            // Submit via AJAX (server will validate email existence if not cached)
+            ajaxLogin();
+            return false;
             function _getLocalCartArray() {
               try {
                 const raw = localStorage.getItem('sopopped_cart_v1') || '[]';
@@ -607,12 +643,20 @@
 
               Promise.resolve(_loginRequest).then(async ({ response, ok, status, json: payload }) => {
                   if (!ok) {
-                    // Debug logging for archived account scenario
-                    console.log('Login failed - Status:', status, 'Payload:', payload);
-                    const msg = (payload && (payload.error || (payload.errors && JSON.stringify(payload.errors)))) || 'Failed to log in. Please try again.';
-                    // Hide success message and show error
-                    $form.find('#success-msg').addClass('d-none').text('');
-                    $form.find('#validate-msg').removeClass('d-none alert-success').addClass('alert-danger').text(msg);
+                    // Check if we know the email doesn't exist (from cached blur check)
+                    const emailExists = $form.find('#loginEmail').data('exists');
+                    let msg;
+                    
+                    if (emailExists === false) {
+                      // Use specific message for non-existent account
+                      msg = 'No account found with that email address.';
+                    } else {
+                      // Use server message or generic message for other errors
+                      msg = (payload && (payload.error || (payload.errors && JSON.stringify(payload.errors)))) || 'Invalid email or password.';
+                    }
+                    
+                    // Show error using consistent helper
+                    showValidateMsg($form, msg, 'danger');
                     $form.data('message-shown', true);
                     submitBtn.prop('disabled', false).text(originalText);
                     return;
@@ -642,50 +686,18 @@
                     }).catch(()=>{ window.location.reload(); });
                   } else {
                     const err = (payload && (payload.error || (payload.errors && JSON.stringify(payload.errors)))) || 'Invalid email or password.';
-                    // Hide success message and show error
-                    $form.find('#success-msg').addClass('d-none').text('');
-                    $form.find('#validate-msg').removeClass('d-none alert-success').addClass('alert-danger').text(err);
+                    // Show error using consistent helper
+                    showValidateMsg($form, err, 'danger');
                     $form.data('message-shown', true);
                     submitBtn.prop('disabled', false).text(originalText);
                   }
                 }).catch((err) => {
                   console.error('Login request failed', err);
-                  // Hide success message and show error
-                  $form.find('#success-msg').addClass('d-none').text('');
-                  $form.find('#validate-msg').removeClass('d-none alert-success').addClass('alert-danger').text('Network or server error. Please try again later.');
+                  // Show error using consistent helper
+                  showValidateMsg($form, 'Network or server error. Please try again later.', 'danger');
                   $form.data('message-shown', true);
                   submitBtn.prop('disabled', false).text(originalText);
                 });
-            }
-
-            // If we don't have a cached existence result, perform a final check before submitting
-            if (typeof emailExists === "undefined") {
-              const email = $form.find("#loginEmail").val().trim();
-              if (email) {
-                checkUserExists(
-                  email,
-                  function (json) {
-                    // json may be {} on network error
-                    if (json && typeof json.exists === "boolean") {
-                      if (json.exists) {
-                        // proceed to submit via AJAX
-                        $form.find("#loginEmail").data("exists", true);
-                        ajaxLogin();
-                        return;
-                      }
-                      // explicit false -> block submit and show message
-                      $form.find("#loginEmail").data("exists", false);
-                      showValidateMsg($form, "No account found with that email address.", "danger");
-                      submitBtn.prop("disabled", false).text(originalText);
-                    } else {
-                      // network error or unknown result: attempt AJAX submit and let server handle
-                      ajaxLogin();
-                    }
-                  },
-                  { $field: $form.find("#loginEmail"), $form: $form, context: "login" }
-                );
-                return false; // will submit (or block) after async check
-              }
             }
 
             // Submit via AJAX
@@ -817,9 +829,8 @@
               Promise.resolve(_signupRequest).then(({ response, ok, json: payload }) => {
                   if (!ok) {
                     const msg = (payload && (payload.error || (payload.errors && JSON.stringify(payload.errors)))) || 'Failed to create account. Please try again.';
-                    // Hide success message and show error
-                    $form.find('#success-msg').addClass('d-none').text('');
-                    $form.find('#validate-msg').removeClass('d-none alert-success').addClass('alert-danger').text(msg);
+                    // Show error using consistent helper
+                    showValidateMsg($form, msg, 'danger');
                     $form.data('message-shown', true);
                     submitBtn.prop('disabled', false).text(originalText);
                     return;
@@ -842,17 +853,15 @@
                     submitBtn.prop('disabled', false).text(originalText);
                   } else {
                     const err = (payload && (payload.error || (payload.errors && JSON.stringify(payload.errors)))) || 'Failed to create account.';
-                    // Hide success message and show error
-                    $form.find('#success-msg').addClass('d-none').text('');
-                    $form.find('#validate-msg').removeClass('d-none alert-success').addClass('alert-danger').text(err);
+                    // Show error using consistent helper
+                    showValidateMsg($form, err, 'danger');
                     $form.data('message-shown', true);
                     submitBtn.prop('disabled', false).text(originalText);
                   }
                 }).catch((err) => {
                   console.error('Signup request failed', err);
-                  // Hide success message and show error
-                  $form.find('#success-msg').addClass('d-none').text('');
-                  $form.find('#validate-msg').removeClass('d-none alert-success').addClass('alert-danger').text('Network or server error. Please try again later.');
+                  // Show error using consistent helper
+                  showValidateMsg($form, 'Network or server error. Please try again later.', 'danger');
                   $form.data('message-shown', true);
                   submitBtn.prop('disabled', false).text(originalText);
                 });
@@ -922,20 +931,17 @@
                   }, 3500);
                 } else if (resp && resp.errors) {
                   var first = Object.keys(resp.errors)[0];
-                  // Hide success message and show error
-                  $form.find('#success-msg').addClass('d-none').text('');
-                  $form.find('#validate-msg').removeClass('d-none').text(resp.errors[first]);
+                  // Show error using consistent helper
+                  showValidateMsg($form, resp.errors[first], 'danger');
                   $form.data('message-shown', true);
                 } else {
-                  // Hide success message and show error
-                  $form.find('#success-msg').addClass('d-none').text('');
-                  $form.find('#validate-msg').removeClass('d-none').text('Unable to send message. Please try again later.');
+                  // Show error using consistent helper
+                  showValidateMsg($form, 'Unable to send message. Please try again later.', 'danger');
                   $form.data('message-shown', true);
                 }
               }).catch(function () {
-                // Hide success message and show error
-                $form.find('#success-msg').addClass('d-none').text('');
-                $form.find('#validate-msg').removeClass('d-none').text('Network or server error. Please try again later.');
+                // Show error using consistent helper
+                showValidateMsg($form, 'Network or server error. Please try again later.', 'danger');
                 $form.data('message-shown', true);
               });
           },
@@ -1399,6 +1405,8 @@
         if (e.isComposing) return;
         const allowed = /[A-Za-z0-9@._]/;
         const key = e.key;
+        // Safety check: if key is undefined or null, allow it
+        if (!key) return;
         // Allow control keys (backspace, delete, arrows, tab, enter, etc.) and modifier combos
         if (e.ctrlKey || e.metaKey || e.altKey) return;
         if (
