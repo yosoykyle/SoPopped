@@ -1,10 +1,9 @@
-// Wait for the DOM to be ready before loading components
-// This script no longer fetches HTML fragments. The app has been migrated to server-side
-// includes for primary components. loadComponents.js now ensures optional UI/validation
-// assets are loaded so the auth dialogs and validation code can run when fragments are
-// included server-side.
+// Load optional UI/validation assets (jQuery UI, jQuery Validate) if available.
+// Safe to include on pages that use server-side includes; this script only
+// attempts to dynamically load optional assets and dispatches `jquery-ui-loaded`
+// when initialization is finished.
 
-document.addEventListener('DOMContentLoaded', async () => {
+$(async function() {
     function loadScript(src) {
         return new Promise((resolve, reject) => {
             const s = document.createElement('script');
