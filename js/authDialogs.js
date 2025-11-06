@@ -1025,7 +1025,7 @@
                     // Only show login message in validate-msg, others use alert
                     if (res.status === 401) {
                       const $form = $(form);
-                      $form.find('#validate-msg').removeClass('d-none').text('You need an account to proceed with checkout.');
+                      showValidateMsg($form, 'You need an account to proceed with checkout.', 'danger');
                       $form.data('message-shown', true);
                     } else {
                       alert(msg);
@@ -1099,7 +1099,7 @@
                   if (!sess || !sess.logged_in) {
                     // ONLY purpose of validate-msg: show login required message
                     const $form = $(form);
-                    $form.find('#validate-msg').removeClass('d-none').text('You need an account to proceed with checkout.');
+                    showValidateMsg($form, 'You need an account to proceed with checkout.', 'danger');
                     $form.data('message-shown', true);
                     return;
                   }
