@@ -13,6 +13,7 @@ If you already have an older version of the SoPopped database:
 1. **Run migrations in order:**
    - First: Execute `db/1. RUN THIS add_user_carts_table.sql` in your MySQL Workbench or RDBMS
    - Second: Execute `db/2. RUN THIS ALTER TABLE users.sql` in your MySQL Workbench or RDBMS
+   - Third: Execute `db/3. RUN THIS add_contact_archiving.sql` in your MySQL Workbench or RDBMS
 
 2. **Update credentials:**
    - Edit `config.php` with your database credentials:
