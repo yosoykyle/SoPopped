@@ -1,8 +1,7 @@
 // Updates navbar cart badge on load and when cart changes
-(function(){
+(function($){
   function updateBadge(count){
-    const els = document.querySelectorAll('.flavorCoutCart');
-    els.forEach(el => el.textContent = String(count || 0));
+    $('.flavorCoutCart').text(String(count || 0));
   }
 
   // Try to use cart API if present
@@ -14,11 +13,11 @@
     }
   }
 
-  document.addEventListener('DOMContentLoaded', ()=>{
+  $(function(){
     refresh();
-    document.addEventListener('cart-changed', (e)=>{
+    $(document).on('cart-changed', (e)=>{
       const c = (e && e.detail && typeof e.detail.count === 'number') ? e.detail.count : null;
       if (c !== null) updateBadge(c); else refresh();
     });
   });
-})();
+})(jQuery);
