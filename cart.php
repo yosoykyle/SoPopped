@@ -76,9 +76,6 @@
                 <label for="address" class="form-label">Address</label>
                 <input type="text" class="form-control" id="address" name="address" placeholder="1234 Main St" required />
               </div>
-              <!-- Move validate-msg inside the form where it's relevant -->
-              <div id="validate-msg" class="mt-3 alert alert-danger d-none"></div>
-              <div id="success-msg" class="mt-3 alert alert-success d-none"></div>
               <div class="col-md-5">
                 <label for="province" class="form-label">Province</label>
                 <select class="form-select" id="province" name="province" required>
@@ -97,6 +94,8 @@
                   <option value="">Choose...</option>
                 </select>
               </div>
+              <!-- Only show login required message -->
+              <div id="validate-msg" class="mt-3 alert alert-danger d-none"></div>
               <h4 class="mb-3">Payment</h4>
               <div class="my-3">
                 <div class="form-check">

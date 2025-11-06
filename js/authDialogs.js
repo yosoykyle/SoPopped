@@ -989,8 +989,7 @@
               const cartJson = localStorage.getItem("sopopped_cart_v1") || "[]";
               const cart = JSON.parse(cartJson);
               if (!Array.isArray(cart) || cart.length === 0) {
-                const $form = $(form);
-                showValidateMsg($form, "Your cart is empty. Add items before checkout.", "danger");
+                alert('Your cart is empty. Add items before checkout.');
                 return false;
               }
 
@@ -1016,13 +1015,13 @@
 
                   if (res && res.ok === false) {
                     const msg = (payload && (payload.error || (payload.errors && JSON.stringify(payload.errors)))) || 'Failed to place order. Please try again.';
-                    if (!showValidateMsg($(form), msg, 'danger') && res.status === 401) {
-                      try {
-                        const $loginDialog = $('#loginDialog');
-                        showValidateMsg($loginDialog, 'You need an account to proceed with checkout. Please log in.', 'danger');
-                        $loginDialog.dialog('open');
-                      } catch (e) { alert(msg); }
-                    } else if (!showValidateMsg($(form), msg, 'danger')) {
+                    
+                    // Only show login message in validate-msg, others use alert
+                    if (res.status === 401) {
+                      const $form = $(form);
+                      $form.find('#validate-msg').removeClass('d-none').text('You need an account to proceed with checkout.');
+                      $form.data('message-shown', true);
+                    } else {
                       alert(msg);
                     }
                     throw { handled: true };
@@ -1076,20 +1075,14 @@
                           encodeURIComponent(orderId);
                       else window.location.href = "order_success.php";
                     } else {
-                      const err =
-                        (data &&
-                          (data.error ||
-                            (data.errors && JSON.stringify(data.errors)))) ||
-                        "Failed to place order. Please try again.";
-                      if (!showValidateMsg($(form), err, "danger")) alert(err);
+                      const err = (data && (data.error || (data.errors && JSON.stringify(data.errors)))) || 'Failed to place order. Please try again.';
+                      alert(err);
                     }
                   })
                   .catch((err) => {
                     if (err && err.handled) return;
                     console.error("Checkout submit failed", err);
-                    const fallback =
-                      "Network error while submitting order. Please try again.";
-                    if (!showValidateMsg($(form), fallback, "danger")) alert(fallback);
+                    alert('Network error while submitting order. Please try again.');
                   });
               }
 
@@ -1098,22 +1091,20 @@
 
               Promise.resolve(_sessCheck).then((sess) => {
                   if (!sess || !sess.logged_in) {
-                    const msg = 'You need an account to proceed with checkout.';
-                    if (!showValidateMsg($(form), msg, 'danger')) {
-                      try {
-                        const $loginDialog = $('#loginDialog');
-                        showValidateMsg($loginDialog, msg + ' Please log in.', 'danger');
-                        $loginDialog.dialog('open');
-                      } catch (e) { alert(msg); }
-                    }
+                    // ONLY purpose of validate-msg: show login required message
+                    const $form = $(form);
+                    $form.find('#validate-msg').removeClass('d-none').text('You need an account to proceed with checkout.');
+                    $form.data('message-shown', true);
                     return;
                   }
                   sendCheckout();
-                }).catch(function(err){ console.warn('Failed to check session before checkout', err); showValidateMsg($(form), 'Network error while checking session.', 'danger'); });
+                }).catch(function(err){ 
+                  console.warn('Failed to check session before checkout', err); 
+                  alert('Network error while checking session.');
+                });
             } catch (e) {
               console.error("Checkout submit error", e);
-              const $form = $(form);
-              showValidateMsg($form, "Unexpected error preparing order.", "danger");
+              alert('Unexpected error preparing order.');
             }
             // Prevent default form submission since we handled it via fetch
             return false;
