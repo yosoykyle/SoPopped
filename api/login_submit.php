@@ -1,11 +1,15 @@
 <?php
-require_once '../db/sopoppedDB.php';
+// Use helpers for session/json handling (no behavior change)
+require_once __DIR__ . '/_helpers.php';
+require_once __DIR__ . '/../db/sopoppedDB.php';
+sp_ensure_session();
+$isAjax = sp_is_ajax_request();
 
-// Start session
-session_start();
+// Use sp_json_response when sending JSON responses
 
 // Only allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    if ($isAjax) sp_json_response(['success' => false, 'error' => 'Method not allowed'], 405);
     header('Location: ../home.php?login_result=error&login_message=Method not allowed');
     exit;
 }
@@ -28,9 +32,10 @@ if (empty($password)) {
     $errors[] = 'Password is required';
 }
 
-// If there are validation errors, redirect back with error message
-if (!empty($errors)) {
+// If there are validation errors, respond appropriately
+    if (!empty($errors)) {
     $errorMessage = implode(', ', $errors);
+    if ($isAjax) sp_json_response(['success' => false, 'error' => $errorMessage, 'errors' => $errors], 400);
     header('Location: ../home.php?login_result=error&login_message=' . urlencode($errorMessage));
     exit;
 }
@@ -45,6 +50,7 @@ try {
 
     if (!$user) {
         // No user found at all
+    if ($isAjax) sp_json_response(['success' => false, 'error' => 'Invalid email or password'], 401);
         header('Location: ../home.php?login_result=error&login_message=' . urlencode('Invalid email or password'));
         exit;
     }
@@ -54,12 +60,15 @@ try {
     // too much information, but still helpful for legitimate users.
     $isArchived = isset($user['is_archived']) ? (int)$user['is_archived'] : 0;
     if ($isArchived) {
-        header('Location: ../home.php?login_result=error&login_message=' . urlencode('This account has been deactivated. Please contact support to reactivate your account.'));
+        $msg = 'This account has been deactivated. Please contact support to reactivate your account.';
+    if ($isAjax) sp_json_response(['success' => false, 'error' => $msg], 403);
+        header('Location: ../home.php?login_result=error&login_message=' . urlencode($msg));
         exit;
     }
 
     // Verify password for active accounts
     if (!password_verify($password, $user['password_hash'])) {
+    if ($isAjax) sp_json_response(['success' => false, 'error' => 'Invalid email or password'], 401);
         header('Location: ../home.php?login_result=error&login_message=' . urlencode('Invalid email or password'));
         exit;
     }
@@ -75,7 +84,14 @@ try {
     // $stmt = $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = ?");
     // $stmt->execute([$user['id']]);
     
-    // Redirect to home page with success message
+    // Successful login - respond with JSON for AJAX or redirect for classic form
+    $userInfo = [
+        'id' => (int)$user['id'],
+        'email' => $user['email'],
+        'name' => trim($user['first_name'] . ' ' . $user['last_name']),
+        'role' => $user['role'] ?? 'customer'
+    ];
+    if ($isAjax) sp_json_response(['success' => true, 'user' => $userInfo, 'message' => 'Welcome back, ' . $user['first_name'] . '!'], 200);
     header('Location: ../home.php?login_result=success&login_message=' . urlencode('Welcome back, ' . $user['first_name'] . '!'));
     exit;
     
@@ -83,6 +99,8 @@ try {
     // Log the error (in production, you might want to log to a file)
     error_log("Login error: " . $e->getMessage());
     
+    error_log("Login error: " . $e->getMessage());
+    if ($isAjax) sp_json_response(['success' => false, 'error' => 'An error occurred during login. Please try again.'], 500);
     header('Location: ../home.php?login_result=error&login_message=' . urlencode('An error occurred during login. Please try again.'));
     exit;
 }
