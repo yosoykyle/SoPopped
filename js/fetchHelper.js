@@ -25,7 +25,10 @@
     // Sets Accept: application/json and includes credentials by default.
     json: async function (url, options = {}) {
       const opts = Object.assign({}, options);
-      opts.headers = Object.assign({ Accept: 'application/json' }, opts.headers || {});
+      opts.headers = Object.assign({ 
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      }, opts.headers || {});
       // Default to including credentials so session cookies are sent.
       opts.credentials = opts.credentials || 'include';
       const res = await fetch(url, opts);
@@ -36,7 +39,11 @@
     postJSON: async function (url, data, options = {}) {
       const opts = Object.assign({}, options, {
         method: 'POST',
-        headers: Object.assign({ 'Content-Type': 'application/json', Accept: 'application/json' }, (options && options.headers) || {}),
+        headers: Object.assign({ 
+          'Content-Type': 'application/json', 
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        }, (options && options.headers) || {}),
         credentials: (options && options.credentials) || 'include',
         body: JSON.stringify(data || {}),
       });
@@ -49,7 +56,11 @@
       const body = toUrlEncoded(data);
       const opts = Object.assign({}, options, {
         method: 'POST',
-        headers: Object.assign({ 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8', Accept: 'application/json' }, (options && options.headers) || {}),
+        headers: Object.assign({ 
+          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8', 
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        }, (options && options.headers) || {}),
         credentials: (options && options.credentials) || 'include',
         body: body,
       });
@@ -62,7 +73,10 @@
       const opts = Object.assign({}, options, {
         method: 'POST',
         // Let browser set Content-Type for FormData (including boundary)
-        headers: Object.assign({ Accept: 'application/json' }, (options && options.headers) || {}),
+        headers: Object.assign({ 
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        }, (options && options.headers) || {}),
         credentials: (options && options.credentials) || 'include',
         body: formData,
       });
@@ -74,7 +88,10 @@
     // Useful when callers need to inspect response.ok/status in addition to body.
     request: async function (url, options = {}) {
       const opts = Object.assign({}, options);
-      opts.headers = Object.assign({ Accept: 'application/json' }, opts.headers || {});
+      opts.headers = Object.assign({ 
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      }, opts.headers || {});
       opts.credentials = opts.credentials || 'include';
       const res = await fetch(url, opts);
       let json = null;

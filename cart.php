@@ -78,6 +78,7 @@
               </div>
               <!-- Move validate-msg inside the form where it's relevant -->
               <div id="validate-msg" class="mt-3 alert alert-danger d-none"></div>
+              <div id="success-msg" class="mt-3 alert alert-success d-none"></div>
               <div class="col-md-5">
                 <label for="province" class="form-label">Province</label>
                 <select class="form-select" id="province" name="province" required>

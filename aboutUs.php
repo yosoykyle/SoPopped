@@ -115,6 +115,7 @@
             <button type="submit" class="btn btn-warning">Send</button>
           </div>
           <div id="validate-msg" class="mt-3 alert alert-danger d-none"></div>
+          <div id="success-msg" class="mt-3 alert alert-success d-none"></div>
         </form>
       </div>
     </section>
@@ -124,6 +125,9 @@
   <?php include_once __DIR__ . '/components/login.php'; ?>
   <?php include_once __DIR__ . '/components/signup.php'; ?>
   <script src="./node_modules/jquery/dist/jquery.min.js"></script>
+  <!-- Add jQuery Validation plugin BEFORE authDialogs.js -->
+  <script src="./node_modules/jquery-validation/dist/jquery.validate.min.js"></script>
+  <script src="./node_modules/jquery-validation/dist/additional-methods.min.js"></script>
   <script src="./node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
   <script src="./js/loadComponents.js"></script>
   <script src="./js/fetchHelper.js"></script>

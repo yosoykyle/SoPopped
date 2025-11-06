@@ -597,16 +597,32 @@
               for (const pair of fd.entries()) body.append(pair[0], pair[1]);
 
               // Use centralized request helper
-              const _loginRequest = window.sopoppedFetch.request('./api/login_submit.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body: body });
+              const _loginRequest = window.sopoppedFetch.request('./api/login_submit.php', { 
+                method: 'POST', 
+                headers: { 
+                  'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+                }, 
+                body: body 
+              });
 
               Promise.resolve(_loginRequest).then(async ({ response, ok, status, json: payload }) => {
                   if (!ok) {
+                    // Debug logging for archived account scenario
+                    console.log('Login failed - Status:', status, 'Payload:', payload);
                     const msg = (payload && (payload.error || (payload.errors && JSON.stringify(payload.errors)))) || 'Failed to log in. Please try again.';
-                    showValidateMsg($form, msg, 'danger');
+                    // Hide success message and show error
+                    $form.find('#success-msg').addClass('d-none').text('');
+                    $form.find('#validate-msg').removeClass('d-none alert-success').addClass('alert-danger').text(msg);
+                    $form.data('message-shown', true);
                     submitBtn.prop('disabled', false).text(originalText);
                     return;
                   }
                   if (payload && payload.success) {
+                    // Hide error message and show success
+                    $form.find('#validate-msg').addClass('d-none').text('');
+                    const successMsg = (payload && payload.message) || 'Login successful!';
+                    $form.find('#success-msg').removeClass('d-none').text(successMsg);
+                    $form.data('message-shown', true);
                     // Login succeeded — wait for session readiness and then merge local cart into server cart
                     (async function(){
                       const ready = await waitForSessionReady();
@@ -626,12 +642,18 @@
                     }).catch(()=>{ window.location.reload(); });
                   } else {
                     const err = (payload && (payload.error || (payload.errors && JSON.stringify(payload.errors)))) || 'Invalid email or password.';
-                    showValidateMsg($form, err, 'danger');
+                    // Hide success message and show error
+                    $form.find('#success-msg').addClass('d-none').text('');
+                    $form.find('#validate-msg').removeClass('d-none alert-success').addClass('alert-danger').text(err);
+                    $form.data('message-shown', true);
                     submitBtn.prop('disabled', false).text(originalText);
                   }
                 }).catch((err) => {
                   console.error('Login request failed', err);
-                  showValidateMsg($form, 'Network or server error. Please try again later.', 'danger');
+                  // Hide success message and show error
+                  $form.find('#success-msg').addClass('d-none').text('');
+                  $form.find('#validate-msg').removeClass('d-none alert-success').addClass('alert-danger').text('Network or server error. Please try again later.');
+                  $form.data('message-shown', true);
                   submitBtn.prop('disabled', false).text(originalText);
                 });
             }
@@ -784,18 +806,30 @@
               const body = new URLSearchParams();
               for (const pair of fd.entries()) body.append(pair[0], pair[1]);
 
-              const _signupRequest = window.sopoppedFetch.request('./api/signup_submit.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body: body });
+              const _signupRequest = window.sopoppedFetch.request('./api/signup_submit.php', { 
+                method: 'POST', 
+                headers: { 
+                  'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+                }, 
+                body: body 
+              });
 
               Promise.resolve(_signupRequest).then(({ response, ok, json: payload }) => {
                   if (!ok) {
                     const msg = (payload && (payload.error || (payload.errors && JSON.stringify(payload.errors)))) || 'Failed to create account. Please try again.';
-                    showValidateMsg($form, msg, 'danger');
+                    // Hide success message and show error
+                    $form.find('#success-msg').addClass('d-none').text('');
+                    $form.find('#validate-msg').removeClass('d-none alert-success').addClass('alert-danger').text(msg);
+                    $form.data('message-shown', true);
                     submitBtn.prop('disabled', false).text(originalText);
                     return;
                   }
                   if (payload && payload.success) {
-                    // Show success and prompt to log in
-                    showValidateMsg($form, payload.message || 'Account created successfully! Please log in.', 'success');
+                    // Hide error message and show success
+                    $form.find('#validate-msg').addClass('d-none').text('');
+                    const successMsg = payload.message || 'Account created successfully! Please log in.';
+                    $form.find('#success-msg').removeClass('d-none').text(successMsg);
+                    $form.data('message-shown', true);
                     try { form.reset(); } catch (e) {}
                     setTimeout(function () {
                       try {
@@ -808,12 +842,18 @@
                     submitBtn.prop('disabled', false).text(originalText);
                   } else {
                     const err = (payload && (payload.error || (payload.errors && JSON.stringify(payload.errors)))) || 'Failed to create account.';
-                    showValidateMsg($form, err, 'danger');
+                    // Hide success message and show error
+                    $form.find('#success-msg').addClass('d-none').text('');
+                    $form.find('#validate-msg').removeClass('d-none alert-success').addClass('alert-danger').text(err);
+                    $form.data('message-shown', true);
                     submitBtn.prop('disabled', false).text(originalText);
                   }
                 }).catch((err) => {
                   console.error('Signup request failed', err);
-                  showValidateMsg($form, 'Network or server error. Please try again later.', 'danger');
+                  // Hide success message and show error
+                  $form.find('#success-msg').addClass('d-none').text('');
+                  $form.find('#validate-msg').removeClass('d-none alert-success').addClass('alert-danger').text('Network or server error. Please try again later.');
+                  $form.data('message-shown', true);
                   submitBtn.prop('disabled', false).text(originalText);
                 });
             }
@@ -871,17 +911,32 @@
 
               Promise.resolve(_contactRequest).then(function (resp) {
                 if (resp && resp.success) {
-                  showValidateMsg($form, 'Message sent — thank you!', 'success');
+                  // Hide error message and show success
+                  $form.find('#validate-msg').addClass('d-none').text('');
+                  $form.find('#success-msg').removeClass('d-none').text('Message sent — thank you!');
+                  $form.data('message-shown', true);
                   form.reset();
-                  setTimeout(function () { hideValidateMsg($form); }, 3500);
+                  setTimeout(function () { 
+                    $form.find('#success-msg').addClass('d-none').text('');
+                    $form.removeData('message-shown');
+                  }, 3500);
                 } else if (resp && resp.errors) {
                   var first = Object.keys(resp.errors)[0];
-                  showValidateMsg($form, resp.errors[first], 'danger');
+                  // Hide success message and show error
+                  $form.find('#success-msg').addClass('d-none').text('');
+                  $form.find('#validate-msg').removeClass('d-none').text(resp.errors[first]);
+                  $form.data('message-shown', true);
                 } else {
-                  showValidateMsg($form, 'Unable to send message. Please try again later.', 'danger');
+                  // Hide success message and show error
+                  $form.find('#success-msg').addClass('d-none').text('');
+                  $form.find('#validate-msg').removeClass('d-none').text('Unable to send message. Please try again later.');
+                  $form.data('message-shown', true);
                 }
               }).catch(function () {
-                showValidateMsg($form, 'Network or server error. Please try again later.', 'danger');
+                // Hide success message and show error
+                $form.find('#success-msg').addClass('d-none').text('');
+                $form.find('#validate-msg').removeClass('d-none').text('Network or server error. Please try again later.');
+                $form.data('message-shown', true);
               });
           },
         });
@@ -1080,6 +1135,22 @@
             } else if (validator && validator.element($input) === true) {
               // If input has value and passes validation, add success color
               $input.addClass("is-valid").removeClass("is-invalid");
+            }
+          }
+        );
+
+        // 1.12 - Clear form messages when user starts typing (better UX)
+        $(document).on(
+          "focus input",
+          "form input, form textarea, form select",
+          function () {
+            const $input = $(this);
+            const $form = $input.closest("form");
+            // Only clear messages on first interaction after they're shown
+            if ($form.data('message-shown')) {
+              $form.find('#validate-msg').addClass('d-none').text('');
+              $form.find('#success-msg').addClass('d-none').text('');
+              $form.removeData('message-shown');
             }
           }
         );
