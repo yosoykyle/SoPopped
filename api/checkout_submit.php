@@ -1,15 +1,17 @@
 <?php
 // api/checkout_submit.php
 // Accepts POST from checkout form (including hidden cart_items JSON) and creates an order + order_items.
-header('Content-Type: application/json; charset=utf-8');
+require_once __DIR__ . '/_helpers.php';
+sp_json_header();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    echo json_encode(['success' => false, 'error' => 'Method not allowed']);
-    exit;
+    sp_json_response(['success' => false, 'error' => 'Method not allowed'], 405);
 }
 
 require_once __DIR__ . '/../db/sopoppedDB.php';
+// Start session to identify logged-in user
+sp_ensure_session();
 
 $firstName = isset($_POST['firstName']) ? trim((string)$_POST['firstName']) : '';
 $lastName = isset($_POST['lastName']) ? trim((string)$_POST['lastName']) : '';
@@ -42,8 +44,7 @@ if (!is_array($cart) || count($cart) === 0) {
 }
 
 if (!empty($errors)) {
-    echo json_encode(['success' => false, 'errors' => $errors]);
-    exit;
+    sp_json_response(['success' => false, 'errors' => $errors], 400);
 }
 
 try {
@@ -80,6 +81,14 @@ try {
         ];
     }
 
+    // If user not logged in, disallow checkout through this API
+    $userId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
+    if (!$userId) {
+        // rollback any locks
+    if ($pdo->inTransaction()) $pdo->rollBack();
+    sp_json_response(['success' => false, 'error' => 'You need an account to proceed with checkout.'], 401);
+    }
+
     // Insert order
     $insertOrder = $pdo->prepare('INSERT INTO orders (user_id, total_amount, status, payment_method, shipping_address) VALUES (:user_id, :total_amount, :status, :payment_method, :shipping_address)');
     $shipping = json_encode([
@@ -92,7 +101,7 @@ try {
         'barangay' => $barangay,
     ]);
     $insertOrder->execute([
-        ':user_id' => null,
+        ':user_id' => $userId,
         ':total_amount' => number_format($total, 2, '.', ''),
         ':status' => 'pending',
         ':payment_method' => $paymentMethod,
@@ -113,15 +122,46 @@ try {
         $updateQtyStmt->execute([':dec' => $it['quantity'], ':id' => $it['product_id']]);
     }
 
+    // Prepare purchased IDs list
+    $purchasedIds = array_map('intval', array_column($orderItemsData, 'product_id'));
+
+    // Remove purchased items from the user's saved cart (if any) while still in transaction
+    if ($userId) {
+        try {
+            // Lock the user's cart row for update
+            $cartSelect = $pdo->prepare('SELECT cart_json FROM user_carts WHERE user_id = :uid FOR UPDATE');
+            $cartSelect->execute([':uid' => $userId]);
+            $cartRow = $cartSelect->fetch(PDO::FETCH_ASSOC);
+            if ($cartRow && isset($cartRow['cart_json']) && $cartRow['cart_json'] !== null) {
+                $saved = json_decode($cartRow['cart_json'], true) ?: [];
+                $purchasedIds = array_map('intval', array_column($orderItemsData, 'product_id'));
+                // Filter out purchased items
+                $remaining = array_values(array_filter($saved, function($it) use ($purchasedIds) {
+                    $id = isset($it['id']) ? (int)$it['id'] : null;
+                    return $id === null ? true : !in_array($id, $purchasedIds, true);
+                }));
+
+                if (count($remaining) > 0) {
+                    $updateCart = $pdo->prepare('UPDATE user_carts SET cart_json = :cj, updated_at = NOW() WHERE user_id = :uid');
+                    $updateCart->execute([':cj' => json_encode($remaining, JSON_UNESCAPED_UNICODE), ':uid' => $userId]);
+                } else {
+                    // No remaining items - delete the cart row
+                    $deleteCart = $pdo->prepare('DELETE FROM user_carts WHERE user_id = :uid');
+                    $deleteCart->execute([':uid' => $userId]);
+                }
+            }
+        } catch (Exception $e) {
+            // If this fails, rollback will handle it below; rethrow to be caught by outer catch
+            throw $e;
+        }
+    }
+
     $pdo->commit();
 
-    echo json_encode(['success' => true, 'order_id' => $orderId]);
-    exit;
+    // Return purchased IDs to the client so it can reconcile localStorage
+    sp_json_response(['success' => true, 'order_id' => $orderId, 'purchased_ids' => $purchasedIds], 200);
 
 } catch (Exception $e) {
     if ($pdo->inTransaction()) $pdo->rollBack();
-    http_response_code(400);
-    // Do not expose detailed error in production
-    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
-    exit;
+    sp_json_response(['success' => false, 'error' => $e->getMessage()], 400);
 }

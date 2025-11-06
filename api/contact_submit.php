@@ -1,12 +1,12 @@
 <?php
 // api/contact_submit.php
 // Accepts POST from contact form and inserts into contact_messages.
-header('Content-Type: application/json; charset=utf-8');
+require_once __DIR__ . '/_helpers.php';
+sp_json_header();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    echo json_encode(['success' => false, 'error' => 'Method not allowed']);
-    exit;
+    sp_json_response(['success' => false, 'error' => 'Method not allowed'], 405);
 }
 
 require_once __DIR__ . '/../db/sopoppedDB.php';
@@ -27,8 +27,7 @@ if ($message === '' || mb_strlen($message) < 10) {
 }
 
 if (!empty($errors)) {
-    echo json_encode(['success' => false, 'errors' => $errors]);
-    exit;
+    sp_json_response(['success' => false, 'errors' => $errors], 400);
 }
 
 try {
@@ -39,9 +38,9 @@ try {
         ':message' => $message,
     ]);
     $id = (int)$pdo->lastInsertId();
-    echo json_encode(['success' => true, 'id' => $id]);
+    sp_json_response(['success' => true, 'id' => $id], 201);
 } catch (PDOException $e) {
     http_response_code(500);
     // Log error in real app instead of exposing details
-    echo json_encode(['success' => false, 'error' => 'Database error']);
+    sp_json_response(['success' => false, 'error' => 'Database error'], 500);
 }
