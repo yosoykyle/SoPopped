@@ -1,8 +1,14 @@
 <?php
-require_once '../db/sopoppedDB.php';
+require_once __DIR__ . '/_helpers.php';
+require_once __DIR__ . '/../db/sopoppedDB.php';
+
+// Standardized helpers for session / JSON detection and responses
+sp_ensure_session();
+$isAjax = sp_is_ajax_request();
 
 // Only allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    if ($isAjax) sp_json_response(['success' => false, 'error' => 'Method not allowed'], 405);
     header('Location: ../home.php?signup_result=error&signup_message=Method not allowed');
     exit;
 }
@@ -22,42 +28,40 @@ $email = strtolower($email);
 // Validation
 $errors = [];
 
-// Validate required fields
 if (empty($name)) {
     $errors[] = 'First name is required';
 }
-
 if (empty($last)) {
     $errors[] = 'Last name is required';
 }
-
 if (empty($email)) {
     $errors[] = 'Email is required';
 } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     $errors[] = 'Please enter a valid email address';
 }
-
 if (empty($phone)) {
     $errors[] = 'Phone number is required';
 }
-
 if (empty($password)) {
     $errors[] = 'Password is required';
 } elseif (strlen($password) < 6) {
     $errors[] = 'Password must be at least 6 characters long';
 }
-
 if (empty($password2)) {
     $errors[] = 'Please confirm your password';
 } elseif ($password !== $password2) {
     $errors[] = 'Passwords do not match';
 }
 
-// If there are validation errors, redirect back with error message
+// If there are validation errors, respond appropriately
 if (!empty($errors)) {
     $errorMessage = implode(', ', $errors);
-    header('Location: ../home.php?signup_result=error&signup_message=' . urlencode($errorMessage));
-    exit;
+    if ($isAjax) {
+        sp_json_response(['success' => false, 'error' => $errorMessage, 'errors' => $errors], 400);
+    } else {
+        header('Location: ../home.php?signup_result=error&signup_message=' . urlencode($errorMessage));
+        exit;
+    }
 }
 
 try {
@@ -67,42 +71,63 @@ try {
     $existing = $stmt->fetch(PDO::FETCH_ASSOC);
     if ($existing) {
         if (!empty($existing['is_archived'])) {
-            header('Location: ../home.php?signup_result=error&signup_message=' . urlencode('An archived account already exists with this email. Creating a new account with the same email is not allowed.'));
-            exit;
+            $msg = 'An archived account already exists with this email. Creating a new account with the same email is not allowed.';
+        } else {
+            $msg = 'An account with this email already exists';
         }
-        header('Location: ../home.php?signup_result=error&signup_message=' . urlencode('An account with this email already exists'));
+        if ($isAjax) {
+            sp_json_response(['success' => false, 'error' => $msg], 409);
+        } else {
+            header('Location: ../home.php?signup_result=error&signup_message=' . urlencode($msg));
+        }
         exit;
     }
-    
+
     // Hash the password
     $passwordHash = password_hash($password, PASSWORD_DEFAULT);
-    
-    // Combine first name and middle name if middle name is provided
-    $firstName = $name;
-    if (!empty($middle)) {
-        $firstName .= ' ' . $middle;
-    }
-    
-    // Insert new user into database
+
+    // Insert new user — keep first, middle, and last names separate
     $stmt = $pdo->prepare("
-        INSERT INTO users (email, password_hash, first_name, last_name, phone, role) 
-        VALUES (?, ?, ?, ?, ?, 'customer')
+        INSERT INTO users (email, password_hash, first_name, middle_name, last_name, phone, role) 
+        VALUES (?, ?, ?, ?, ?, ?, 'customer')
     ");
-    
-    $stmt->execute([$email, $passwordHash, $firstName, $last, $phone]);
-    
+
+    // Pass values in correct order: first_name, middle_name (nullable), last_name
+    $stmt->execute([
+        $email,
+        $passwordHash,
+        $name,
+        !empty($middle) ? $middle : null, // Store NULL if empty
+        $last,
+        $phone
+    ]);
+
     // Get the new user ID
     $userId = $pdo->lastInsertId();
-    
-    // Redirect to home page with success message
-    header('Location: ../home.php?signup_result=success&signup_message=' . urlencode('Account created successfully! You can now log in.'));
+
+    // Build full name for response (optional)
+    $fullName = trim($name . ' ' . ($middle ?? '') . ' ' . $last);
+
+    $userInfo = [
+        'id' => (int)$userId,
+        'email' => $email,
+        'name' => $fullName
+    ];
+
+    if ($isAjax) {
+        sp_json_response(['success' => true, 'user' => $userInfo, 'message' => 'Account created successfully! You can now log in.'], 201);
+    } else {
+        header('Location: ../home.php?signup_result=success&signup_message=' . urlencode('Account created successfully! You can now log in.'));
+    }
     exit;
-    
+
 } catch (PDOException $e) {
-    // Log the error (in production, you might want to log to a file)
     error_log("Signup error: " . $e->getMessage());
-    
-    header('Location: ../home.php?signup_result=error&signup_message=' . urlencode('An error occurred while creating your account. Please try again.'));
+    if ($isAjax) {
+        sp_json_response(['success' => false, 'error' => 'An error occurred while creating your account. Please try again.'], 500);
+    } else {
+        header('Location: ../home.php?signup_result=error&signup_message=' . urlencode('An error occurred while creating your account. Please try again.'));
+    }
     exit;
 }
 ?>

@@ -1,10 +1,10 @@
 // productModal.js
 // Opens product modal when a product card is clicked.
-document.addEventListener('DOMContentLoaded', () => {
-  const modalEl = document.getElementById('productModal');
-  if (!modalEl) return;
+$(function() {
+  const $modalEl = $('#productModal');
+  if (!$modalEl.length) return;
 
-  const bsModal = new bootstrap.Modal(modalEl);
+  const bsModal = new bootstrap.Modal($modalEl[0]);
 
   // Utility to resolve relative image paths safely
   function resolveImagePath(path) {
@@ -32,83 +32,83 @@ document.addEventListener('DOMContentLoaded', () => {
     const isAvailable = stock > 0;
 
     // Update image
-    const img = document.getElementById('pm-image');
+    const $img = $('#pm-image');
     // Prefer `image`, fall back to `image_path`, then to a local placeholder
     const rawPath = product.image || product.image_path || 'images/image.png';
     const resolvedSrc = resolveImagePath(rawPath);
-    if (img) {
+    if ($img.length) {
       // Log for debugging
       console.debug('[productModal] openProduct', { id: product.id, rawPath, resolvedSrc });
-      img.src = resolvedSrc;
-      img.alt = product.name || 'Product';
+      $img.attr('src', resolvedSrc);
+      $img.attr('alt', product.name || 'Product');
 
-      // Fallback handler: replace broken images with a local placeholder
-      img.onerror = () => {
+      // Error handler: replace broken images with a local placeholder
+      $img.off('error').on('error', () => {
         const placeholder = resolveImagePath('images/image.png');
-        if (img.src !== placeholder) {
+        if ($img.attr('src') !== placeholder) {
           console.warn('[productModal] Image failed to load, using placeholder:', resolvedSrc);
-          img.src = placeholder;
+          $img.attr('src', placeholder);
         }
-      };
+      });
     }
 
     // Update text content
-    document.getElementById('pm-name').textContent = product.name || '';
-    document.getElementById('pm-desc').textContent = product.description || '';
-    document.getElementById('pm-price').textContent = formatPrice(product.price);
+    $('#pm-name').text(product.name || '');
+    $('#pm-desc').text(product.description || '');
+    $('#pm-price').text(formatPrice(product.price));
 
     // Update quantity input
-    const qtyInput = document.getElementById('pm-qty');
-    qtyInput.value = isAvailable ? 1 : 0;
-    qtyInput.min = '1';
-    qtyInput.max = String(Math.max(0, stock));
-    qtyInput.setAttribute('data-stock', String(stock));
+    const $qtyInput = $('#pm-qty');
+    $qtyInput.val(isAvailable ? 1 : 0);
+    $qtyInput.attr('min', '1');
+    $qtyInput.attr('max', String(Math.max(0, stock)));
+    $qtyInput.attr('data-stock', String(stock));
 
     // Update stock count
-    const stockCountEl = document.getElementById('pm-stock-count');
-    if (stockCountEl) stockCountEl.textContent = String(stock);
+    const $stockCountEl = $('#pm-stock-count');
+    if ($stockCountEl.length) $stockCountEl.text(String(stock));
 
     // Toggle buttons
-    const addBtn = document.getElementById('pm-add-cart');
-    const buyBtn = document.getElementById('pm-buy-now');
-    if (addBtn) addBtn.toggleAttribute('disabled', !isAvailable);
-    if (buyBtn) buyBtn.toggleAttribute('disabled', !isAvailable);
+    const $addBtn = $('#pm-add-cart');
+    const $buyBtn = $('#pm-buy-now');
+    if ($addBtn.length) $addBtn.prop('disabled', !isAvailable);
+    if ($buyBtn.length) $buyBtn.prop('disabled', !isAvailable);
 
     // Store ID for cart handlers
-    modalEl.dataset.productId = String(product.id);
+    $modalEl.attr('data-product-id', String(product.id));
     bsModal.show();
   }
 
   // Quantity controls
-  const qtyInput = document.getElementById('pm-qty');
-  const increaseBtn = document.getElementById('pm-qty-increase');
-  const decreaseBtn = document.getElementById('pm-qty-decrease');
+  const $qtyInput = $('#pm-qty');
+  const $increaseBtn = $('#pm-qty-increase');
+  const $decreaseBtn = $('#pm-qty-decrease');
 
-  if (increaseBtn) {
-    increaseBtn.addEventListener('click', () => {
-      const stock = Number(qtyInput.getAttribute('data-stock') || 0);
+  if ($increaseBtn.length) {
+    $increaseBtn.on('click', () => {
+      const stock = Number($qtyInput.attr('data-stock') || 0);
       if (stock <= 0) return;
-      const current = Number(qtyInput.value) || 0;
-      qtyInput.value = Math.min(current + 1, stock);
+      const current = Number($qtyInput.val()) || 0;
+      $qtyInput.val(Math.min(current + 1, stock));
     });
   }
 
-  if (decreaseBtn) {
-    decreaseBtn.addEventListener('click', () => {
-      const stock = Number(qtyInput.getAttribute('data-stock') || 0);
+  if ($decreaseBtn.length) {
+    $decreaseBtn.on('click', () => {
+      const stock = Number($qtyInput.attr('data-stock') || 0);
       if (stock <= 0) {
-        qtyInput.value = 0;
+        $qtyInput.val(0);
         return;
       }
-      const current = Number(qtyInput.value) || 1;
-      qtyInput.value = Math.max(1, current - 1);
+      const current = Number($qtyInput.val()) || 1;
+      $qtyInput.val(Math.max(1, current - 1));
     });
   }
 
-  if (qtyInput) {
-    qtyInput.addEventListener('input', (e) => {
+  if ($qtyInput.length) {
+    $qtyInput.on('input', (e) => {
       let val = Number(e.target.value);
-      const stock = Number(qtyInput.getAttribute('data-stock') || 0);
+      const stock = Number($qtyInput.attr('data-stock') || 0);
 
       if (stock <= 0) {
         e.target.value = 0;
@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Cart actions
   function addToCart(qty) {
-    const id = modalEl.dataset.productId;
+    const id = $modalEl.attr('data-product-id');
     if (!id) return;
 
     const product = { id, qty };
@@ -139,40 +139,38 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.sopoppedCart?.add) {
       window.sopoppedCart.add(product);
     } else {
-      document.dispatchEvent(new CustomEvent('product-add-to-cart', { detail: { id, qty } }));
+      $(document).trigger('product-add-to-cart', [{ detail: { id, qty } }]);
     }
   }
 
-  const addCartBtn = document.getElementById('pm-add-cart');
-  const buyNowBtn = document.getElementById('pm-buy-now');
+  const $addCartBtn = $('#pm-add-cart');
+  const $buyNowBtn = $('#pm-buy-now');
 
-  if (addCartBtn) {
-    addCartBtn.addEventListener('click', () => {
-      const qty = Number(qtyInput?.value) || 1;
+  if ($addCartBtn.length) {
+    $addCartBtn.on('click', () => {
+      const qty = Number($qtyInput.val()) || 1;
       addToCart(qty);
       bsModal.hide();
     });
   }
 
-  if (buyNowBtn) {
-    buyNowBtn.addEventListener('click', () => {
-      const qty = Number(qtyInput?.value) || 1;
+  if ($buyNowBtn.length) {
+    $buyNowBtn.on('click', () => {
+      const qty = Number($qtyInput.val()) || 1;
       addToCart(qty);
       if (window.sopoppedCart?.add) {
         window.location.href = 'cart.php';
       } else {
-        document.dispatchEvent(new CustomEvent('product-buy-now', { detail: { id: modalEl.dataset.productId, qty } }));
+        $(document).trigger('product-buy-now', [{ detail: { id: $modalEl.attr('data-product-id'), qty } }]);
         bsModal.hide();
       }
     });
   }
 
   // Click delegation: only use data-product-id + global array
-  document.addEventListener('click', (e) => {
-    const card = e.target.closest('.product-card');
-    if (!card) return;
-
-    const productId = card.dataset.productId;
+  $(document).on('click', '.product-card', function(e) {
+    const $card = $(this);
+    const productId = $card.attr('data-product-id');
     if (!productId) {
       console.warn('[productModal] Product card missing data-product-id');
       return;

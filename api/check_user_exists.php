@@ -26,7 +26,8 @@
  *    so callers cannot enumerate registered emails.
  *  - Prefer POST over GET to avoid exposing emails in logs/URLs; use TLS.
  */
-header('Content-Type: application/json; charset=utf-8');
+require_once __DIR__ . '/_helpers.php';
+sp_json_header();
 require_once __DIR__ . '/../db/sopoppedDB.php';
 
 // Prefer POST but accept GET for backward compatibility. Normalize to lowercase.
@@ -94,14 +95,11 @@ function rate_limit_check($limit = 15, $window = 60)
 
 // Enforce rate limit (15 requests per minute per IP)
 if (!rate_limit_check(15, 60)) {
-    http_response_code(429);
-    echo json_encode(['exists' => false, 'error' => 'rate_limited']);
-    exit;
+    sp_json_response(['exists' => false, 'error' => 'rate_limited'], 429);
 }
 
 if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    echo json_encode(['exists' => false, 'error' => 'invalid_email']);
-    exit;
+    sp_json_response(['exists' => false, 'error' => 'invalid_email'], 400);
 }
 
 try {
@@ -111,11 +109,10 @@ try {
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
     if ($row) {
         $isArchived = isset($row['is_archived']) ? (int)$row['is_archived'] : 0;
-        echo json_encode(['exists' => true, 'is_archived' => $isArchived]);
+        sp_json_response(['exists' => true, 'is_archived' => $isArchived], 200);
     } else {
-        echo json_encode(['exists' => false, 'is_archived' => 0]);
+        sp_json_response(['exists' => false, 'is_archived' => 0], 200);
     }
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['exists' => false, 'error' => 'server_error']);
+    sp_json_response(['exists' => false, 'error' => 'server_error'], 500);
 }

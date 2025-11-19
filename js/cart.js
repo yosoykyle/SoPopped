@@ -95,22 +95,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const available = prodMeta ? Number(prodMeta.quantity || 0) : Infinity;
 
-      if (existing) {
+        if (existing) {
         const newQty = Math.min(available, existing.qty + requested);
         if (newQty === existing.qty) {
           // nothing changed — show message
-          const msgEl = document.querySelector('#validate-msg');
-          if (msgEl) { msgEl.classList.remove('d-none'); msgEl.textContent = 'Cannot add more items than available in stock.'; }
-          else alert('Cannot add more items than available in stock.');
+            if (window.sopoppedValidate && typeof window.sopoppedValidate.show === 'function') {
+              window.sopoppedValidate.show(null, 'Cannot add more items than available in stock.', 'danger');
+            } else {
+              try { console.error('sopoppedValidate adapter not available: ensure authDialogs.js registers the adapter before using cart'); } catch (e) {}
+              // As a last resort, show an alert for visibility in dev; keep minimal to avoid DOM coupling
+              alert('Cannot add more items than available in stock.');
+            }
         } else {
           existing.qty = newQty;
         }
       } else {
         const initial = Math.min(available, requested);
         if (initial <= 0) {
-          const msgEl = document.querySelector('#validate-msg');
-          if (msgEl) { msgEl.classList.remove('d-none'); msgEl.textContent = 'This product is out of stock.'; }
-          else alert('This product is out of stock.');
+          if (window.sopoppedValidate && typeof window.sopoppedValidate.show === 'function') {
+            window.sopoppedValidate.show(null, 'This product is out of stock.', 'danger');
+          } else {
+            try { console.error('sopoppedValidate adapter not available: ensure authDialogs.js registers the adapter before using cart'); } catch (e) {}
+            alert('This product is out of stock.');
+          }
           return;
         }
         items.push({ id: product.id, name: product.name, description: product.description||'', price: Number(product.price||0), qty: initial });
@@ -155,4 +162,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // initialize
   render();
+
+  // Fetch session info once and store globally for save ops
+  (function fetchSession(){
+    try{
+      // Use centralized session helper directly
+      const p = window.sopoppedSession.fetchInfo();
+      Promise.resolve(p).then(data=>{ window.__sopopped_session = data || { logged_in: false }; }).catch(()=>{ window.__sopopped_session = { logged_in: false }; });
+    }catch(e){ window.__sopopped_session = { logged_in: false }; }
+  })();
+
+  // Listen for server cart loaded event triggered by cartPrefetch
+  try{ document.addEventListener('sopopped-server-cart-loaded', function(){ render(); }); }catch(e){}
+
+  // Debounced save to server when cart changes and user is logged in
+  let saveTimer = null;
+  function scheduleSaveToServer(){
+    if (!window.__sopopped_session || !window.__sopopped_session.logged_in) return;
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(function(){
+      try{
+        const items = readCart();
+        // Use centralized helper for saving cart
+        const _saveCartPromise = window.sopoppedFetch.postJSON('./api/cart_save.php', items);
+
+        _saveCartPromise.then(resp => { /* optional handling */ }).catch(err => { console.warn('Failed to save cart', err); });
+      }catch(e){console.warn('Failed scheduling cart save', e);}    
+    }, 800);
+  }
+
+  // Hook writes to schedule save
+  const originalWrite = writeCart;
+  writeCart = function(items){ originalWrite(items); scheduleSaveToServer(); };
 });

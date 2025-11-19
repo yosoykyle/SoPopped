@@ -18,8 +18,9 @@ $(document).ready(function () {
   // Load products from DB API (cache-busted)
   function loadProducts() {
     const url = `./api/db_products.php?t=${Date.now()}`;
-    $.getJSON(url)
-      .done(function (data) {
+    const _prodReq = window.sopoppedFetch.json(url);
+
+    Promise.resolve(_prodReq).then(function (data) {
         // db_products.php returns { success: true, products: [...], count: N }
         const rows = Array.isArray(data?.products) ? data.products : [];
 
@@ -56,10 +57,9 @@ $(document).ready(function () {
 
         // Expose for modal (temporary bridge)
         window.__sopopped_products = products;
-      })
-      .fail(function (jqXHR, textStatus, errorThrown) {
-        console.error('Failed to load products from API:', textStatus, errorThrown);
-      });
+    }).catch(function (err) {
+      console.error('Failed to load products from API:', err);
+    });
   }
 
   function displayProducts(page) {

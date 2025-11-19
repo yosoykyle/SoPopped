@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `email` VARCHAR(255) NOT NULL,
   `password_hash` VARCHAR(255) NOT NULL,
   `first_name` VARCHAR(100) NOT NULL DEFAULT '',
+  `middle_name` VARCHAR(100) DEFAULT NULL,
   `last_name` VARCHAR(100) NOT NULL DEFAULT '',
   `phone` VARCHAR(30) NOT NULL DEFAULT '',
   `role` ENUM('customer','admin') NOT NULL DEFAULT 'customer',
@@ -16,7 +17,14 @@ CREATE TABLE IF NOT EXISTS `users` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_users_email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
+-- User carts table: store per-user cart JSON. Use user_id as unique key so ON DUPLICATE KEY UPDATE works.
+CREATE TABLE IF NOT EXISTS `user_carts` (
+  `user_id` INT UNSIGNED NOT NULL,
+  `cart_json` JSON NULL,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`user_id`),
+  CONSTRAINT `fk_user_carts_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 -- Products table
 CREATE TABLE IF NOT EXISTS `products` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,

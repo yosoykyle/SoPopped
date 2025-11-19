@@ -65,22 +65,23 @@ try {
     unset($p);
     
     // Return products as JSON
-    header('Content-Type: application/json');
-    echo json_encode([
+    require_once __DIR__ . '/_helpers.php';
+    sp_json_header();
+    sp_json_response([
         'success' => true,
         'products' => $products,
         'count' => count($products)
-    ]);
+    ], 200);
     
 } catch (Exception $e) {
     error_log("Error in db_products.php: " . $e->getMessage());
-    header('Content-Type: application/json');
-    http_response_code(500);
-    echo json_encode([
+    require_once __DIR__ . '/_helpers.php';
+    sp_json_header();
+    sp_json_response([
         'success' => false,
         'message' => 'Error fetching products',
         'products' => [],
         'count' => 0
-    ]);
+    ], 500);
 }
 ?>
