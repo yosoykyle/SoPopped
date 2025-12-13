@@ -13,8 +13,7 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
         alt="So Popped Logo"
         width="50"
         height="50"
-        class="d-inline-block align-text-center"
-      />
+        class="d-inline-block align-text-center" />
     </a>
 
     <button
@@ -24,15 +23,14 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
       data-bs-target="#navbarNavAltMarkup"
       aria-controls="navbarNavAltMarkup"
       aria-expanded="false"
-      aria-label="Toggle navigation"
-    >
+      aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
       <div class="navbar-nav me-auto mb-2 mb-lg-0">
         <a class="nav-link <?= $current === 'home.php' ? 'active text-warning' : '' ?>" aria-current="page" href="home.php">Home</a>
         <a class="nav-link <?= $current === 'products.php' ? 'active text-warning' : '' ?>" href="products.php">Products</a>
-  <a class="nav-link <?= $current === 'cart.php' ? 'active text-warning' : '' ?>" href="cart.php">Cart <span class="flavorCoutCart badge bg-warning rounded-pill ms-1">0</span></a>
+        <a class="nav-link <?= $current === 'cart.php' ? 'active text-warning' : '' ?>" href="cart.php">Cart <span class="flavorCoutCart badge bg-warning rounded-pill ms-1">0</span></a>
         <a class="nav-link <?= $current === 'aboutUs.php' ? 'active text-warning' : '' ?>" href="aboutUs.php">About Us</a>
       </div>
       <form method="#" action="#" class="d-flex gap-2" role="search">
@@ -40,20 +38,18 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
           class="form-control"
           type="search"
           placeholder="Search"
-          aria-label="Search"
-        />
+          aria-label="Search" />
         <button class="btn btn-outline-primary" type="submit">
           Search
         </button>
         <?php if ($isLoggedIn): ?>
           <div class="dropdown">
             <button
-              class="btn btn-warning dropdown-toggle"
+              class="btn btn-warning dropdown-toggle d-flex align-items-center gap-1"
               type="button"
               data-bs-toggle="dropdown"
-              aria-expanded="false"
-            >
-              <i class="bi bi-person-circle me-1"></i><?= htmlspecialchars($userName) ?>
+              aria-expanded="false">
+              <i class="bi bi-person-circle"></i><?= htmlspecialchars($userName) ?>
             </button>
             <ul class="dropdown-menu">
               <li><a class="dropdown-item" href="#" onclick="logout()">Logout</a></li>
@@ -62,10 +58,9 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
         <?php else: ?>
           <button
             id="loginBtn"
-            class="btn btn-warning"
-            type="button"
-          >
-            <i class="bi bi-person-circle me-1"></i>Login
+            class="btn btn-warning d-flex align-items-center gap-1"
+            type="button">
+            <i class="bi bi-person-circle"></i>Login
           </button>
         <?php endif; ?>
       </form>
