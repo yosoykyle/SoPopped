@@ -143,12 +143,11 @@
   <script src="./js/cartPrefetch.js"></script>
   <script src="./js/fetchHelper.js"></script>
   <script src="./js/sessionHelper.js"></script>
-  <script src="./js/constants.js"></script>
-  <script src="./js/utils.js"></script>
   <script src="./js/cart-badge.js"></script>
   <script src="./js/uiHelper.js"></script>
   <script src="./js/validateHelper.js"></script>
   <script src="./js/authDialogs.js"></script>
 
 </body>
+
 </html>

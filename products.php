@@ -153,7 +153,6 @@ $pageProducts = array_slice($products, $offset, $itemsPerPage);
   <script src="./js/loadComponents.js"></script>
   <script src="./js/fetchHelper.js"></script>
   <script src="./js/sessionHelper.js"></script>
-  <script src="./js/utils.js"></script>
   <script src="./js/uiHelper.js"></script>
   <script src="./js/validateHelper.js"></script>
   <script src="./js/authDialogs.js"></script>
