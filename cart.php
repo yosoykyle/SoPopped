@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Cart</title>
   <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="./node_modules/bootstrap-icons/font/bootstrap-icons.css">
   <link rel="shortcut icon" href="images/So Popped Logo.png" />
   <link
     rel="icon"
