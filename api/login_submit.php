@@ -33,7 +33,7 @@ if (empty($password)) {
 }
 
 // If there are validation errors, respond appropriately
-    if (!empty($errors)) {
+if (!empty($errors)) {
     $errorMessage = implode(', ', $errors);
     if ($isAjax) sp_json_response(['success' => false, 'error' => $errorMessage, 'errors' => $errors], 400);
     header('Location: ../home.php?login_result=error&login_message=' . urlencode($errorMessage));
@@ -50,7 +50,7 @@ try {
 
     if (!$user) {
         // No user found at all
-    if ($isAjax) sp_json_response(['success' => false, 'error' => 'Invalid email or password'], 401);
+        if ($isAjax) sp_json_response(['success' => false, 'error' => 'Invalid email or password'], 401);
         header('Location: ../home.php?login_result=error&login_message=' . urlencode('Invalid email or password'));
         exit;
     }
@@ -61,29 +61,29 @@ try {
     $isArchived = isset($user['is_archived']) ? (int)$user['is_archived'] : 0;
     if ($isArchived) {
         $msg = 'This account has been deactivated. Please contact support to reactivate your account.';
-    if ($isAjax) sp_json_response(['success' => false, 'error' => $msg], 403);
+        if ($isAjax) sp_json_response(['success' => false, 'error' => $msg], 403);
         header('Location: ../home.php?login_result=error&login_message=' . urlencode($msg));
         exit;
     }
 
     // Verify password for active accounts
     if (!password_verify($password, $user['password_hash'])) {
-    if ($isAjax) sp_json_response(['success' => false, 'error' => 'Invalid email or password'], 401);
+        if ($isAjax) sp_json_response(['success' => false, 'error' => 'Invalid email or password'], 401);
         header('Location: ../home.php?login_result=error&login_message=' . urlencode('Invalid email or password'));
         exit;
     }
-    
+
     // Login successful - set session variables
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['user_email'] = $user['email'];
     $_SESSION['user_name'] = $user['first_name'] . ' ' . $user['last_name'];
     $_SESSION['user_role'] = $user['role'];
     $_SESSION['logged_in'] = true;
-    
+
     // Optional: Update last login time (you might want to add this column to your users table)
     // $stmt = $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = ?");
     // $stmt->execute([$user['id']]);
-    
+
     // Successful login - respond with JSON for AJAX or redirect for classic form
     $userInfo = [
         'id' => (int)$user['id'],
@@ -91,17 +91,19 @@ try {
         'name' => trim($user['first_name'] . ' ' . $user['last_name']),
         'role' => $user['role'] ?? 'customer'
     ];
-    if ($isAjax) sp_json_response(['success' => true, 'user' => $userInfo, 'message' => 'Welcome back, ' . $user['first_name'] . '!'], 200);
-    header('Location: ../home.php?login_result=success&login_message=' . urlencode('Welcome back, ' . $user['first_name'] . '!'));
+
+    // Determine redirect URL based on role
+    $redirectUrl = ($user['role'] === 'admin') ? '../admin/dashboard.php' : '../home.php';
+    $redirectUrlWithParams = $redirectUrl . '?login_result=success&login_message=' . urlencode('Welcome back, ' . $user['first_name'] . '!');
+
+    if ($isAjax) sp_json_response(['success' => true, 'user' => $userInfo, 'redirect' => $redirectUrl, 'message' => 'Welcome back, ' . $user['first_name'] . '!'], 200);
+    header('Location: ' . $redirectUrlWithParams);
     exit;
-    
 } catch (PDOException $e) {
     // Log the error (in production, you might want to log to a file)
     error_log("Login error: " . $e->getMessage());
-    
-    error_log("Login error: " . $e->getMessage());
+
     if ($isAjax) sp_json_response(['success' => false, 'error' => 'An error occurred during login. Please try again.'], 500);
     header('Location: ../home.php?login_result=error&login_message=' . urlencode('An error occurred during login. Please try again.'));
     exit;
 }
-?>
