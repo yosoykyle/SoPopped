@@ -33,15 +33,7 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
         <a class="nav-link <?= $current === 'cart.php' ? 'active text-warning' : '' ?>" href="cart.php">Cart <span class="flavorCoutCart badge bg-warning rounded-pill ms-1">0</span></a>
         <a class="nav-link <?= $current === 'aboutUs.php' ? 'active text-warning' : '' ?>" href="aboutUs.php">About Us</a>
       </div>
-      <form method="#" action="#" class="d-flex gap-2" role="search">
-        <input
-          class="form-control"
-          type="search"
-          placeholder="Search"
-          aria-label="Search" />
-        <button class="btn btn-outline-primary" type="submit">
-          Search
-        </button>
+      <div class="d-flex gap-2 align-items-center">
         <?php if ($isLoggedIn): ?>
           <div class="dropdown">
             <button
@@ -63,7 +55,7 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
             <i class="bi bi-person-circle"></i>Login
           </button>
         <?php endif; ?>
-      </form>
+      </div>
     </div>
     <!-- cart scripts moved to footer for end-of-body loading -->
   </div>
