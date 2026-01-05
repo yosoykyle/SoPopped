@@ -1160,9 +1160,7 @@ $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
 </script>
 ```
 
-#### **2. Backend: `api/admin/get_dashboard_stats.php`**
-
-**Location:** `api/admin/get_dashboard_stats.php`
+#### **2. Backend: `api/admin/get_dashboard_stats.php`**`
 
 ```php
     try {
