@@ -1119,7 +1119,7 @@ $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
         // Update Users Card (first card)
         const usersCard = cards[0];
         const usersH3 = usersCard.querySelector("h3");
-        usersH3.innerHTML = `${stats.total_users} Users`;
+        usersH3.innerHTML = `${stats.total_users} Active Customers`;
         usersCard.querySelector("small.stat-info")?.remove();
         usersH3.insertAdjacentHTML(
           "afterend",
