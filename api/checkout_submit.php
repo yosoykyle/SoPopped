@@ -85,8 +85,8 @@ try {
     $userId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
     if (!$userId) {
         // rollback any locks
-    if ($pdo->inTransaction()) $pdo->rollBack();
-    sp_json_response(['success' => false, 'error' => 'You need an account to proceed with checkout.'], 401);
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        sp_json_response(['success' => false, 'error' => 'You need an account to proceed with checkout.'], 401);
     }
 
     // Insert order
@@ -136,7 +136,7 @@ try {
                 $saved = json_decode($cartRow['cart_json'], true) ?: [];
                 $purchasedIds = array_map('intval', array_column($orderItemsData, 'product_id'));
                 // Filter out purchased items
-                $remaining = array_values(array_filter($saved, function($it) use ($purchasedIds) {
+                $remaining = array_values(array_filter($saved, function ($it) use ($purchasedIds) {
                     $id = isset($it['id']) ? (int)$it['id'] : null;
                     return $id === null ? true : !in_array($id, $purchasedIds, true);
                 }));
@@ -160,7 +160,6 @@ try {
 
     // Return purchased IDs to the client so it can reconcile localStorage
     sp_json_response(['success' => true, 'order_id' => $orderId, 'purchased_ids' => $purchasedIds], 200);
-
 } catch (Exception $e) {
     if ($pdo->inTransaction()) $pdo->rollBack();
     sp_json_response(['success' => false, 'error' => $e->getMessage()], 400);

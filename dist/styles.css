@@ -1347,7 +1347,7 @@ textarea.form-control-lg{min-height:calc(1.5em + 1rem + calc(var(--bs-border-wid
    ========================================================================== */
 /* Navbar Base - Creates a frosted glass effect */
 .navbar {
-   backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   background-color: rgba(255, 255, 255, 0.2) !important;
 }
@@ -1429,7 +1429,8 @@ textarea.form-control-lg{min-height:calc(1.5em + 1rem + calc(var(--bs-border-wid
 /* Button Base - Smooth transitions */
 .btn {
   transition: all 0.3s ease; /* Smooth revert when button is released */
-  transition-property: transform, box-shadow, font-weight, font-family, font-style, text-shadow;
+  transition-property: transform, box-shadow, font-weight, font-family,
+    font-style, text-shadow;
 }
 .btn:active {
   transform: scale(0.95);
@@ -1680,15 +1681,15 @@ textarea.form-control-lg{min-height:calc(1.5em + 1rem + calc(var(--bs-border-wid
   font-family: snymo;
   src: url(./fonts/SyneMono-Regular.ttf);
 }
-h1.display-4{
+h1.display-4 {
   font-family: pix; /* Replace with your desired font */
   font-weight: bolder;
   font-size: 60px;
   font-style: italic;
   color: #0d6dfd;
-  text-shadow: 0px 3px 5px #0000007c;
+  text-shadow: 0px 3px 5px #00000014;
 }
-h2.display-4{
+h2.display-4 {
   font-family: pix; /* Replace with your desired font */
   font-weight: bolder;
   /* font-style: italic; */
@@ -1753,30 +1754,47 @@ body .ui-widget-overlay {
   transform: none !important;
   filter: none !important;
 }
-/* Glassmorphism / blurred backdrop for product modal */
-#productModal .modal-content {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.3));
+/* Glassmorphism / blurred backdrop for product modal & admin modals */
+#productModal .modal-content,
+#userModal .modal-content,
+.glass-modal .modal-content {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.2),
+    rgba(255, 255, 255, 0.3)
+  );
   border: 1px solid rgba(255, 255, 255, 0.955);
   box-shadow: 0 10px 40px rgba(255, 255, 255, 0.296);
-  backdrop-filter:  blur(10px);
+  backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   color: var(--bs-body-color);
   overflow: hidden;
 }
-#productModal .modal-header {
+#productModal .modal-header,
+#userModal .modal-header,
+.glass-modal .modal-header {
   background: transparent;
   border-bottom: none;
 }
-#productModal .modal-body {
+#productModal .modal-body,
+#userModal .modal-body,
+.glass-modal .modal-body {
   padding-top: 0.6rem;
   padding-bottom: 0.8rem;
 }
 /* Gentle entrance for the modal content */
 @keyframes modalGlassIn {
-  from { transform: translateY(8px) scale(0.995); opacity: 0; }
-  to { transform: translateY(0) scale(1); opacity: 1; }
+  from {
+    transform: translateY(8px) scale(0.995);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
 }
-#productModal .modal-content {
+#productModal .modal-content,
+.glass-modal .modal-content {
   animation: modalGlassIn 120ms ease-out;
 }
 /* Constrain the modal to approximately 7 Bootstrap columns on large screens */
@@ -1801,17 +1819,16 @@ body .ui-widget-overlay {
 #loginDialog a:hover {
   transform: scale(0.98) !important;
   font-weight: 550;
-  text-shadow:  3px 3px 20px white, -3px -3px 20px white !important;
+  text-shadow: 3px 3px 20px white, -3px -3px 20px white !important;
   color: var(--bs-primary) !important;
   text-decoration: underline !important;
 }
 #loginDialog a:active {
   transform: scale(0.95) !important;
-  text-shadow:  3px 3px 20px white, -3px -3px 20px white !important;
+  text-shadow: 3px 3px 20px white, -3px -3px 20px white !important;
   font-style: italic !important;
   color: var(--bs-warning) !important;
   text-decoration: underline !important;
 }
-
 
 /*# sourceMappingURL=styles.css.map */

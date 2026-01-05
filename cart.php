@@ -97,6 +97,7 @@
               </div>
               <!-- Only show login required message -->
               <div id="validate-msg" class="mt-3 alert alert-danger d-none"></div>
+              <div id="success-msg" class="mt-3 alert alert-success d-none"></div>
               <h4 class="mb-3">Payment</h4>
               <div class="my-3">
                 <div class="form-check">
@@ -134,20 +135,9 @@
   <?php include_once __DIR__ . '/components/footer.php'; ?>
   <?php include_once __DIR__ . '/components/login.php'; ?>
   <?php include_once __DIR__ . '/components/signup.php'; ?>
-  <script src="./node_modules/jquery/dist/jquery.min.js"></script>
-  <!-- Add jQuery Validation plugin BEFORE authDialogs.js -->
-  <script src="./node_modules/jquery-validation/dist/jquery.validate.min.js"></script>
-  <script src="./node_modules/jquery-validation/dist/additional-methods.min.js"></script>
-  <script src="./node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="./js/loadComponents.js"></script>
+  <!-- Page-specific scripts -->
   <script src="./js/countryState.js"></script>
   <script src="./js/cartPrefetch.js"></script>
-  <script src="./js/fetchHelper.js"></script>
-  <script src="./js/sessionHelper.js"></script>
-  <script src="./js/cart-badge.js"></script>
-  <script src="./js/uiHelper.js"></script>
-  <script src="./js/validateHelper.js"></script>
-  <script src="./js/authDialogs.js"></script>
 
 </body>
 

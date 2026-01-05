@@ -33,23 +33,29 @@ $(function() {
 
     // Update image
     const $img = $('#pm-image');
-    // Prefer `image`, fall back to `image_path`, then to a local placeholder
-    const rawPath = product.image || product.image_path || 'images/image.png';
+    // Use image_path from product, fallback to default.png
+    const rawPath = product.image_path || product.image || 'images/default.png';
     const resolvedSrc = resolveImagePath(rawPath);
     if ($img.length) {
       // Log for debugging
       console.debug('[productModal] openProduct', { id: product.id, rawPath, resolvedSrc });
-      $img.attr('src', resolvedSrc);
-      $img.attr('alt', product.name || 'Product');
-
-      // Error handler: replace broken images with a local placeholder
-      $img.off('error').on('error', () => {
-        const placeholder = resolveImagePath('images/image.png');
-        if ($img.attr('src') !== placeholder) {
+      
+      // Remove any previous error flag before setting new image
+      $img[0].removeAttribute('data-error-handled');
+      
+      // Attach error handler BEFORE setting src so it catches load failures
+      $img.off('error').on('error', function() {
+        if (!this.hasAttribute('data-error-handled')) {
+          const placeholder = resolveImagePath('images/default.png');
           console.warn('[productModal] Image failed to load, using placeholder:', resolvedSrc);
-          $img.attr('src', placeholder);
+          this.setAttribute('data-error-handled', 'true');
+          this.src = placeholder;
         }
       });
+      
+      // Now set the source
+      $img.attr('src', resolvedSrc);
+      $img.attr('alt', product.name || 'Product');
     }
 
     // Update text content

@@ -93,10 +93,16 @@ try {
     ];
 
     // Determine redirect URL based on role
+    // For PHP header(): relative to the 'api/' folder (goes up one level to root)
     $redirectUrl = ($user['role'] === 'admin') ? '../admin/dashboard.php' : '../home.php';
+
+    // For JSON response: relative to the FRONTEND page location (e.g., home.php in root)
+    // Removing '../' ensures it resolves to 'sopopped/admin/dashboard.php' instead of 'admin/dashboard.php' (root)
+    $jsonRedirectUrl = ($user['role'] === 'admin') ? 'admin/dashboard.php' : 'home.php';
+
     $redirectUrlWithParams = $redirectUrl . '?login_result=success&login_message=' . urlencode('Welcome back, ' . $user['first_name'] . '!');
 
-    if ($isAjax) sp_json_response(['success' => true, 'user' => $userInfo, 'redirect' => $redirectUrl, 'message' => 'Welcome back, ' . $user['first_name'] . '!'], 200);
+    if ($isAjax) sp_json_response(['success' => true, 'user' => $userInfo, 'redirect' => $jsonRedirectUrl, 'message' => 'Welcome back, ' . $user['first_name'] . '!'], 200);
     header('Location: ' . $redirectUrlWithParams);
     exit;
 } catch (PDOException $e) {

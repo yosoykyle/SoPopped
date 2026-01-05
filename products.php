@@ -20,8 +20,6 @@ function getProducts($pdo)
   }
 }
 
-// (Seeder moved to db/seed_sample_products.php)
-
 // Get products from database
 $products = getProducts($pdo);
 
@@ -57,10 +55,6 @@ $pageProducts = array_slice($products, $offset, $itemsPerPage);
 </head>
 
 <body>
-  <script src="./node_modules/jquery/dist/jquery.min.js"></script>
-  <script>
-    window.jQuery || document.write('<script src="https://code.jquery.com/jquery-3.6.0.min.js"><\/script>');
-  </script>
   <!-- NAV (server-side include) -->
   <?php include_once __DIR__ . '/components/navbar.php'; ?>
   <!-- FEATURED -->
@@ -147,16 +141,7 @@ $pageProducts = array_slice($products, $offset, $itemsPerPage);
   <!-- Auth dialogs (login/signup) -->
   <?php include_once __DIR__ . '/components/login.php'; ?>
   <?php include_once __DIR__ . '/components/signup.php'; ?>
-  <script src="./node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- Add jQuery Validation plugin BEFORE authDialogs.js -->
-  <script src="./node_modules/jquery-validation/dist/jquery.validate.min.js"></script>
-  <script src="./node_modules/jquery-validation/dist/additional-methods.min.js"></script>
-  <script src="./js/loadComponents.js"></script>
-  <script src="./js/fetchHelper.js"></script>
-  <script src="./js/sessionHelper.js"></script>
-  <script src="./js/uiHelper.js"></script>
-  <script src="./js/validateHelper.js"></script>
-  <script src="./js/authDialogs.js"></script>
+  <!-- Page-specific scripts -->
   <script src="./js/productModal.js"></script>
 
   <script>

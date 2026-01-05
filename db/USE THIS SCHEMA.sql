@@ -1,6 +1,45 @@
--- Create database if not exists
+-- ==============================================================================
+-- SOPOPPED DATABASE SCHEMA
+-- ==============================================================================
+-- 
+-- HOW TO RUN THIS FILE:
+-- ---------------------
+-- This file can be executed AS A WHOLE in one go. You do NOT need to run it
+-- statement-by-statement.
+-- 
+-- Option A: MySQL Workbench
+--   1. Open this file in MySQL Workbench
+--   2. Click the "Execute" button (lightning bolt icon) to run the entire script
+--   3. Refresh the schema list to see the 'sopopped' database
+-- 
+-- Option B: Command Line (MySQL CLI)
+--   Run: mysql -u root -p < "db/USE THIS SCHEMA.sql"
+--   (Enter your password when prompted)
+-- 
+-- Option C: phpMyAdmin
+--   1. Go to the "Import" tab
+--   2. Choose this file and click "Go"
+-- 
+-- WHAT THIS FILE DOES:
+-- --------------------
+-- 1. Creates the 'sopopped' database if it doesn't exist
+-- 2. Switches to the 'sopopped' database
+-- 3. Creates all required tables with proper relationships
+-- 
+-- SAFE TO RE-RUN:
+-- ---------------
+-- All statements use "IF NOT EXISTS", so running this multiple times will NOT
+-- delete existing data or cause errors.
+-- 
+-- ==============================================================================
+
+-- Step 1: Create database if not exists
 CREATE DATABASE IF NOT EXISTS sopopped;
 
+-- Step 2: Switch to the sopopped database (REQUIRED for table creation)
+USE sopopped;
+
+-- Step 3: Create tables
 -- Users table
 CREATE TABLE IF NOT EXISTS `users` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,

@@ -3,18 +3,6 @@ $(document).ready(function () {
   let products = [];
   let currentPage = 1;
 
-  // Utility to resolve relative image paths safely
-  function resolveImagePath(path) {
-    if (!path) return '';
-    try {
-      // Use origin so '/images/x.png' resolves to 'http(s)://host/images/x.png'
-      return new URL(path, window.location.origin).href;
-    } catch (err) {
-      console.warn('[productLoader] Invalid image path:', path, err);
-      return '';
-    }
-  }
-
   // Load products from DB API (cache-busted)
   function loadProducts() {
     const url = `./api/db_products.php?t=${Date.now()}`;
@@ -32,8 +20,8 @@ $(document).ready(function () {
           // ensure price is a number
           price: (typeof p.price !== 'undefined' && p.price !== null) ? parseFloat(p.price) : 0,
           quantity: (typeof p.quantity !== 'undefined' && p.quantity !== null) ? Number(p.quantity) : 0,
-          // Prefer absolute `image` provided by API; fall back to `image_path` or `image` from JSON
-          image: p.image || p.image_path || p.image || '',
+          // Prefer database image_path, fall back to API image or default
+          image: p.image_path || p.image || 'images/default.png',
           is_active: p.is_active || 1
         }));
 
@@ -69,15 +57,16 @@ $(document).ready(function () {
     $container.empty();
 
     pageProducts.forEach(product => {
-      const resolvedSrc = resolveImagePath(product.image);
+      const imgSrc = product.image || 'images/default.png';
       const safePrice = typeof product.price !== 'undefined' ? product.price : 0;
-      const safeDesc = product.description || '';
+      const safeDesc = (product.description || '').replace(/"/g, '&quot;');
+      const safeName = (product.name || 'Product').replace(/"/g, '&quot;');
       const quantity = product.quantity || 0;
       const outOfStock = quantity <= 0;
 
       const cardClasses = `card product-card mx-auto mt-2 rounded-4 ${outOfStock ? 'out-of-stock' : ''}`;
 
-      const card = `
+      const $card = $(`
         <div class="col">
           <div class="${cardClasses}" 
                data-product-id="${String(product.id)}" 
@@ -85,22 +74,33 @@ $(document).ready(function () {
                data-description="${safeDesc}" 
                data-quantity="${quantity}" 
                style="cursor:pointer; position:relative;">
-      <img class="mx-auto card-img rounded-4"
-        src="${resolvedSrc}"
-        alt="${product.name || 'Product'}"
-        width="auto"
-        height="auto" onerror="this.onerror=null;this.src='/images/image.png'" />
+            <img class="mx-auto card-img rounded-4"
+              src="${imgSrc}"
+              alt="${safeName}"
+              width="auto"
+              height="auto"
+              data-product-name="${safeName}" />
             <div class="card-body text-center mx-auto">
               <h5 class="card-title display-7">${product.name}</h5>
             </div>
             ${outOfStock ? `
               <div class="position-absolute top-0 start-0 m-2">
-                <span class="badge bg-danger ">Out of stock</span>
+                <span class="badge bg-danger">Out of stock</span>
               </div>` : ''}
           </div>
         </div>
-      `;
-      $container.append(card);
+      `);
+
+      // Attach error handler - only replace once to prevent infinite loop
+      $card.find('img').on('error', function() {
+        if (!this.hasAttribute('data-error-handled')) {
+          console.warn('[productLoader] Image failed to load, using placeholder:', this.src);
+          this.setAttribute('data-error-handled', 'true');
+          this.src = 'images/default.png';
+        }
+      });
+
+      $container.append($card);
     });
   }
 

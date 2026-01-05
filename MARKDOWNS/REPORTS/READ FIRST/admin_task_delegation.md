@@ -2,11 +2,11 @@
 
 Before you start implementing any admin features, read the [READ FIRST CHANGELOG.md](MARKDOWNS/READ%20FIRST/READ%20FIRST%20CHANGELOG.md) file and follow the section titled "HOW TO UPDATE OR CREATE DATABASE". That section contains critical setup and migration steps required before applying the snippets in this document.
 
-**Note:** The admin pages and API endpoints in this repository are intentionally left as scaffolds. This document provides verified, copy-paste snippets that each package owner can quickly implement, test, and iterate on.
+**Your Role & Task:** The admin pages and API endpoints are currently empty "scaffolds" (placeholders). **Your task is to populate them.** Here are the provided verified, ready-to-use code snippets in this document. You simply need to copy the snippet for your assigned file and paste it into the actual file in the codebase.
 
-**Why this approach?** We all have other academic commitments and limited time. Breaking work into smaller, focused tasks allows us to make steady progress without long coordination sessions. This workflow enables quick bug fixes and incremental improvements while respecting everyone's schedule constraints.
+**Why this approach?** You might wonder, _"What will I learn if I just paste code?"_ Actually, you learn **more** by analyzing a working system than by getting stuck on syntax errors. This approach allows you to immediately trace the connections between the frontend and backend to understand _how_ the architecture works, rather than spending hours debugging why it doesn't.
 
-This is a pragmatic choice that works well for our team's availability—not a reflection of anyone's technical abilities. If you'd prefer a different approach (pair programming, full refactors, staged rollouts, etc.), please raise it in the group chat.
+As Project Lead, I chose this "scaffold-then-fill" strategy specifically because of our heavy academic workload. We simply don't have the luxury of time for a "break-then-fix" learning cycle. This decision is purely about efficiency and meeting our deadlines—it is **not** a reflection of anyone's technical skills. It's about working smarter, not harder.
 
 # Admin Implementation Guide (Detailed & Verified)
 
@@ -43,6 +43,7 @@ This document is the **Developer's Manual** for finishing the Admin Panel. It in
 - **Package A — User Management:** Assigned to **PALEC, JHONABELLE H.** — see the Package A section below: [Package A: User Management](#package-a-user-management)
 - **Package B — Product Management:** Assigned to **RANCHEZ, JAMES BOND M.** — see the Package B section below: [Package B: Product Management](#package-b-product-management)
 - **Package C — Order Management:** Assigned to **SAMUDIO, JOSHUA B.** — see the Package C section below: [Package C: Order Management](#package-c-order-management)
+- **Package D — Dashboard Intelligence:** Assigned to **CONSORTE JR., FRANCISCO L.** — see the Package D section below: [Package D: Dashboard Intelligence](#package-d-dashboard-intelligence)
 
 ## 2. 📋 Implementation Snippets
 
@@ -766,7 +767,7 @@ $limit = isset($_GET['limit']) ? max(1, (int)$_GET['limit']) : 100;
     $offset = isset($_GET['offset']) ? max(0, (int)$_GET['offset']) : 0;
 
     try {
-        $stmt = $pdo->prepare("SELECT id, name, description, price, quantity, is_active, image_path, created_at FROM products ORDER BY id ASC LIMIT ? OFFSET ?");
+        $stmt = $pdo->prepare("SELECT id, name, description, price, quantity, is_active, image_path, created_at FROM products ORDER BY id DESC LIMIT ? OFFSET ?");
         $stmt->bindValue(1, $limit, PDO::PARAM_INT);
         $stmt->bindValue(2, $offset, PDO::PARAM_INT);
         $stmt->execute();
@@ -1081,5 +1082,128 @@ $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
         sp_json_response(['success' => true]);
     } catch (Exception $e) {
         sp_json_response(['success' => false, 'error' => 'Failed to update order'], 500);
+    }
+```
+
+---
+
+<a id="package-d-dashboard-intelligence"></a>
+
+## Package D: Dashboard Intelligence
+
+**Assignee:** CONSORTE JR., FRANCISCO L.
+**Goal:** Make the admin dashboard stats dynamic (live counts).
+
+#### **1. Frontend: `admin/dashboard.php`**
+
+**Location:** Bottom of file, before footer include.
+**Action:** Paste this script block.
+
+```html
+<script>
+  document.addEventListener("DOMContentLoaded", async () => {
+    // Select all the actual card divs (the ones with .p-4.border)
+    const cards = document.querySelectorAll(".dashboard-card > div > div");
+    if (cards.length < 3) {
+      console.warn("Dashboard cards not found");
+      return;
+    }
+
+    try {
+      const res = await sopoppedFetch.json(
+        "../api/admin/get_dashboard_stats.php"
+      );
+      if (res.success) {
+        const stats = res.data;
+
+        // Update Users Card (first card)
+        const usersCard = cards[0];
+        const usersH3 = usersCard.querySelector("h3");
+        usersH3.innerHTML = `${stats.total_users} Users`;
+        usersCard.querySelector("small.stat-info")?.remove();
+        usersH3.insertAdjacentHTML(
+          "afterend",
+          `<small class='stat-info text-muted d-block mb-3'>${stats.new_users_today} new today</small>`
+        );
+
+        // Update Products Card (second card)
+        const productsCard = cards[1];
+        const productsH3 = productsCard.querySelector("h3");
+        productsH3.innerHTML = `${stats.total_products} Products`;
+        productsCard.querySelector("small.stat-info")?.remove();
+        if (stats.low_stock > 0) {
+          productsH3.insertAdjacentHTML(
+            "afterend",
+            `<small class='stat-info text-danger d-block mb-3'>${stats.low_stock} low stock</small>`
+          );
+        } else {
+          productsH3.insertAdjacentHTML(
+            "afterend",
+            `<small class='stat-info text-muted d-block mb-3'>Stock Healthy</small>`
+          );
+        }
+
+        // Update Orders Card (third card)
+        const ordersCard = cards[2];
+        const ordersH3 = ordersCard.querySelector("h3");
+        ordersH3.innerHTML = `${stats.total_orders} Orders`;
+        ordersCard.querySelector("small.stat-info")?.remove();
+        ordersH3.insertAdjacentHTML(
+          "afterend",
+          `<small class='stat-info text-muted d-block mb-3'>Pending: ${stats.pending_orders}</small>`
+        );
+      }
+    } catch (err) {
+      console.error("Failed to load dashboard stats", err);
+    }
+  });
+</script>
+```
+
+#### **2. Backend: `api/admin/get_dashboard_stats.php`**
+
+**Location:** `api/admin/get_dashboard_stats.php`
+
+```php
+    try {
+        // Fetch summary statistics
+        // 1. Total Users & New Users Today
+        $userStats = $pdo->query("
+            SELECT
+                COUNT(*) as total,
+                SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) as new_today
+            FROM users
+            WHERE role != 'admin' AND is_archived = 0
+        ")->fetch(PDO::FETCH_ASSOC);
+
+        // 2. Total Products & Low Stock
+        $prodStats = $pdo->query("
+            SELECT
+                COUNT(*) as total,
+                SUM(CASE WHEN quantity < 10 AND is_active = 1 THEN 1 ELSE 0 END) as low_stock
+            FROM products
+            WHERE is_active = 1
+        ")->fetch(PDO::FETCH_ASSOC);
+
+        // 3. Order Stats
+        $orderStats = $pdo->query("
+            SELECT
+                COUNT(*) as total,
+                SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending
+            FROM orders
+        ")->fetch(PDO::FETCH_ASSOC);
+
+        $data = [
+            'total_users' => $userStats['total'],
+            'new_users_today' => $userStats['new_today'] ?? 0,
+            'total_products' => $prodStats['total'],
+            'low_stock' => $prodStats['low_stock'] ?? 0,
+            'total_orders' => $orderStats['total'],
+            'pending_orders' => $orderStats['pending'] ?? 0
+        ];
+
+        sp_json_response(['success' => true, 'data' => $data]);
+    } catch (Exception $e) {
+        sp_json_response(['success' => false, 'error' => $e->getMessage()], 500);
     }
 ```

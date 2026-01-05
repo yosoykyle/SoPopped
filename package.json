@@ -9,6 +9,7 @@
   "type": "commonjs",
   "dependencies": {
     "bootstrap": "^5.3.8",
+    "bootstrap-icons": "^1.13.1",
     "bulma": "^1.0.4",
     "jquery": "^3.7.1",
     "jquery-ui": "^1.14.1",
@@ -16,6 +17,7 @@
   },
   "devDependencies": {
     "autoprefixer": "^10.4.21",
+    "baseline-browser-mapping": "^2.9.11",
     "postcss": "^8.5.6",
     "postcss-cli": "^11.0.1",
     "postcss-import": "^16.1.1"

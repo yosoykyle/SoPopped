@@ -22,5 +22,3 @@
     </div>
   </form>
 </div>
-
-<!-- Inline script moved to js/authDialogs.js to centralize dialog behavior -->

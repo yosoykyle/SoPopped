@@ -59,7 +59,7 @@ try {
                 $p['image'] = $projectBaseUrl . ltrim($img, '/\\');
             }
         } else {
-            $p['image'] = $projectBaseUrl . 'images/image.png';
+            $p['image'] = $projectBaseUrl . 'images/default.png';
         }
     }
     unset($p);

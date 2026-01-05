@@ -1,3 +1,42 @@
+-- ==============================================================================
+-- SEEDER: Sample Products
+-- ==============================================================================
+-- 
+-- PURPOSE:
+-- --------
+-- Inserts 18 sample products into the `products` table for development and
+-- testing purposes. These are fictional items with placeholder images.
+-- 
+-- WHEN TO RUN:
+-- ------------
+-- Run this AFTER creating the database schema (either via `USE THIS SCHEMA.sql`
+-- or after running all migrations). This is optional — only needed if you want
+-- sample data to work with during development.
+-- 
+-- PREREQUISITE:
+-- -------------
+-- The `products` table must exist.
+-- 
+-- HOW TO RUN:
+-- -----------
+-- Execute this file AS A WHOLE in MySQL Workbench, phpMyAdmin, or CLI.
+-- Make sure you are connected to the `sopopped` database first.
+-- 
+-- SAFE TO RE-RUN:
+-- ---------------
+-- NO! Running this twice will insert duplicate products (same names, descriptions).
+-- If you need to reset, delete all products first:
+--   DELETE FROM products;
+-- Then run this file again.
+-- 
+-- PRODUCT COUNT:
+-- --------------
+-- This file inserts 18 products.
+-- 
+-- ==============================================================================
+
+USE sopopped;
+
 INSERT INTO products (name, description, price, quantity, image_path, is_active) VALUES
 ('Star Fruit', 'Fresh star fruit — crisp, slightly tart and perfect for snacks or garnishes.', 4.50, 100, 'images/f4.png', 1),
 ('Strawberry', 'Sweet ripe strawberries sourced locally for bright flavor.', 3.25, 100, 'images/p1.png', 1),

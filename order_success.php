@@ -1,10 +1,12 @@
 <?php
 // order_success.php
 require_once __DIR__ . '/db/sopoppedDB.php';
+session_start();
 
 $orderId = isset($_GET['order_id']) ? (int)$_GET['order_id'] : 0;
 $order = null;
 $items = [];
+$forbidden = false;
 if ($orderId > 0) {
     // Fetch order and items
     $stmt = $pdo->prepare('SELECT id, user_id, total_amount, status, payment_method, shipping_address, created_at FROM orders WHERE id = :id');
@@ -12,9 +14,31 @@ if ($orderId > 0) {
     $order = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($order) {
-        $it = $pdo->prepare('SELECT oi.product_id, oi.price_at_purchase, oi.quantity, p.name, p.image_path FROM order_items oi JOIN products p ON p.id = oi.product_id WHERE oi.order_id = :order_id');
-        $it->execute([':order_id' => $orderId]);
-        $items = $it->fetchAll(PDO::FETCH_ASSOC);
+        // Enforce that only the owning user (or admin) can view this order
+        $currentUserId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
+        $isAdmin = isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin';
+        if (!$isAdmin && $order['user_id'] !== $currentUserId) {
+            // hide details from unauthorized users
+            $order = null;
+            $items = [];
+            $forbidden = true;
+        } else {
+            $it = $pdo->prepare('SELECT oi.product_id, oi.price_at_purchase, oi.quantity, p.name, p.image_path FROM order_items oi JOIN products p ON p.id = oi.product_id WHERE oi.order_id = :order_id');
+            $it->execute([':order_id' => $orderId]);
+            $items = $it->fetchAll(PDO::FETCH_ASSOC);
+        }
+    }
+}
+
+// PHP version of statusClassFor
+function statusClassFor($status) {
+    if (!$status) return 'bg-secondary';
+    switch (strtolower($status)) {
+        case 'pending': return 'bg-warning';
+        case 'paid': return 'bg-success';
+        case 'shipped': return 'bg-info';
+        case 'cancelled': return 'bg-secondary';
+        default: return 'bg-secondary';
     }
 }
 ?>
@@ -28,16 +52,8 @@ if ($orderId > 0) {
     <link rel="stylesheet" href="./styles.css" />
     <link rel="stylesheet" href="./node_modules/bootstrap-icons/font/bootstrap-icons.css">
     <link rel="shortcut icon" href="images/So Popped Logo.png" />
-    <link
-        rel="icon"
-        type="image/png"
-        sizes="32x32"
-        href="images/So Popped Logo.png" />
-    <link
-        rel="icon"
-        type="image/png"
-        sizes="16x16"
-        href="images/So Popped Logo.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="images/So Popped Logo.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="images/So Popped Logo.png" />
     <link rel="apple-touch-icon" href="images/So Popped Logo.png" />
 </head>
 
@@ -46,61 +62,57 @@ if ($orderId > 0) {
     <main>
         <div class="container mt-5 pt-5">
             <div class="row justify-content-center">
-                <div class="col-12">
-                    <div class="p-4 text-center border border-secondary-subtle rounded-3">
+                <div class="col-12 col-lg-10">
+                    <div class="p-3 p-md-4 text-center border border-secondary-subtle rounded-3">
                         <h1 class="display-4 text-primary mb-3">Thank you for your order!</h1>
 
                         <?php if (!$orderId): ?>
-                            <p class="lead text-body-secondary">
+                            <p class="text-muted mb-0">
                                 No order specified. If you just placed an order, it may take a moment to appear.
                             </p>
                         <?php elseif (!$order): ?>
-                            <p class="lead text-danger">
+                            <p class="text-danger mb-0">
                                 Order not found. Please contact support with details.
                             </p>
                         <?php else: ?>
-                            <p class="lead text-body-secondary mb-4">
+                            <p class="text-muted mb-3">
                                 We received your order. Below are the details.
                             </p>
 
-                            <div class="text-start mb-4">
-                                <p><strong>Order ID:</strong> <?php echo htmlspecialchars($order['id']); ?></p>
-                                <p><strong>Placed:</strong> <?php echo htmlspecialchars($order['created_at']); ?></p>
-                                <p><strong>Status:</strong> <?php echo htmlspecialchars($order['status']); ?></p>
-
-                                <h2 class="h5 mt-4 mb-3">Items</h2>
-                                <div class="d-flex flex-column gap-3">
-                                    <?php foreach ($items as $it): ?>
-                                        <div class="d-flex justify-content-between align-items-start pb-2">
-                                            <div class="text-start">
-                                                <div class="fw-bold"><?php echo htmlspecialchars($it['name']); ?></div>
-                                                <small class="text-muted">
-                                                    Qty: <?php echo (int)$it['quantity']; ?> &middot; Unit: $<?php echo number_format($it['price_at_purchase'], 2); ?>
-                                                </small>
-                                            </div>
-                                            <div class="fw-bold">$<?php echo number_format($it['price_at_purchase'] * $it['quantity'], 2); ?></div>
-                                        </div>
-                                    <?php endforeach; ?>
-                                </div>
-
-                                <div class="d-flex justify-content-end mt-3 pt-2 border-top">
+                            <div class="text-start mb-3">
+                                <!-- Order Header -->
+                                <div class="d-flex justify-content-between mb-2">
+                                    <div>
+                                        <div class="h5 fw-bold text-warning">Order #<?php echo htmlspecialchars($order['id']); ?></div>
+                                        <div class="small text-muted mt-1"><?php echo htmlspecialchars($order['created_at']); ?></div>
+                                    </div>
                                     <div class="text-end">
-                                        <small class="text-muted d-block">Total</small>
-                                        <div class="fw-bold fs-4">$<?php echo number_format($order['total_amount'], 2); ?></div>
+                                        <div><span class="badge <?php echo statusClassFor($order['status']); ?> text-white rounded-pill px-2 py-1"><?php echo htmlspecialchars($order['status']); ?></span></div>
+                                        <div class="mt-2 fw-bold fs-5">$<?php echo number_format($order['total_amount'], 2); ?></div>
                                     </div>
                                 </div>
+
+                                <!-- Order Items -->
+                                <ul class="list-group list-group-flush">
+                                    <?php foreach ($items as $it): ?>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center py-2 fs-6">
+                                            <div class="text-truncate me-2 fw-semibold"><?php echo htmlspecialchars($it['name']); ?></div>
+                                            <span class="badge bg-light text-dark"><?php echo (int)$it['quantity']; ?> × $<?php echo number_format($it['price_at_purchase'], 2); ?></span>
+                                        </li>
+                                    <?php endforeach; ?>
+                                </ul>
                             </div>
                         <?php endif; ?>
 
-                        <div class="mt-4">
-                            <a class="btn btn-warning" href="products.php">Continue shopping</a>
-                            <a class="btn btn-outline-secondary" href="cart.php">View cart</a>
+                        <div class="mt-3 d-flex flex-column flex-sm-row gap-2 justify-content-center">
+                            <a class="btn btn-sm btn-warning" href="http://localhost/sopopped/orders.php">View all orders</a>
+                            <a class="btn btn-sm btn-outline-primary" href="products.php">Continue shopping</a>
+                            <a class="btn btn-sm btn-outline-secondary" href="cart.php">View cart</a>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-
     </main>
     <?php include_once __DIR__ . '/components/footer.php'; ?>
 </body>

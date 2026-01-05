@@ -1,9 +1,9 @@
 <!-- footer.html fragment -->
 <footer class="pt-3">
   <div class="container">
-  <ul class="nav justify-content-center border-bottom pb-3 mb-3">
+    <ul class="nav justify-content-center border-bottom pb-3 mb-3">
       <li class="nav-item">
-  <a href="home.php" class="nav-link px-2 text-body-secondary">Home</a>
+        <a href="home.php" class="nav-link px-2 text-body-secondary">Home</a>
       </li>
       <li class="nav-item">
         <a href="products.php" class="nav-link px-2 text-body-secondary">Products</a>
@@ -16,18 +16,31 @@
       </li>
     </ul>
     <p class="text-center text-body-secondary">
-      &copy; 2025 So Popped, Inc
+      &copy; <?= date('Y') ?> So Popped, Inc
       <a
-        href="https://www.seobility.net/en/seocheck/check?url=https%3A%2F%2Fsopopped.netlify.app%2F"
-        ><img
+        href="https://www.seobility.net/en/seocheck/check?url=https%3A%2F%2Fsopopped.netlify.app%2F"><img
           src="https://app.seobility.net/widget/widget.png?url=https%3A%2F%2Fsopopped.netlify.app%2F"
           alt="Seobility Score for sopopped.netlify.app"
           width="80"
-          height="80"
-      /></a>
+          height="80" /></a>
     </p>
   </div>
 </footer>
-<!-- Scripts that should be loaded at end of body -->
+
+<!-- Common Scripts (loaded via footer.php) -->
+<script src="./node_modules/jquery/dist/jquery.min.js"></script>
+<script>
+  window.jQuery || document.write('<script src="https://code.jquery.com/jquery-3.6.0.min.js"><\/script>');
+</script>
+<script src="./node_modules/jquery-validation/dist/jquery.validate.min.js"></script>
+<script src="./node_modules/jquery-validation/dist/additional-methods.min.js"></script>
+<script src="./node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="./js/loadComponents.js"></script>
+<script src="./js/fetchHelper.js"></script>
+<script src="./js/sessionHelper.js"></script>
 <script src="./js/cart.js"></script>
 <script src="./js/cart-badge.js"></script>
+<script src="./js/dialogUI.js"></script>
+<script src="./js/validationUI.js"></script>
+<script src="./js/validateHelper.js"></script>
+<script src="./js/authDialogs.js"></script>

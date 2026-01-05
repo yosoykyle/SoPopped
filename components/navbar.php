@@ -1,6 +1,8 @@
 <?php
 // navbar.php - server-side navbar with active link highlighting
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+  session_start();
+}
 $current = basename($_SERVER['SCRIPT_NAME']);
 $isLoggedIn = isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true;
 $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
@@ -44,6 +46,8 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
               <i class="bi bi-person-circle"></i><?= htmlspecialchars($userName) ?>
             </button>
             <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="orders.php">Orders</a></li>
+              <li><hr class="dropdown-divider"></li>
               <li><a class="dropdown-item" href="#" onclick="logout()">Logout</a></li>
             </ul>
           </div>
@@ -57,8 +61,5 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
         <?php endif; ?>
       </div>
     </div>
-    <!-- cart scripts moved to footer for end-of-body loading -->
   </div>
 </nav>
-
-<!-- Navbar inline scripts moved to js/authDialogs.js -->
