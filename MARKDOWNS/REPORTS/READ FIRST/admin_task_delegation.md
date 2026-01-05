@@ -19,11 +19,12 @@ This document is the **Developer's Manual** for finishing the Admin Panel. It in
 
 ## 1. 📂 File Status Overview
 
-| File (Frontend)      | Status   | Action Required                       |
-| :------------------- | :------- | :------------------------------------ |
-| `admin/users.php`    | 🟡 Shell | Insert Table Snippet + Fetch Script.  |
-| `admin/products.php` | 🟡 Shell | Insert Table Snippet + Fetch Script.  |
-| `admin/orders.php`   | 🟡 Shell | Insert Table Snippet + Status Script. |
+| File (Frontend)       | Status   | Action Required                       |
+| :-------------------- | :------- | :------------------------------------ |
+| `admin/dashboard.php` | 🟡 Shell | Insert Stats Script (Package D).      |
+| `admin/users.php`     | 🟡 Shell | Insert Table Snippet + Fetch Script.  |
+| `admin/products.php`  | 🟡 Shell | Insert Table Snippet + Fetch Script.  |
+| `admin/orders.php`    | 🟡 Shell | Insert Table Snippet + Status Script. |
 
 | File (Backend API)                  | Status   | Action Required                       |
 | :---------------------------------- | :------- | :------------------------------------ |
@@ -35,6 +36,7 @@ This document is the **Developer's Manual** for finishing the Admin Panel. It in
 | `api/admin/delete_product.php`      | 🔴 Empty | Paste Snippet (Soft Delete).          |
 | `api/admin/get_orders.php`          | 🔴 Empty | Paste Snippet (Select Join Query).    |
 | `api/admin/update_order_status.php` | 🔴 Empty | Paste Snippet (Update Status).        |
+| `api/admin/get_dashboard_stats.php` | 🔴 Empty | Paste Snippet (Fetch Stats).          |
 
 ---
 
