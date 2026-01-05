@@ -33,7 +33,7 @@ If you already have an older version of the SoPopped database:
 
 3. **A Must: Run seed files (recommended for development)**
    - After running the migrations above, you can populate sample data and an admin account:
-     - `db/manual_seed_sample_products.sql` — inserts sample products
+     - Execute `db/manual_seed_sample_products.sql` in your MySQL Workbench or RDBMS — inserts sample products
      - `php db/seed_admin.php` — creates an admin user (`admin@admin.com` / `admin123`)
    - Example (VS Code Terminal):
      ```bash
@@ -63,7 +63,7 @@ If this is your first time setting up the database or want to start fresh:
 
 3. **A Must: Run seed files (recommended for development)**
    - After importing the full schema you may run the seeders to add sample products and an admin account:
-     - `db/manual_seed_sample_products.sql`
+     - Execute `db/manual_seed_sample_products.sql` in your MySQL Workbench or RDBMS
      - `php db/seed_admin.php`
    - Example (VS Code Terminal):
      ```bash
@@ -179,14 +179,14 @@ SoPopped/
 Developer notes
 
 - The verified snippets live in `MARKDOWNS/REPORTS/admin_task_delegation.md`. I have reviewed those snippets and confirm they are correct and safe to paste into the matching `api/admin/*.php` files to enable full admin functionality.
+- The verified snippets live in `MARKDOWNS/REPORTS/admin_task_delegation.md`. I have reviewed those snippets and confirm they are correct and safe to paste into the matching `api/admin/*.php` files to enable full admin functionality.
 - The current live API files remain scaffolded — they intentionally do not contain the full snippets. This keeps the repository safe, but more importantly, **this is the task that you need to do**: you must apply the snippets to your assigned files to complete the feature.
 - Admin frontend pages (`admin/users.php`, `admin/products.php`, `admin/orders.php`) are also scaffolds: their table HTML and scripts are available in `MARKDOWNS/REPORTS/admin_task_delegation.md` and can be pasted in when you are ready.
 
 Seeders (development convenience)
 
 - Included seed files:
-  - `db/manual_seed_sample_products.sql` — sample product rows
-  - `db/manual_seed_sample_products.sql` — sample product rows
+  - Execute `db/manual_seed_sample_products.sql` in your MySQL Workbench or RDBMS — sample product rows
   - `db/seed_admin.php` — PHP script to seed admin user (`admin@admin.com` / `admin123`)
 
 Status: Major Release (3.0.0) — Admin scaffolding merged; implementation snippets verified and available for application.
