@@ -100,7 +100,7 @@ Highlights
 
 ![Admin Dashboard](../../img/DASHBOARD.png)
 
-#### 👥 User Management Feature
+#### 👥 Package A: User Management Feature
 
 - **Admin Page** (`admin/users.php`): The main interface for viewing, searching, and managing user accounts.
 
@@ -115,7 +115,7 @@ Highlights
   - `save_user.php`: Handles creating new users and updating existing profiles.
   - `delete_user.php`: Soft-deletes (archives) a user account to prevent login.
 
-#### 📦 Product Management Feature
+#### 📦 Package B: Product Management Feature
 
 - **Admin Page** (`admin/products.php`): The grid/list view for managing the product catalog.
 
@@ -130,7 +130,7 @@ Highlights
   - `save_product.php`: Processes product creation and updates.
   - `delete_product.php`: Marks products as inactive (archived) so they don't appear in the shop.
 
-#### 🛍️ Order Management Feature
+#### 🛍️ Package C: Order Management Feature
 
 - **Admin Page** (`admin/orders.php`): The control center for viewing and filtering customer orders.
 
@@ -140,7 +140,7 @@ Highlights
   - `get_orders.php`: Fetches order history with filtering capabilities.
   - `update_order_status.php`: Updates the status of an order (e.g., from 'Pending' to 'Shipped').
 
-#### 📊 Dashboard Intelligence Feature
+#### 📊 Package D: Dashboard Intelligence Feature
 
 - **Admin Dashboard Stats** (`admin/dashboard.php`): Dynamically displays real-time statistics on the dashboard cards.
 - **API Endpoints**:
@@ -178,7 +178,6 @@ SoPopped/
 
 Developer notes
 
-- The verified snippets live in `MARKDOWNS/REPORTS/admin_task_delegation.md`. I have reviewed those snippets and confirm they are correct and safe to paste into the matching `api/admin/*.php` files to enable full admin functionality.
 - The verified snippets live in `MARKDOWNS/REPORTS/admin_task_delegation.md`. I have reviewed those snippets and confirm they are correct and safe to paste into the matching `api/admin/*.php` files to enable full admin functionality.
 - The current live API files remain scaffolded — they intentionally do not contain the full snippets. This keeps the repository safe, but more importantly, **this is the task that you need to do**: you must apply the snippets to your assigned files to complete the feature.
 - Admin frontend pages (`admin/users.php`, `admin/products.php`, `admin/orders.php`) are also scaffolds: their table HTML and scripts are available in `MARKDOWNS/REPORTS/admin_task_delegation.md` and can be pasted in when you are ready.
