@@ -1,10 +1,10 @@
 # IMPORTANT — Read This First
 
-Before you start implementing any admin features, read the [READ FIRST CHANGELOG.md](MARKDOWNS/READ%20FIRST/READ%20FIRST%20CHANGELOG.md) file and follow the section titled "HOW TO UPDATE OR CREATE DATABASE". That section contains critical setup and migration steps required before applying the snippets in this document.
+Before implementing any admin features, please read the [READ FIRST CHANGELOG.md](MARKDOWNS/READ%20FIRST/READ%20FIRST%20CHANGELOG.md) file and follow the section titled "HOW TO UPDATE OR CREATE DATABASE". This section contains critical setup and migration steps that must be completed before using the code snippets in this document.
 
-**Your Role & Task:** The admin pages and API endpoints are currently empty "scaffolds" (placeholders). **Your task is to populate them.** Here are the provided verified, ready-to-use code snippets in this document. You simply need to copy the snippet for your assigned file and paste it into the actual file in the codebase.
+**Your Role & Task:** The admin pages and API endpoints are currently empty scaffolds (placeholders). Your task is to populate them using the verified, ready-to-use code snippets provided in this document. Simply copy the snippet for your assigned file and paste it into the actual file in the codebase.
 
-**Why this approach?** You might wonder, _"What will I learn if I just paste code?"_ Actually, you learn **more** by analyzing a working system than by getting stuck on syntax errors. This approach allows you to immediately trace the connections between the frontend and backend to understand _how_ the architecture works, rather than spending hours debugging why it doesn't.
+**Why this approach?** You might wonder: _"What will I learn if I just paste code?"_ The answer: analyzing a working system teaches you more than getting stuck on syntax errors. This approach allows you to immediately trace the connections between frontend and backend, helping you understand _how_ the architecture works rather than spending hours debugging.
 
 As Project Lead, I chose this "scaffold-then-fill" strategy specifically because of our heavy academic workload. We simply don't have the luxury of time for a "break-then-fix" learning cycle. This decision is purely about efficiency and meeting our deadlines—it is **not** a reflection of anyone's technical skills. It's about working smarter, not harder.
 
