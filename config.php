@@ -13,7 +13,7 @@
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'sopopped');
 define('DB_USER', 'root');
-define('DB_PASS', '@59532258968'); // Change this to your actual password
+define('DB_PASS', 'Hot_Dough123'); // Change this to your actual password
 define('DB_CHARSET', 'utf8mb4');
 
 // You can override these with environment variables or a local-only file
