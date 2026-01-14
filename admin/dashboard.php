@@ -48,6 +48,64 @@ require_once 'components/header.php';
         </div>
     </div>
 </div>
-<!-- paste here -->
+
+<script>
+  document.addEventListener("DOMContentLoaded", async () => {
+    // Select all the actual card divs (the ones with .p-4.border)
+    const cards = document.querySelectorAll(".dashboard-card > div > div");
+    if (cards.length < 3) {
+      console.warn("Dashboard cards not found");
+      return;
+    }
+
+    try {
+      const res = await sopoppedFetch.json(
+        "../api/admin/get_dashboard_stats.php"
+      );
+      if (res.success) {
+        const stats = res.data;
+
+        // Update Users Card (first card)
+        const usersCard = cards[0];
+        const usersH3 = usersCard.querySelector("h3");
+        usersH3.innerHTML = `${stats.total_users} Active Customers`;
+        usersCard.querySelector("small.stat-info")?.remove();
+        usersH3.insertAdjacentHTML(
+          "afterend",
+          `<small class='stat-info text-muted d-block mb-3'>${stats.new_users_today} new today</small>`
+        );
+
+        // Update Products Card (second card)
+        const productsCard = cards[1];
+        const productsH3 = productsCard.querySelector("h3");
+        productsH3.innerHTML = `${stats.total_products} Products`;
+        productsCard.querySelector("small.stat-info")?.remove();
+        if (stats.low_stock > 0) {
+          productsH3.insertAdjacentHTML(
+            "afterend",
+            `<small class='stat-info text-danger d-block mb-3'>${stats.low_stock} low stock</small>`
+          );
+        } else {
+          productsH3.insertAdjacentHTML(
+            "afterend",
+            `<small class='stat-info text-muted d-block mb-3'>Stock Healthy</small>`
+          );
+        }
+
+        // Update Orders Card (third card)
+        const ordersCard = cards[2];
+        const ordersH3 = ordersCard.querySelector("h3");
+        ordersH3.innerHTML = `${stats.total_orders} Orders`;
+        ordersCard.querySelector("small.stat-info")?.remove();
+        ordersH3.insertAdjacentHTML(
+          "afterend",
+          `<small class='stat-info text-muted d-block mb-3'>Pending: ${stats.pending_orders}</small>`
+        );
+      }
+    } catch (err) {
+      console.error("Failed to load dashboard stats", err);
+    }
+  });
+</script>
 
 <?php require_once 'components/footer.php'; ?>
