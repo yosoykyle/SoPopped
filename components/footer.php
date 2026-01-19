@@ -43,4 +43,4 @@
 <script src="./js/dialogUI.js"></script>
 <script src="./js/validationUI.js"></script>
 <script src="./js/validateHelper.js"></script>
-<script src="./js/authDialogs.js"></script>
+<script src="./js/auth.js"></script>

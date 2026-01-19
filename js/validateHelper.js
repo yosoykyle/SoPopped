@@ -76,4 +76,50 @@
   } catch (e) {
     /* noop */
   }
+
+  if (!$.validator) return;
+  $.validator.addMethod(
+    "emailChars",
+    function (value, element) {
+      return this.optional(element) || window.sopoppedValidate.emailChars(value);
+    },
+    "Email can only contain letters, numbers, underscores, periods, and @ symbol"
+  );
+  $.validator.addMethod(
+    "emailFormat",
+    function (value, element) {
+      return this.optional(element) || window.sopoppedValidate.emailFormat(value);
+    },
+    function (value, element) {
+      if (!value.includes("@")) {
+        return "Email must contain an @ symbol";
+      }
+      if ((value.match(/@/g) || []).length > 1) {
+        return "Email cannot contain multiple @ symbols";
+      }
+      const parts = value.split("@");
+      if (parts.length === 2) {
+        const domain = parts[1];
+        if (!domain.includes(".") || domain.split(".").pop().length < 2) {
+          return "Email must have a valid domain with a top-level domain (e.g., .com, .org)";
+        }
+      }
+      return "Please enter a valid email address";
+    }
+  );
+  $.validator.addMethod(
+    "passwordStrength",
+    function (value, element) {
+      return this.optional(element) || window.sopoppedValidate.passwordStrength(value);
+    },
+    "Password must contain at least 8-16 characters with at least one uppercase letter, one lowercase letter, one number, and one special character (e.g., !@#$%^&*;'[]/ etc.)"
+  );
+
+  $.validator.addMethod(
+    "phoneFormat",
+    function (value, element) {
+      return this.optional(element) || /^\d{4}-\d{3}-\d{4}$/.test(value);
+    },
+    "Please enter phone in format: 0000-000-0000"
+  );
 })(jQuery);
