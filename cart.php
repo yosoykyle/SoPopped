@@ -19,6 +19,7 @@
     sizes="16x16"
     href="images/So Popped Logo.png" />
   <link rel="apple-touch-icon" href="images/So Popped Logo.png" />
+  <meta name="theme-color" content="#0d6dfd" />
 </head>
 
 <body>

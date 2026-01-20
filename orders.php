@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="./styles.css" />
   <link rel="stylesheet" href="./node_modules/bootstrap-icons/font/bootstrap-icons.css">
   <link rel="shortcut icon" href="images/So Popped Logo.png" />
+  <meta name="theme-color" content="#0d6dfd" />
 </head>
 
 <body>

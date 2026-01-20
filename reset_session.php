@@ -53,6 +53,7 @@ setcookie('PHPSESSID', '', time() - 3600, '/');
     <link rel="stylesheet" href="./styles.css">
     <link href="./node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="shortcut icon" href="./images/So Popped Logo.png">
+    <meta name="theme-color" content="#0d6dfd" />
 </head>
 
 <body class="bg-white text-black d-flex align-items-center justify-content-center vh-100">

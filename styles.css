@@ -135,8 +135,8 @@
 /* Button Base - Smooth transitions */
 .btn {
   transition: all 0.3s ease; /* Smooth revert when button is released */
-  transition-property: transform, box-shadow, font-weight, font-family,
-    font-style, text-shadow;
+  transition-property:
+    transform, box-shadow, font-weight, font-family, font-style, text-shadow;
 }
 
 .btn:active {
@@ -453,7 +453,9 @@ body .ui-widget-overlay {
 
 /* Ensure dialog remains clear and focused */
 .ui-dialog {
-  box-shadow: 12px 12px 80px #ffffff3b, -12px -12px 80px #ffffff50 !important;
+  box-shadow:
+    12px 12px 80px #ffffff3b,
+    -12px -12px 80px #ffffff50 !important;
   border-radius: 6px !important;
   border: 1px solid rgb(255, 255, 255) !important;
   background: rgba(255, 255, 255, 0.2) !important;
@@ -575,16 +577,19 @@ body .ui-widget-overlay {
 #loginDialog a:hover {
   transform: scale(0.98) !important;
   font-weight: 550;
-  text-shadow: 3px 3px 20px white, -3px -3px 20px white !important;
+  text-shadow:
+    3px 3px 20px white,
+    -3px -3px 20px white !important;
   color: var(--bs-primary) !important;
   text-decoration: underline !important;
 }
 
 #loginDialog a:active {
   transform: scale(0.95) !important;
-  text-shadow: 3px 3px 20px white, -3px -3px 20px white !important;
+  text-shadow:
+    3px 3px 20px white,
+    -3px -3px 20px white !important;
   font-style: italic !important;
   color: var(--bs-warning) !important;
   text-decoration: underline !important;
 }
-

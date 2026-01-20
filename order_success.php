@@ -31,14 +31,20 @@ if ($orderId > 0) {
 }
 
 // PHP version of statusClassFor
-function statusClassFor($status) {
+function statusClassFor($status)
+{
     if (!$status) return 'bg-secondary';
     switch (strtolower($status)) {
-        case 'pending': return 'bg-warning';
-        case 'paid': return 'bg-success';
-        case 'shipped': return 'bg-info';
-        case 'cancelled': return 'bg-secondary';
-        default: return 'bg-secondary';
+        case 'pending':
+            return 'bg-warning';
+        case 'paid':
+            return 'bg-success';
+        case 'shipped':
+            return 'bg-info';
+        case 'cancelled':
+            return 'bg-secondary';
+        default:
+            return 'bg-secondary';
     }
 }
 ?>
@@ -55,6 +61,7 @@ function statusClassFor($status) {
     <link rel="icon" type="image/png" sizes="32x32" href="images/So Popped Logo.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="images/So Popped Logo.png" />
     <link rel="apple-touch-icon" href="images/So Popped Logo.png" />
+    <meta name="theme-color" content="#0d6dfd" />
 </head>
 
 <body>
