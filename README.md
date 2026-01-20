@@ -31,65 +31,78 @@ To manage the system, use the following default credentials to log in to the Adm
 
 ### 🛒 Customer Interface
 
-#### 1. Home Page
+#### 1. Home Page `home.php`
 
-The landing page introduces the brand with a "Flavor Has No Borders" hero section and displays a curated selection of "Featured Flavors."
+The landing page introduces the brand with a visually immersive "Flavor Has No Borders" hero section.
 
-- **Key Actions**: Navigate to Shop, Read About Us, View Featured Items.
+- **Responsive Hero Section**: Adapts to screen sizes with a clear call-to-action ("Shop Now").
+- **Featured Flavors**: Displays a curated selection of 4 signature flavors (Hawthorn, Lavender, Chamomile, Star Fruit) using a responsive card grid layout.
+- **Navigation**: Persistent top bar for easy access to Shop, About Us, and Account features.
 
 ![Home Page Screenshot](MARKDOWNS/screenshots/client/CL_HOMEPAGE.png)
 
-#### 2. Products Page
+#### 2. Products Page `products.php`
 
-Browse our complete catalog of international soda flavors.
+A robust catalog interface driven by `js/productLoader.js` for seamless browsing.
 
-- **Features**:
-  - **Dynamic Catalogue**: Products are loaded dynamically for smooth navigation.
-  - **Pagination**: Client-side handled pagination.
-  - **"Out of Stock"**: Real-time inventory tracking disables purchasing for empty stock.
-  - **Quick View**: Access product details without leaving the page.
+- **Dynamic Data Loading**: Products are fetched asynchronously from `api/db_products.php` to ensure up-to-date inventory status.
+- **Client-Side Pagination**: Implements a 6-item limit per page to improve performance and readability, with custom JavaScript logic for navigation without page reloads.
+- **Live Stock Indicators**:
+  - Products with `quantity <= 0` are automatically visually dimmed.
+  - A "Out of Stock" badge is dynamically overlayed to prevent accidental orders.
+- **Smart Image Handling**: Automatically detects broken image links and swaps them for a branded placeholder (`images/default.png`) to maintain layout integrity.
 
 ![Products Page Screenshot](MARKDOWNS/screenshots/client/CL_PRODUCTS.png)
 
-#### 3. Product Details (Quick View)
+#### 3. Product Details (Modal) `js/productModal.js`
 
-Clicking a product card opens a modal with more information.
+Clicking any product card opens an interactive modal overlay, keeping the user context preserved.
 
-- **Details**: Full description, price, and stock quantity.
-- **Action**: Add to Cart (requires login).
+- **Instant Interaction**: Modal populates instantly using data attributes from the clicked card (`data-product-id`, `data-price`, etc.), avoiding unnecessary network round-trips.
+- **Quantity Control**: Integrated stepper input allows users to select quantity, capped at the available stock level.
+- **Add to Cart**:
+  - Verifies user session (`api/session_info.php`).
+  - Adds item to local/database cart via `js/cart.js`.
+  - Triggers a UI toast notification upon success.
 
 ![Product Details Modal Screenshot](MARKDOWNS/screenshots/client/CL_PRODUCT_DETAILS.png)
 
-#### 4. About Us
+#### 4. About Us `aboutUs.php`
 
-Learn about our mission to connect people through flavor.
+Connects the brand story with customer engagement.
 
-- **Content**: Our Story ("Most of the world's flavors are still unknown...").
-- **Contact Form**: Functional messaging system with inputs validation (min 2 chars for name, 10 for message).
+- **Narrative Content**: Presents the "Flavor Has No Borders" mission statement.
+- **Integrated Contact Form**:
+  - Submits directly to `api/contact_submit.php`.
+  - **Validation**: Enforces name (>2 chars) and message length (>10 chars) constraints before submission.
+  - **Feedback**: Displays real-time success/error alerts without reloading the page.
 
 ![About Us Page Screenshot](MARKDOWNS/screenshots/client/CL_ABT_US.png)
 
-#### 5. Authentication
+#### 5. Authentication `components/login.php` & `signup.php`
 
-Secure access for customers to manage their profile and orders.
+Secure modal-based authentication system available from any page.
 
-- **Login**: Shared authentication portal for both Users and Admins. Automatically redirects to the appropriate dashboard based on user role (checks for archived status).
-- **Sign Up**: Registration with strict validation:
-  - **Password**: Min 6 chars, mismatch detection, and BCRYPT hashing.
-  - **Email**: Uniqueness check to prevent duplicates.
+- **Unified Access**: Login handles both Customers and Admins, redirecting to `home.php` or `admin/dashboard.php` based on the `role` column in the database.
+- **Security Checks**:
+  - **Archived Account Prevention**: Checks `is_archived` flag during login to block deactivated users.
+  - **Duplicate Prevention**: Signup checks against existing emails via `api/check_user_exists.php` before submission.
+- **Cart Synchronization**: Automatically merges a guest's local cart items into their database cart (`user_carts` table) upon successful login.
 
 ![Login Screenshot](MARKDOWNS/screenshots/client/CL_AD_LOGIN.png)
 ![Signup Screenshot](MARKDOWNS/screenshots/client/CL_SIGNUP.png)
 
 #### 6. Shopping Cart & Checkout
 
-A robust purchasing system designed for reliability and data integrity.
+A comprehensive order processing system designed for data integrity.
 
-- **Features**:
-  - **Dual-Storage Cart**: Items are saved locally for speed and synced to the database for cross-device access when logged in.
-  - **Checkout Validation**: Strict address and contact verification.
-  - **Transactional Safety**: Uses database transactions to ensure stock is only deducted if the order is successfully created, preventing overselling.
-  - **Secure Order Creation**: Automatically linking orders to user accounts.
+- **Dual-Persistence Cart**:
+  - **Guest**: Stores data in `localStorage`.
+  - **User**: Syncs to MySQL `user_carts` table.
+- **Checkout Validation**:
+  - Requires strict address details (Province/City/Barangay).
+  - Verifies stock availability _one last time_ before processing transaction (`api/checkout_submit.php`).
+- **Atomic Transactions**: Uses `pdo->beginTransaction()` to ensure that Order Creation, Item Insertion, and Stock Deduction happen either all together or not at all, preventing inventory desyncs.
 
 ![Cart and Checkout Screenshot](MARKDOWNS/screenshots/client/CL_CART.png)
 
@@ -97,53 +110,48 @@ A robust purchasing system designed for reliability and data integrity.
 
 ### 🛠️ Admin Interface
 
-#### 1. Admin Dashboard
+#### 1. Admin Dashboard `admin/dashboard.php`
 
-The central hub for business oversight.
+The command center for business operations, powered by `api/admin/get_dashboard_stats.php`.
 
-- **Stats**: Real-time counters for Active Customers (new today), Total Products (stock alerts), and Total Orders (pending count).
-- **Navigation**: Quick links to Users, Products, and Orders management.
+- **Real-Time Intelligence**:
+  - **Users Card**: Shows total active customers + count of new registrations today.
+  - **Products Card**: Displays total count + alerts for "Low Stock" items.
+  - **Orders Card**: Shows total order volume + count of "Pending" orders requiring attention.
+- **Quick Actions**: Direct links to all management modules.
 
 ![Admin Dashboard Screenshot](MARKDOWNS/screenshots/admin/ADMIN_DASHBOARD.png)
 
-#### 2. User Management
+#### 2. User Management `admin/users.php`
 
-Manage the customer database.
+Full control over the customer database.
 
-- **Features**:
-  - **List View**: Comprehensive table showing Name, Email, Role (Admin/Customer), Status, and Last Updated timestamp.
-  - **Add User**: Secure registration with validation for:
-    - Password strength (8-16 chars, mixed case, numbers, special chars).
-    - Email uniqueness.
-  - **Edit User**: Update profile details or reset passwords.
-  - **Archive**: Soft-delete users to preserve order history.
-    - _Security Note_: Admins are prevented from archiving or demoting their own accounts.
+- **Dynamic Data Table**: Lists users with their Role (Admin/Customer) and Status (Active/Archived).
+- **Modal-Based Editing**: Allows admins to update user details or reset passwords without leaving the list view.
+- **Soft-Delete System**: "Archiving" a user prevents them from logging in but keeps their historical order data intact for reporting.
 
 ![User Management Screenshot](MARKDOWNS/screenshots/admin/AD_USER_MANAGEMENT.png)
 
-#### 3. Product Management
+#### 3. Product Management `admin/products.php`
 
-Control the inventory and catalog.
+Advanced inventory control system.
 
-- **Features**:
-  - **List View**: Monitor inventory with columns for Image, Name, Price, and Stock Level.
-  - **Add/Edit Product**:
-    - **Image Handling**: Automatic image resizing (max 800x800) and optimization (JPG/PNG/WEBP).
-    - **Duplicate Check**: Prevents creating products with existing names.
-    - **File Management**: Automatically cleans up old product images when replaced.
-  - **Stock Control**: Real-time updates to `quantity` which immediately affects frontend "Out of Stock" status.
-  - **Archive**: Soft-delete products to remove them from the shop without breaking past order records.
+- **Smart Image Optimization**:
+  - Uses HTML5 Canvas API to **client-side resize** images to max 800x800px before upload.
+  - Reduces server bandwidth and storage usage significantly.
+- **Inventory Control**: Direct editing of stock quantities. Setting stock to 0 immediately renders the product "Out of Stock" on the frontend.
+- **Archive vs Delete**: Supports soft-deleting products (`is_active = 0`) to hide them from the shop while preserving order history.
 
 ![Product Management Screenshot](MARKDOWNS/screenshots/admin/AD_PROD_MANAGEMENT.png)
 
-#### 4. Order Management
+#### 4. Order Management `admin/orders.php`
 
-Track and fulfill customer orders.
+Streamlined order fulfillment workflow.
 
-- **Features**:
-  - **Status Filtering**: Filter orders by Pending, Paid, Shipped, or Cancelled.
-  - **Order Table**: detailed view including Date Placed, Order #, Customer Name, Total Amount, and ordered Product IDs.
-  - **Status Management**: Update order status directly via dropdown (Pending, Paid, Shipped, Cancelled).
+- **Status Filtering**: Dropdown filter to view only Pending, Paid, Shipped, or Cancelled orders.
+- **One-Click Updates**: Admins can update an order's status directly from the table row dropdown.
+- **Confirmation Logic**: JavaScript confirmation prompts prevent accidental status changes.
+- **Detail View**: Table displays a summary of ordered item IDs and customer details for quick packing reference.
 
 ![Order Management Screenshot](MARKDOWNS/screenshots/admin/AD_ORDER_MANAGEMENT.png)
 
