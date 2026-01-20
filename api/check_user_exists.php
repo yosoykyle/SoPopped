@@ -1,36 +1,34 @@
 <?php
+
 /**
- * API endpoint: /api/check_user_exists.php
- *
- * Purpose:
- *  - Return whether an active user account exists for a given email.
- *
- * Behavior (short):
- *  - Accepts email via POST (preferred) or GET.
- *  - Normalizes the email (trim + lowercase) before checking.
- *  - Returns JSON: { "exists": true } or { "exists": false }.
- *  - Returns { "exists": false, "error": "invalid_email" } for invalid input.
- *  - Enforces a simple per-IP rate limit and returns HTTP 429 with
- *    { "exists": false, "error": "rate_limited" } when exceeded.
- *  - On unexpected server errors returns HTTP 500 with
- *    { "exists": false, "error": "server_error" }.
- *
- * Notes / recommendations:
- *  - This endpoint is intended for UX checks (signup form validation).
- *    Always enforce uniqueness at the database level (unique index on
- *    users.email) to prevent race conditions and duplicates.
- *  - The built-in rate limiter is file-based for convenience and is
- *    not suitable for multi-server deployments — use Redis/memcached or
- *    WAF rules in production.
- *  - For privacy-sensitive apps, consider returning generic responses
- *    so callers cannot enumerate registered emails.
- *  - Prefer POST over GET to avoid exposing emails in logs/URLs; use TLS.
+ * =============================================================================
+ * File: api/check_user_exists.php
+ * Purpose: Check availability of a user email address.
+ * =============================================================================
+ * 
+ * Used by:
+ *   - Login form (to warn if user does NOT exist)
+ *   - Signup form (to warn if user ALREADY exists)
+ * 
+ * Inputs:
+ *   - email (POST preferred, GET accepted)
+ * 
+ * Logic:
+ *   1. Rate limiting check (file-based).
+ *   2. Database lookup for email.
+ *   3. Returns existence status and archived status.
+ * 
+ * Response:
+ *   { "exists": true, "is_archived": 0/1 }
+ *   { "exists": false }
+ * =============================================================================
  */
+
 require_once __DIR__ . '/_helpers.php';
 sp_json_header();
 require_once __DIR__ . '/../db/sopoppedDB.php';
 
-// Prefer POST but accept GET for backward compatibility. Normalize to lowercase.
+// 1. Input Processing
 $email = '';
 if (isset($_POST['email'])) {
     $email = trim((string)$_POST['email']);
@@ -39,8 +37,8 @@ if (isset($_POST['email'])) {
 }
 $email = strtolower($email);
 
-// Simple per-IP rate limiting to mitigate enumeration abuse.
-// Uses a small file in the system temp directory keyed by client IP.
+// 2. Rate Limiting Implementation
+// Simple temp-file based limiter to prevent enumeration attacks
 function client_ip()
 {
     if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
@@ -58,55 +56,51 @@ function rate_limit_check($limit = 15, $window = 60)
     $file = $dir . DIRECTORY_SEPARATOR . md5($ip . '_check_user_exists') . '.json';
     $now = time();
 
+    // Read current state
     $data = ['count' => 0, 'start' => $now];
     $fp = @fopen($file, 'c+');
-    if (!$fp) return false; // best-effort: if we can't open file, don't block
+    if (!$fp) return true; // Fail open if FS error
 
     flock($fp, LOCK_EX);
-    clearstatcache(true, $file);
     $contents = stream_get_contents($fp);
-    if ($contents !== false && $contents !== '') {
+    if ($contents) {
         $decoded = json_decode($contents, true);
-        if (is_array($decoded) && isset($decoded['count']) && isset($decoded['start'])) {
-            $data = $decoded;
-        }
+        if (isset($decoded['count'])) $data = $decoded;
     }
 
-    // Reset window if expired
+    // Reset if window expired
     if (($data['start'] + $window) <= $now) {
         $data = ['count' => 0, 'start' => $now];
     }
 
     $data['count']++;
 
-    // Rewind and truncate then write
+    // Write back
     ftruncate($fp, 0);
     rewind($fp);
     fwrite($fp, json_encode($data));
-    fflush($fp);
     flock($fp, LOCK_UN);
     fclose($fp);
 
-    if ($data['count'] > $limit) {
-        return false; // rate limited
-    }
-    return true;
+    return $data['count'] <= $limit;
 }
 
-// Enforce rate limit (15 requests per minute per IP)
+// Enforce limit: 15 req / 60 sec
 if (!rate_limit_check(15, 60)) {
     sp_json_response(['exists' => false, 'error' => 'rate_limited'], 429);
 }
 
+// 3. Validation
 if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     sp_json_response(['exists' => false, 'error' => 'invalid_email'], 400);
 }
 
 try {
-    // Return whether a user with this email exists and whether it's archived.
+    // 4. Database Check
     $stmt = $pdo->prepare('SELECT id, is_archived FROM users WHERE email = :email LIMIT 1');
     $stmt->execute([':email' => $email]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
     if ($row) {
         $isArchived = isset($row['is_archived']) ? (int)$row['is_archived'] : 0;
         sp_json_response(['exists' => true, 'is_archived' => $isArchived], 200);

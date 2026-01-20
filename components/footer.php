@@ -41,6 +41,7 @@
 <script src="./js/cart.js"></script>
 <script src="./js/cart-badge.js"></script>
 <script src="./js/dialogUI.js"></script>
-<script src="./js/validationUI.js"></script>
-<script src="./js/validateHelper.js"></script>
+<script src="./js/validation.js"></script>
+<!-- Auth Handler Modules (merged from authUserCheck, authLoginHandler, authSignupHandler, authCheckoutHandler) -->
+<script src="./js/authHandlers.js"></script>
 <script src="./js/authDialogs.js"></script>

@@ -1,18 +1,19 @@
-/*
+/**
+ * =============================================================================
  * File: js/dialogUI.js
- * Purpose: Handles dialog sizing/positioning and provides dialog option factory
- *           (for jQuery UI or custom dialogs).
+ * Purpose: Handles dialog sizing, positioning, and option factory.
+ * =============================================================================
+ *
+ * This utility provides helper functions for configuring jQuery UI dialogs to
+ * be responsive and consistently styled across the application.
  *
  * Exports (window.dialogUI):
- *   - dialogMaxHeightOffset(): pixel offset from viewport height.
- *   - dialogOptions(width): returns config object for dialog init.
+ *   - dialogMaxHeightOffset(): Calculate max height based on viewport
+ *   - dialogOptions(width): Factory for standard dialog config object
  *
  * Dependencies:
- *   - None required. Uses jQuery if available; falls back to DOM APIs.
- *
- * Usage:
- *   - Load before any dialog creation code to access dialogUI.
- *   - Keeps a small global namespace: window.dialogUI.
+ *   - jQuery UI (implied usage for options)
+ * =============================================================================
  */
 
 (function () {
@@ -21,12 +22,22 @@
   if (typeof window === "undefined") return;
   window.dialogUI = window.dialogUI || {};
 
+  /**
+   * Calculate maximum height for dialogs relative to viewport.
+   * Ensures dialog doesn't cover navbar or overflow bottom.
+   * @returns {number} Pixel offset to subtract from window height
+   */
   window.dialogUI.dialogMaxHeightOffset = function () {
     const nav = document.querySelector(".navbar");
     const navHeight = nav ? nav.getBoundingClientRect().height : 0;
     return Math.max(120, navHeight + 40);
   };
 
+  /**
+   * Generate standard configuration object for jQuery UI Dialog.
+   * @param {number} width - Desired dialog width (max constrained by viewport)
+   * @returns {Object} jQuery UI Dialog options object
+   */
   window.dialogUI.dialogOptions = function (width) {
     const maxH = window.innerHeight - window.dialogUI.dialogMaxHeightOffset();
     const opts = {
@@ -41,8 +52,8 @@
         "ui-dialog": "rounded-3",
         "ui-widget-overlay": "custom-overlay",
       },
+      // Reposition on open to account for navbar
       open: function () {
-        // prefer jQuery parent positioning when available
         const nav = document.querySelector(".navbar");
         const topOffset = nav ? nav.getBoundingClientRect().height + 10 : 10;
         try {
@@ -60,6 +71,6 @@
     return opts;
   };
 
-  // BACKWARDS COMPATIBILITY (Temporary)
+  // BACKWARDS COMPATIBILITY (Temporary alias)
   window.uiHelpers = window.dialogUI;
 })();

@@ -1,49 +1,86 @@
-// Load optional UI/validation assets (jQuery UI, jQuery Validate) if available.
-// Safe to include on pages that use server-side includes; this script only
-// attempts to dynamically load optional assets and dispatches `jquery-ui-loaded`
-// when initialization is finished.
+/**
+ * =============================================================================
+ * File: js/loadComponents.js
+ * Purpose: Dynamic loading of optional UI dependencies (jQuery UI).
+ * =============================================================================
+ *
+ * This utility handles the lazy loading of heavy libraries like jQuery UI and
+ * jQuery Validate. It ensures they are only loaded when needed, improving
+ * initial page load performance.
+ *
+ * Features:
+ *   - Checks if defined checkVar exists before loading
+ *   - Returns Promise that resolves when loaded
+ *   - Dispatches 'jquery-ui-loaded' event
+ *   - Includes CSS loading helper
+ *
+ * Exports:
+ *   - loadScript(url, checkVar)
+ *   - loadStyle(url)
+ *   - loadJqueryUI() - Main entry point
+ * =============================================================================
+ */
 
-$(async function() {
-    function loadScript(src) {
-        return new Promise((resolve, reject) => {
-            const s = document.createElement('script');
-            s.src = src;
-            s.onload = resolve;
-            s.onerror = reject;
-            document.head.appendChild(s);
-        });
-    }
+function loadScript(url, checkVar) {
+  return new Promise((resolve, reject) => {
+    if (checkVar && window[checkVar]) return resolve(); // Already loaded
 
-    function loadStyle(href) {
-        return new Promise((resolve, reject) => {
-            const l = document.createElement('link');
-            l.rel = 'stylesheet';
-            l.href = href;
-            l.onload = resolve;
-            l.onerror = reject;
-            document.head.appendChild(l);
-        });
-    }
+    // Check if script tag already exists
+    if (document.querySelector(`script[src="${url}"]`)) return resolve();
 
-    try {
-        await loadStyle('./node_modules/jquery-ui/themes/base/all.css');
-    } catch (e) {
-        try { await loadStyle('./node_modules/jquery-ui/themes/base/jquery-ui.css'); } catch (err) { /* ignore */ }
-    }
+    const script = document.createElement("script");
+    script.src = url;
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+}
 
-    try {
-        await loadScript('./node_modules/jquery-ui/dist/jquery-ui.min.js');
-        await loadScript('./node_modules/jquery-validation/dist/jquery.validate.min.js');
-        await loadScript('./node_modules/jquery-validation/dist/additional-methods.min.js');
-    } catch (err) {
-        // Optional UI/validation scripts failed to load — ignore silently in production
-    }
+function loadStyle(url) {
+  if (document.querySelector(`link[href="${url}"]`)) return;
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = url;
+  document.head.appendChild(link);
+}
 
-    // Notify authDialogs.js that jQuery UI is ready (authDialogs listens for this event)
-    const evt = new Event('jquery-ui-loaded');
-    document.dispatchEvent(evt);
-    // Also trigger a jQuery event for code that listens via jQuery
-    if (window.jQuery) {
-        window.jQuery(document).trigger('jquery-ui-loaded');
-    }
-});
+// Main loader function
+function loadJqueryUI() {
+  loadStyle("./node_modules/jquery-ui/dist/themes/base/jquery-ui.css");
+
+  // Helper to check deep existence
+  const hasUI = window.jQuery && window.jQuery.ui;
+  const hasValidate =
+    window.jQuery && window.jQuery.fn && window.jQuery.fn.validate;
+
+  // Chain: Load UI -> Load Validate -> Dispatch
+
+  // 1. Load UI (if missing)
+  let uiPromise = Promise.resolve();
+  if (!hasUI) {
+    uiPromise = loadScript(
+      "./node_modules/jquery-ui/dist/jquery-ui.min.js",
+      "jQuery.ui",
+    );
+  }
+
+  return uiPromise
+    .then(() => {
+      // 2. Load Validate (if missing)
+      if (!hasValidate && (!window.jQuery || !window.jQuery.fn.validate)) {
+        return loadScript(
+          "./node_modules/jquery-validation/dist/jquery.validate.min.js",
+          "jQuery.validator",
+        );
+      }
+      return Promise.resolve();
+    })
+    .then(() => {
+      // 3. Dispatch ready event
+      document.dispatchEvent(new Event("jquery-ui-loaded"));
+    })
+    .catch((err) => console.error("Failed to load components", err));
+}
+
+// Auto-load on page load (can be deferred if strictly needed)
+document.addEventListener("DOMContentLoaded", loadJqueryUI);

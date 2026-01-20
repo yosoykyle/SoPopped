@@ -1,20 +1,51 @@
-// sessionHelper.js — small helper to fetch session info from server
-// This file centralizes the single-place call to `api/session_info.php` so
-// other scripts simply call `window.sopoppedSession.fetchInfo()` and avoid
-// duplicating fetch logic.
+/**
+ * =============================================================================
+ * File: js/sessionHelper.js
+ * Purpose: Centralized session info fetcher for the SoPopped application.
+ * =============================================================================
+ *
+ * This small utility provides a single point of access to fetch session info
+ * from the server. Other scripts call `window.sopoppedSession.fetchInfo()` to
+ * check login status without duplicating fetch logic.
+ *
+ * Exports (window.sopoppedSession):
+ *   - fetchInfo(): Returns Promise<Object|null> with session data or null on error
+ *
+ * Usage Example:
+ *   const session = await window.sopoppedSession.fetchInfo();
+ *   if (session && session.logged_in) {
+ *     console.log('User is logged in:', session.user_name);
+ *   }
+ *
+ * Dependencies:
+ *   - fetchHelper.js (sopoppedFetch.json)
+ *   - jQuery (passed but not heavily used)
+ * =============================================================================
+ */
 
-(function($){
+(function ($) {
   try {
+    // Initialize global namespace if not exists
     window.sopoppedSession = window.sopoppedSession || {};
-    // Return object or null on error
+
+    /**
+     * Fetch session info from server API.
+     * @returns {Promise<Object|null>} Session info object or null on error
+     *   - logged_in: boolean - Whether user is logged in
+     *   - user_id: number - User ID (if logged in)
+     *   - user_name: string - User's name (if logged in)
+     *   - user_email: string - User's email (if logged in)
+     */
     window.sopoppedSession.fetchInfo = async function () {
       try {
-        return await window.sopoppedFetch.json('./api/session_info.php').catch(() => null);
+        return await window.sopoppedFetch
+          .json("./api/session_info.php")
+          .catch(() => null);
       } catch (e) {
         return null;
       }
     };
   } catch (e) {
-    // noop
+    // Silent fail - noop
   }
 })(jQuery);

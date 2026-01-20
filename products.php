@@ -2,23 +2,8 @@
 // Include database connection
 require_once __DIR__ . '/db/sopoppedDB.php';
 
-// Function to get products from database
-function getProducts($pdo)
-{
-  try {
-    $stmt = $pdo->prepare("
-            SELECT id, name, description, price, quantity, image_path, is_active 
-            FROM products 
-            WHERE is_active = 1 
-            ORDER BY id ASC
-        ");
-    $stmt->execute();
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-  } catch (PDOException $e) {
-    error_log("Error fetching products: " . $e->getMessage());
-    return [];
-  }
-}
+// Include shared product service
+require_once __DIR__ . '/api/_products_service.php';
 
 // Get products from database
 $products = getProducts($pdo);

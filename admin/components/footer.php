@@ -13,9 +13,10 @@
 <script src="../node_modules/jquery/dist/jquery.min.js"></script>
 <script src="../js/fetchHelper.js"></script>
 <script src="../node_modules/jquery-validation/dist/jquery.validate.min.js"></script>
-<script src="../js/validateHelper.js"></script>
+<script src="../js/validation.js"></script>
+<!-- Auth Handler Modules (merged) -->
+<script src="../js/authHandlers.js"></script>
 <script src="../js/authDialogs.js"></script>
-<script src="../js/sopoppedValidate.js"></script>
 <script src="js/admin-ui.js"></script>
 <script src="js/admin-validation.js"></script>
 </body>
