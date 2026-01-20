@@ -15,7 +15,7 @@
 - 2023-00378-SP-0 PALEC, JHONABELLE HISTORILLO
 - 2023-00389-SP-0 RANCHEZ, JAMES BOND MIRASOL
 - 2023-00393-SP-0 SAMUDIO, JOSHUA BUNDALIAN
-<<<<<<< HEAD
+  <<<<<<< HEAD
 
 ---
 
@@ -218,5 +218,3 @@ If this is your first time setting up the database or want to start fresh:
      php db/seed_admin.php
      ```
      ![Admin Seed GIF](MARKDOWNS/img/ADMIN%20SEED.gif)
-=======
->>>>>>> 82cefe319a5e249a9480524f12770f23225d38a3
