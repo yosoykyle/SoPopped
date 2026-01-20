@@ -52,7 +52,16 @@ elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Please enter a 
 
 if (empty($phone)) $errors[] = 'Phone number is required';
 if (empty($password)) $errors[] = 'Password is required';
-elseif (strlen($password) < 6) $errors[] = 'Password must be at least 6 characters long';
+elseif (strlen($password) < 8 || strlen($password) > 16) {
+    $errors[] = 'Password must be 8-16 characters long';
+} elseif (
+    !preg_match('/[A-Z]/', $password) ||
+    !preg_match('/[a-z]/', $password) ||
+    !preg_match('/[0-9]/', $password) ||
+    !preg_match('/[^A-Za-z0-9]/', $password)
+) {
+    $errors[] = 'Password must include uppercase, lowercase, number, and special character';
+}
 
 if (empty($password2)) $errors[] = 'Please confirm your password';
 elseif ($password !== $password2) $errors[] = 'Passwords do not match';
