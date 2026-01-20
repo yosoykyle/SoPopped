@@ -116,7 +116,7 @@ This document is the **Developer's Manual** for finishing the Admin Panel. It in
           try {
             const res = await sopoppedFetch.postJSON(
               "../api/admin/save_user.php",
-              data
+              data,
             );
             if (res.success) {
               if (sucMsg) {
@@ -124,7 +124,7 @@ This document is the **Developer's Manual** for finishing the Admin Panel. It in
                 sucMsg.classList.remove("d-none");
                 setTimeout(() => {
                   bootstrap.Modal.getInstance(
-                    document.getElementById("userModal")
+                    document.getElementById("userModal"),
                   ).hide();
                   loadUsers();
                   sucMsg.classList.add("d-none");
@@ -135,7 +135,7 @@ This document is the **Developer's Manual** for finishing the Admin Panel. It in
                 }, 1500);
               } else {
                 bootstrap.Modal.getInstance(
-                  document.getElementById("userModal")
+                  document.getElementById("userModal"),
                 ).hide();
                 loadUsers();
                 if (btn) {
@@ -170,7 +170,7 @@ This document is the **Developer's Manual** for finishing the Admin Panel. It in
               btn.innerText = originalText;
             }
           }
-        }
+        },
       );
     }
 
@@ -206,7 +206,7 @@ This document is the **Developer's Manual** for finishing the Admin Panel. It in
               // Handle specific defaults
               document.getElementById("userStatus").value =
                 item.is_archived || 0;
-            }
+            },
           );
           new bootstrap.Modal(document.getElementById("userModal")).show();
         }
@@ -237,16 +237,16 @@ This document is the **Developer's Manual** for finishing the Admin Panel. It in
         (u) => `
         <tr>
             <td>${new Date(
-              u.updated_at
+              u.updated_at,
             ).toLocaleDateString()} <small class="text-muted">${new Date(
-          u.updated_at
-        ).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })}</small></td>
+              u.updated_at,
+            ).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}</small></td>
             <td>${u.first_name}${u.middle_name ? " " + u.middle_name : ""} ${
-          u.last_name
-        }</td>
+              u.last_name
+            }</td>
             <td>${u.email}</td>
             <td><span class="badge ${
               u.role === "admin" ? "text-bg-warning" : "text-bg-secondary"
@@ -256,19 +256,19 @@ This document is the **Developer's Manual** for finishing the Admin Panel. It in
             }">${u.is_archived == 1 ? "Archived" : "Active"}</span></td>
             <td>
                 <button type="button" class="btn btn-sm btn-outline-primary btn-edit-user" title="Edit" data-item="${encodeURIComponent(
-                  JSON.stringify(u)
+                  JSON.stringify(u),
                 )}"><i class="bi bi-pencil"></i></button>
                 <button type="button" class="btn btn-sm btn-outline-danger btn-delete-user" data-id="${
                   u.id
                 }" data-name="${(u.first_name + " " + u.last_name).replace(
-          /"/g,
-          "&quot;"
-        )}" title="Archive" ${
-          u.is_archived == 1 ? "disabled" : ""
-        }><i class="bi bi-archive"></i></button>
+                  /"/g,
+                  "&quot;",
+                )}" title="Archive" ${
+                  u.is_archived == 1 ? "disabled" : ""
+                }><i class="bi bi-archive"></i></button>
             </td>
         </tr>
-    `
+    `,
       )
       .join("");
   }
@@ -513,7 +513,7 @@ $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
             file,
             maxWidth = 800,
             maxHeight = 800,
-            quality = 0.9
+            quality = 0.9,
           ) {
             return new Promise((resolve, reject) => {
               const reader = new FileReader();
@@ -525,7 +525,7 @@ $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
                   const ratio = Math.min(
                     maxWidth / img.width,
                     maxHeight / img.height,
-                    1
+                    1,
                   );
                   const w = Math.round(img.width * ratio);
                   const h = Math.round(img.height * ratio);
@@ -543,7 +543,7 @@ $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
                       else reject(new Error("Canvas toBlob returned null"));
                     },
                     outType,
-                    quality
+                    quality,
                   );
                 };
                 img.src = reader.result;
@@ -561,12 +561,12 @@ $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
                   fileInput.files[0],
                   800,
                   800,
-                  0.9
+                  0.9,
                 );
               } catch (resizeErr) {
                 console.warn(
                   "Image resize failed, will attempt original upload",
-                  resizeErr
+                  resizeErr,
                 );
               }
             }
@@ -585,7 +585,7 @@ $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
 
             const res = await sopoppedFetch.postFormData(
               "../api/admin/save_product.php",
-              fd
+              fd,
             );
             const valMsg = e.target.querySelector("#validate-msg");
             const sucMsg = e.target.querySelector("#success-msg");
@@ -597,7 +597,7 @@ $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
                 sucMsg.classList.remove("d-none");
                 setTimeout(() => {
                   bootstrap.Modal.getInstance(
-                    document.getElementById("productModal")
+                    document.getElementById("productModal"),
                   ).hide();
                   loadProducts();
                   sucMsg.classList.add("d-none");
@@ -608,7 +608,7 @@ $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
                 }, 1500);
               } else {
                 bootstrap.Modal.getInstance(
-                  document.getElementById("productModal")
+                  document.getElementById("productModal"),
                 ).hide();
                 loadProducts();
                 if (btn) {
@@ -641,7 +641,7 @@ $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
           } finally {
             // Cleanup if needed
           }
-        }
+        },
       );
     }
 
@@ -694,7 +694,7 @@ $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
               if (priceEl && item.price !== undefined) {
                 priceEl.value = parseFloat(item.price).toFixed(2);
               }
-            }
+            },
           );
           new bootstrap.Modal(document.getElementById("productModal")).show();
         }
@@ -708,7 +708,7 @@ $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
         "../api/admin/delete_product.php",
         {
           id,
-        }
+        },
       );
       if (res.success) {
         loadProducts();
@@ -743,19 +743,19 @@ $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
             <td>
                 <button type="button" class="btn btn-sm btn-outline-primary btn-edit-product" title="Edit"
                     data-item="${encodeURIComponent(
-                      JSON.stringify(p)
+                      JSON.stringify(p),
                     )}"><i class="bi bi-pencil"></i></button>
                 <button type="button" class="btn btn-sm btn-outline-danger btn-delete-product" data-id="${
                   p.id
                 }" data-name="${p.name.replace(
-          /"/g,
-          "&quot;"
-        )}" title="Archive" ${
-          p.is_active == 0 ? "disabled" : ""
-        }><i class="bi bi-archive"></i></button>
+                  /"/g,
+                  "&quot;",
+                )}" title="Archive" ${
+                  p.is_active == 0 ? "disabled" : ""
+                }><i class="bi bi-archive"></i></button>
             </td>
         </tr>
-    `
+    `,
       )
       .join("");
   }
@@ -956,16 +956,16 @@ $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
         (o) => `
         <tr>
             <td>${new Date(
-              o.created_at
+              o.created_at,
             ).toLocaleDateString()} <small class="text-muted">${new Date(
-          o.created_at
-        ).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })}</small></td>
+              o.created_at,
+            ).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}</small></td>
             <td>
                 <strong>#${o.id}</strong><br>
-                <div class="text-primary text-break" style="font-size: 0.85rem;">Product IDs: ${
+                <div class="text-primary text-break" style="font-size: 0.85rem;">Items: ${
                   o.product_ids || "N/A"
                 }</div>
             </td>
@@ -990,7 +990,7 @@ $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
                 </select>
             </td>
         </tr>
-    `
+    `,
       )
       .join("");
   }
@@ -1008,7 +1008,7 @@ $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
         {
           order_id: id,
           status,
-        }
+        },
       );
       if (!res.success) {
         alert(res.error || "Failed to update status");
@@ -1040,7 +1040,7 @@ $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
         }
 
         $sql = "SELECT o.id, o.user_id, o.total_amount, o.status, o.created_at, u.first_name, u.last_name,
-                       GROUP_CONCAT(oi.product_id SEPARATOR ', ') as product_ids
+                       GROUP_CONCAT(CONCAT('#', oi.product_id, ' <span class=\'text-dark fw-bold\'>x', oi.quantity, '</span>') SEPARATOR ', ') as product_ids
                 FROM orders o
                 JOIN users u ON o.user_id = u.id
                 LEFT JOIN order_items oi ON o.id = oi.order_id
@@ -1113,7 +1113,7 @@ $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
 
     try {
       const res = await sopoppedFetch.json(
-        "../api/admin/get_dashboard_stats.php"
+        "../api/admin/get_dashboard_stats.php",
       );
       if (res.success) {
         const stats = res.data;
@@ -1125,7 +1125,7 @@ $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
         usersCard.querySelector("small.stat-info")?.remove();
         usersH3.insertAdjacentHTML(
           "afterend",
-          `<small class='stat-info text-muted d-block mb-3'>${stats.new_users_today} new today</small>`
+          `<small class='stat-info text-muted d-block mb-3'>${stats.new_users_today} new today</small>`,
         );
 
         // Update Products Card (second card)
@@ -1136,12 +1136,12 @@ $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
         if (stats.low_stock > 0) {
           productsH3.insertAdjacentHTML(
             "afterend",
-            `<small class='stat-info text-danger d-block mb-3'>${stats.low_stock} low stock</small>`
+            `<small class='stat-info text-danger d-block mb-3'>${stats.low_stock} low stock</small>`,
           );
         } else {
           productsH3.insertAdjacentHTML(
             "afterend",
-            `<small class='stat-info text-muted d-block mb-3'>Stock Healthy</small>`
+            `<small class='stat-info text-muted d-block mb-3'>Stock Healthy</small>`,
           );
         }
 
@@ -1152,7 +1152,7 @@ $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
         ordersCard.querySelector("small.stat-info")?.remove();
         ordersH3.insertAdjacentHTML(
           "afterend",
-          `<small class='stat-info text-muted d-block mb-3'>Pending: ${stats.pending_orders}</small>`
+          `<small class='stat-info text-muted d-block mb-3'>Pending: ${stats.pending_orders}</small>`,
         );
       }
     } catch (err) {

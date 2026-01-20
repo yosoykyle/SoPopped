@@ -1,9 +1,219 @@
-BSIT 3 - 1 COMP 016 - Web Development - Group Activity
+# So Popped - Flavor Has No Borders
 
-MEMBERS / COLLABORATORS:
+**BSIT 3 - 1 COMP 016 - Web Development - Group Activity**
+
+## Executive Summary
+
+**So Popped** is an e-commerce platform built on the belief that "Flavor Has No Borders." We aim to bring global flavors to local doorsteps, sharing the stories and cultures behind every spice, fruit, and ingredient. Our system provides a seamless browsing and purchasing experience for customers, inviting them to taste the world, one flavor at a time. The platform features a dynamic product catalog, user account management, and a dedicated administration portal for managing business operations.
+
+---
+
+## 👥 Members / Collaborators
 
 - 2023-00354-SP-0 BALUYOT, KYLE FAJARDO
 - 2023-00385-SP-0 CONSORTE JR., FRANCISCO LAPADA
 - 2023-00378-SP-0 PALEC, JHONABELLE HISTORILLO
 - 2023-00389-SP-0 RANCHEZ, JAMES BOND MIRASOL
 - 2023-00393-SP-0 SAMUDIO, JOSHUA BUNDALIAN
+
+---
+
+## 🔐 Admin Access
+
+To manage the system, use the following default credentials to log in to the Admin Dashboard:
+
+- **Email**: `admin@admin.com`
+- **Password**: `admin123`
+
+---
+
+## 🧭 Navigation User Manual
+
+### 🛒 Customer Interface
+
+#### 1. Home Page
+
+The landing page introduces the brand with a "Flavor Has No Borders" hero section and displays a curated selection of "Featured Flavors."
+
+- **Key Actions**: Navigate to Shop, Read About Us, View Featured Items.
+
+![Home Page Screenshot](MARKDOWNS/screenshots/client/CL_HOMEPAGE.png)
+
+#### 2. Products Page
+
+Browse our complete catalog of international soda flavors.
+
+- **Features**:
+  - **Dynamic Catalogue**: Products are loaded dynamically for smooth navigation.
+  - **Pagination**: Client-side handled pagination.
+  - **"Out of Stock"**: Real-time inventory tracking disables purchasing for empty stock.
+  - **Quick View**: Access product details without leaving the page.
+
+![Products Page Screenshot](MARKDOWNS/screenshots/client/CL_PRODUCTS.png)
+
+#### 3. Product Details (Quick View)
+
+Clicking a product card opens a modal with more information.
+
+- **Details**: Full description, price, and stock quantity.
+- **Action**: Add to Cart (requires login).
+
+![Product Details Modal Screenshot](MARKDOWNS/screenshots/client/CL_PRODUCT_DETAILS.png)
+
+#### 4. About Us
+
+Learn about our mission to connect people through flavor.
+
+- **Content**: Our Story ("Most of the world's flavors are still unknown...").
+- **Contact Form**: Functional messaging system with inputs validation (min 2 chars for name, 10 for message).
+
+![About Us Page Screenshot](MARKDOWNS/screenshots/client/CL_ABT_US.png)
+
+#### 5. Authentication
+
+Secure access for customers to manage their profile and orders.
+
+- **Login**: Shared authentication portal for both Users and Admins. Automatically redirects to the appropriate dashboard based on user role (checks for archived status).
+- **Sign Up**: Registration with strict validation:
+  - **Password**: Min 6 chars, mismatch detection, and BCRYPT hashing.
+  - **Email**: Uniqueness check to prevent duplicates.
+
+![Login Screenshot](MARKDOWNS/screenshots/client/CL_AD_LOGIN.png)
+![Signup Screenshot](MARKDOWNS/screenshots/client/CL_SIGNUP.png)
+
+#### 6. Shopping Cart & Checkout
+
+A robust purchasing system designed for reliability and data integrity.
+
+- **Features**:
+  - **Dual-Storage Cart**: Items are saved locally for speed and synced to the database for cross-device access when logged in.
+  - **Checkout Validation**: Strict address and contact verification.
+  - **Transactional Safety**: Uses database transactions to ensure stock is only deducted if the order is successfully created, preventing overselling.
+  - **Secure Order Creation**: Automatically linking orders to user accounts.
+
+![Cart and Checkout Screenshot](MARKDOWNS/screenshots/client/CL_CART.png)
+
+---
+
+### 🛠️ Admin Interface
+
+#### 1. Admin Dashboard
+
+The central hub for business oversight.
+
+- **Stats**: Real-time counters for Active Customers (new today), Total Products (stock alerts), and Total Orders (pending count).
+- **Navigation**: Quick links to Users, Products, and Orders management.
+
+![Admin Dashboard Screenshot](MARKDOWNS/screenshots/admin/ADMIN_DASHBOARD.png)
+
+#### 2. User Management
+
+Manage the customer database.
+
+- **Features**:
+  - **List View**: Comprehensive table showing Name, Email, Role (Admin/Customer), Status, and Last Updated timestamp.
+  - **Add User**: Secure registration with validation for:
+    - Password strength (8-16 chars, mixed case, numbers, special chars).
+    - Email uniqueness.
+  - **Edit User**: Update profile details or reset passwords.
+  - **Archive**: Soft-delete users to preserve order history.
+    - _Security Note_: Admins are prevented from archiving or demoting their own accounts.
+
+![User Management Screenshot](MARKDOWNS/screenshots/admin/AD_USER_MANAGEMENT.png)
+
+#### 3. Product Management
+
+Control the inventory and catalog.
+
+- **Features**:
+  - **List View**: Monitor inventory with columns for Image, Name, Price, and Stock Level.
+  - **Add/Edit Product**:
+    - **Image Handling**: Automatic image resizing (max 800x800) and optimization (JPG/PNG/WEBP).
+    - **Duplicate Check**: Prevents creating products with existing names.
+    - **File Management**: Automatically cleans up old product images when replaced.
+  - **Stock Control**: Real-time updates to `quantity` which immediately affects frontend "Out of Stock" status.
+  - **Archive**: Soft-delete products to remove them from the shop without breaking past order records.
+
+![Product Management Screenshot](MARKDOWNS/screenshots/admin/AD_PROD_MANAGEMENT.png)
+
+#### 4. Order Management
+
+Track and fulfill customer orders.
+
+- **Features**:
+  - **Status Filtering**: Filter orders by Pending, Paid, Shipped, or Cancelled.
+  - **Order Table**: detailed view including Date Placed, Order #, Customer Name, Total Amount, and ordered Product IDs.
+  - **Status Management**: Update order status directly via dropdown (Pending, Paid, Shipped, Cancelled).
+
+![Order Management Screenshot](MARKDOWNS/screenshots/admin/AD_ORDER_MANAGEMENT.png)
+
+---
+
+# ⚙️ Technical Setup
+
+## 🚀 Accessing the Project
+
+1. Ensure **Apache** and **MySQL** are running in XAMPP.
+2. Place the project folder `SoPopped` in `xampp/htdocs/`.
+3. Open your browser and navigate to:
+   - **Customer Home**: [http://localhost/SoPopped/home.php](http://localhost/SoPopped/home.php)
+   - **Admin Dashboard**: [http://localhost/SoPopped/admin/dashboard.php](http://localhost/SoPopped/admin/dashboard.php)
+
+## 🗄️ Database Setup (Update or Create)
+
+### Option 1: Existing Database (Migration)
+
+If you already have an older version of the SoPopped database:
+
+1. **Run migrations in order:**
+   - First: Execute `db/1. RUN THIS add_user_carts_table.sql` in your MySQL Workbench or RDBMS
+   - Second: Execute `db/2. RUN THIS ALTER TABLE users.sql` in your MySQL Workbench or RDBMS
+   - Third: Execute `db/3. RUN THIS add_contact_archiving.sql` in your MySQL Workbench or RDBMS
+
+2. **Update credentials:**
+   - Edit `config.php` with your database credentials:
+     ```php
+     define('DB_HOST', 'localhost');
+     define('DB_NAME', 'sopopped');
+     define('DB_USER', 'root');
+     define('DB_PASS', 'your_password');
+     ```
+   - Edit `db/sopoppedDB.php` (tests `config.php` automatically)
+
+3. **A Must: Run seed files (recommended for development)**
+   - After running the migrations above, you can populate sample data and an admin account:
+     - Execute `db/manual_seed_sample_products.sql` in your MySQL Workbench or RDBMS — inserts sample products
+     - `php db/seed_admin.php` — creates an admin user (`admin@admin.com` / `admin123`)
+   - Example (VS Code Terminal):
+     ```bash
+     php db/seed_admin.php
+     ```
+     ![Admin Seed GIF](MARKDOWNS/img/ADMIN%20SEED.gif)
+
+### Option 2: Fresh Installation
+
+If this is your first time setting up the database or want to start fresh:
+
+1. **Import complete schema:**
+   - Execute `db/USE THIS SCHEMA.sql` in your MySQL Workbench or RDBMS
+   - This creates all tables with the latest structure
+
+2. **Update credentials:**
+   - Edit `config.php` with your database credentials:
+     ```php
+     define('DB_HOST', 'localhost');
+     define('DB_NAME', 'sopopped');
+     define('DB_USER', 'root');
+     define('DB_PASS', 'your_password');
+     ```
+   - Edit `db/sopoppedDB.php` (tests `config.php` automatically)
+
+3. **A Must: Run seed files (recommended for development)**
+   - After importing the full schema you may run the seeders to add sample products and an admin account:
+     - Execute `db/manual_seed_sample_products.sql` in your MySQL Workbench or RDBMS
+     - `php db/seed_admin.php`
+   - Example (VS Code Terminal):
+     ```bash
+     php db/seed_admin.php
+     ```
+     ![Admin Seed GIF](MARKDOWNS/img/ADMIN%20SEED.gif)
