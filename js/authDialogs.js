@@ -563,17 +563,17 @@
           }
         }
 
-        // If no explicit target, try to find an input within the same form/dialog
+        // Use provided selector if no data-attribute was found
+        if (!($inp && $inp.length) && fallbackInputSelector) {
+          $inp = $(fallbackInputSelector);
+        }
+
+        // If still no target, try to find an input within the same form/dialog
         if (!($inp && $inp.length)) {
           const $form = $btn.closest("form, .ui-dialog, .modal");
           if ($form && $form.length) {
             $inp = $form.find("input[type='password']").first();
           }
-        }
-
-        // Use provided selector as a final option
-        if (!($inp && $inp.length) && fallbackInputSelector) {
-          $inp = $(fallbackInputSelector);
         }
 
         if (!($inp && $inp.length)) return;
