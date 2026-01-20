@@ -546,16 +546,51 @@
     });
 
     // 4.4 - Password Visibility Toggle
-    $(document).on("click", ".toggle-password", function () {
-      const $icon = $(this);
-      const inputId = $icon.attr("toggle");
-      const $input = $(inputId); // ID selector from attribute
-      if ($input.length) {
-        const type = $input.attr("type") === "password" ? "text" : "password";
-        $input.attr("type", type);
-        $icon.toggleClass("bi-eye bi-eye-slash");
-      }
-    });
+    // Returns emoji-based toggling (Monkey See/No-See)
+    function togglePassword(buttonSelector, fallbackInputSelector) {
+      $(document).on("click", buttonSelector, function (e) {
+        e.preventDefault();
+        const $btn = $(this);
+
+        // Prefer explicit data attributes if provided
+        const explicit = $btn.attr("data-target") || $btn.attr("data-input");
+        let $inp = null;
+        if (explicit) {
+          try {
+            $inp = $(explicit);
+          } catch (e) {
+            $inp = null;
+          }
+        }
+
+        // If no explicit target, try to find an input within the same form/dialog
+        if (!($inp && $inp.length)) {
+          const $form = $btn.closest("form, .ui-dialog, .modal");
+          if ($form && $form.length) {
+            $inp = $form.find("input[type='password']").first();
+          }
+        }
+
+        // Use provided selector as a final option
+        if (!($inp && $inp.length) && fallbackInputSelector) {
+          $inp = $(fallbackInputSelector);
+        }
+
+        if (!($inp && $inp.length)) return;
+
+        // Only toggle the first matched input
+        const $first = $inp.eq(0);
+        const isPassword = $first.attr("type") === "password";
+        $first.attr("type", isPassword ? "text" : "password");
+        $btn.text(isPassword ? "🙉" : "🙈");
+      });
+    }
+
+    // Bind handlers for known toggles.
+    togglePassword("#toggleLoginPassword", "#loginPassword");
+    togglePassword("#toggleSignupPassword", "#signupPassword");
+    togglePassword("#toggleSignupPassword2", "#signupPassword2");
+    togglePassword("#toggleUserPassword", "#userPassword");
 
     // 4.5 - Responsive Resize
     $(window).on("resize", function () {
