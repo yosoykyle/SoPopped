@@ -24,6 +24,17 @@ if (!$isLoggedIn || $userRole !== 'admin') {
   <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="../node_modules/bootstrap-icons/font/bootstrap-icons.css">
   <link rel="shortcut icon" href="../images/So Popped Logo.png">
+  <link
+    rel="icon"
+    type="image/png"
+    sizes="32x32"
+    href="../images/So Popped Logo.png" />
+  <link
+    rel="icon"
+    type="image/png"
+    sizes="16x16"
+    href="../images/So Popped Logo.png" />
+  <link rel="apple-touch-icon" href="../images/So Popped Logo.png" />
 </head>
 
 <body class="bg-light">
