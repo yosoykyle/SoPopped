@@ -65,7 +65,7 @@ try {
 
     if (!$user) {
         $msg = 'Invalid email or password';
-        if ($isAjax) sp_json_response(['success' => false, 'error' => $msg], 401);
+        if ($isAjax) sp_json_response(['success' => false, 'error' => $msg], 200);
         header('Location: ../home.php?login_result=error&login_message=' . urlencode($msg));
         exit;
     }
@@ -82,7 +82,7 @@ try {
     // 6. Password Verification
     if (!password_verify($password, $user['password_hash'])) {
         $msg = 'Invalid email or password';
-        if ($isAjax) sp_json_response(['success' => false, 'error' => $msg], 401);
+        if ($isAjax) sp_json_response(['success' => false, 'error' => $msg], 200);
         header('Location: ../home.php?login_result=error&login_message=' . urlencode($msg));
         exit;
     }

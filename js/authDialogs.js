@@ -19,9 +19,8 @@
  * TABLE OF CONTENTS:
  *   1. GLOBAL HELPERS (Logout, Error Reporting)
  *   2. CONFIGURATION (Dialog Options)
- *   3. VALIDATION SETUP (Custom Methods, Defaults)
- *   4. FORM INIT (Login, Signup, Contact, Checkout)
- *   5. UI BEHAVIORS (Dialog Init, URL Params, Resize, Password Toggle)
+ *   3. VALIDATION & FORM INITIALIZATION (Rules, Defaults, Handlers)
+ *   4. UI BEHAVIORS (Dialog Init, URL Params, Resize, Password Toggle)
  * =============================================================================
  */
 
@@ -89,19 +88,38 @@
     // 2. CONFIGURATION
     // =========================================================================
 
-    // Delegate to dialogUI.js for consistent sizing
+    // Delegate to dialogUI.js + Add Form Reset on Close
     function dialogOptions(width) {
-      return window.dialogUI && window.dialogUI.dialogOptions
-        ? window.dialogUI.dialogOptions(width)
-        : { width: width, modal: true }; // Fallback
+      const opts =
+        window.dialogUI && window.dialogUI.dialogOptions
+          ? window.dialogUI.dialogOptions(width)
+          : { width: width, modal: true };
+
+      opts.close = function () {
+        const $form = $(this).find("form");
+        if ($form.length) {
+          $form[0].reset();
+          // Clear CSS classes
+          $form.find(".is-invalid").removeClass("is-invalid");
+          $form.find(".is-valid").removeClass("is-valid");
+          // Clear validation/success messages
+          if (window.validationUI && window.validationUI.hideValidateMsg) {
+            window.validationUI.hideValidateMsg($form);
+          }
+          $form.find("#success-msg").addClass("d-none");
+          // Clear data attributes for user checks
+          $form
+            .find("input")
+            .removeData("exists")
+            .removeData("archived")
+            .removeData("last-checked");
+        }
+      };
+      return opts;
     }
 
     // =========================================================================
-    // 3. VALIDATION SETUP
-    // =========================================================================
-
-    // =========================================================================
-    // 4. FORM INITIALIZATION
+    // 3. VALIDATION & FORM INITIALIZATION
     // =========================================================================
 
     function initValidation() {
@@ -349,10 +367,10 @@
     document.addEventListener("jquery-ui-loaded", initValidation);
 
     // =========================================================================
-    // 5. UI BEHAVIORS
+    // 4. UI BEHAVIORS
     // =========================================================================
 
-    // 5.1 - Initialize Dialogs Function (Idempotent)
+    // 4.1 - Initialize Dialogs Function (Idempotent)
     function initDialogs() {
       if ($.fn.dialog) {
         // Only init if not already turned into a widget
@@ -376,7 +394,7 @@
     // Re-attempt init when loadComponents.js finishes lazy loading
     document.addEventListener("jquery-ui-loaded", initDialogs);
 
-    // 5.2 - Process URL Parameters (e.g. Login Results)
+    // 4.2 - Process URL Parameters (e.g. Login Results)
     (function processUrlParams() {
       try {
         const p = new URLSearchParams(window.location.search);
@@ -456,7 +474,7 @@
       }
     })();
 
-    // 5.3 - Navbar Button Handlers
+    // 4.3 - Navbar Button Handlers
     $("#loginBtn").on("click", (e) => {
       e.preventDefault();
       if ($.fn.dialog) {
@@ -527,7 +545,7 @@
       }
     });
 
-    // 5.4 - Password Visibility Toggle
+    // 4.4 - Password Visibility Toggle
     $(document).on("click", ".toggle-password", function () {
       const $icon = $(this);
       const inputId = $icon.attr("toggle");
@@ -539,7 +557,7 @@
       }
     });
 
-    // 5.5 - Responsive Resize
+    // 4.5 - Responsive Resize
     $(window).on("resize", function () {
       if ($.fn.dialog) {
         $(".ui-dialog-content").each(function () {
@@ -562,7 +580,7 @@
       }
     });
 
-    // 5.6 - Bootstrap Modal Fallback (Init Only)
+    // 4.6 - Bootstrap Modal Fallback (Init Only)
     if (!$.fn.dialog) {
       // Temporarily mark as bootstrap modal until UI loads
       $("#loginDialog, #signupDialog")

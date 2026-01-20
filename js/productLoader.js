@@ -82,9 +82,6 @@ $(document).ready(function () {
         }
 
         const totalPages = Math.ceil(products.length / ITEMS_PER_PAGE);
-        console.log(
-          `[productLoader] Loaded ${products.length} products — ${totalPages} pages`,
-        );
 
         if ($(".pagination").length === 0) {
           console.warn(
@@ -119,14 +116,27 @@ $(document).ready(function () {
     const $container = $(".row.row-cols-2");
     $container.empty();
 
+    // Helper to escape HTML
+    function escapeHtml(text) {
+      if (!text) return "";
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
     pageProducts.forEach((product) => {
       const imgSrc = product.image || "images/default.png";
       const safePrice =
         typeof product.price !== "undefined" ? product.price : 0;
-      const safeDesc = (product.description || "").replace(/"/g, "&quot;");
-      const safeName = (product.name || "Product").replace(/"/g, "&quot;");
       const quantity = product.quantity || 0;
       const outOfStock = quantity <= 0;
+
+      // XSS Protection
+      const safeName = escapeHtml(product.name || "Product");
+      const safeDesc = escapeHtml(product.description || "");
 
       const cardClasses = `card product-card mx-auto mt-2 rounded-4 ${
         outOfStock ? "out-of-stock" : ""
@@ -147,7 +157,7 @@ $(document).ready(function () {
               height="auto"
               data-product-name="${safeName}" />
             <div class="card-body text-center mx-auto">
-              <h5 class="card-title display-7">${product.name}</h5>
+              <h5 class="card-title display-7">${safeName}</h5>
             </div>
             ${
               outOfStock
