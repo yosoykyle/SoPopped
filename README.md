@@ -105,6 +105,32 @@ A comprehensive order processing system designed for data integrity.
 - **Atomic Transactions**: Uses `pdo->beginTransaction()` to ensure that Order Creation, Item Insertion, and Stock Deduction happen either all together or not at all, preventing inventory desyncs.
 
 ![Cart and Checkout Screenshot](MARKDOWNS/screenshots/client/CL_CART.png)
+<br>
+
+---
+
+#### 7. Order Success `order_success.php`
+
+The final step of the purchasing journey, designed to reassure the customer.
+
+- **Receipt View**: Displays a clear summary of the transaction including Order ID, Date, Status, and Total Amount.
+- **Security Check**: Enforces session-based access control so users can only view their own receipts.
+- **Navigation**: Provides immediate options to "View all orders" or "Continue shopping."
+
+![Order Success Screenshot](MARKDOWNS/screenshots/client/CL_ORD_SUCCESS.png)
+<br>
+
+---
+
+#### 8. My Orders `orders.php`
+
+A dedicated history page allowing users to track their purchase lifecycle.
+
+- **Async Loading**: Powered by `js/userOrders.js`, fetching purchase history via `api/get_user_orders.php`.
+- **Status Tracking**: Uses color-coded badges (e.g., Yellow for "Pending", Green for "Paid") to give at-a-glance status updates.
+- **Item Preview**: Lists the first few items of each order directly on the summary card for quick identification.
+
+![My Orders Screenshot](MARKDOWNS/screenshots/client/CL_ORDERS.png)
 
 ---
 
