@@ -32,7 +32,7 @@ function getProducts($pdo)
             SELECT id, name, description, price, quantity, image_path, is_active 
             FROM products 
             WHERE is_active = 1 
-            ORDER BY id ASC
+            ORDER BY id DESC
         ");
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
