@@ -1,3 +1,13 @@
+<!-- 
+  File: home.php
+  Description: The main landing page of the So Popped application.
+  Flow:
+  1. Includes global styles and fonts.
+  2. Renders the Navigation Bar (server-side include).
+  3. Displays a Hero Section with brand messaging.
+  4. Shows a "Featured Flavors" grid to attract users.
+  5. Includes the Footer and Auth Modals.
+-->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -23,10 +33,18 @@
 </head>
 
 <body>
-  <!-- NAV (server-side include) -->
+  <!-- 
+    COMPONENT: Navigation Bar 
+    - Handles dynamic link highlighting based on current page.
+    - Displays User Dropdown if logged in, otherwise Login button.
+  -->
   <?php include_once __DIR__ . '/components/navbar.php'; ?>
 
-  <!-- HERO -->
+  <!-- 
+    SECTION: Hero 
+    - Main visual entry point.
+    - Contains "Shop now" and "About Us" Call-to-Actions (CTAs).
+  -->
   <header>
     <div
       class="container px-4 pt-5 mt-5 text-center border-bottom bg-body">
@@ -61,7 +79,11 @@
       </div>
     </div>
   </header>
-  <!-- FEATURED -->
+  <!-- 
+    SECTION: Featured Flavors
+    - Static showcase of key products to entice users.
+    - Uses a responsive grid layout.
+  -->
   <main>
     <div class="container bg-body" id="custom-cards">
       <h1 class="display-6 pt-5 pb-1 text-center border-bottom fw-bolder text-warning">
@@ -72,7 +94,7 @@
           <div
             class="card featured-flavor rounded-3 aspect-ratio-1x1 overflow-hidden">
             <img
-              src="images/f1.png"
+              src="images/fc1.png"
               class="card-img"
               alt="Flavor Image"
               style="object-fit: cover" />
@@ -89,7 +111,7 @@
           <div
             class="card featured-flavor rounded-3 aspect-ratio-1x1 overflow-hidden">
             <img
-              src="images/p12.png"
+              src="images/pc12.png"
               class="card-img"
               alt="Flavor Image"
               style="object-fit: cover" />
@@ -106,7 +128,7 @@
           <div
             class="card featured-flavor rounded-3 aspect-ratio-1x1 overflow-hidden">
             <img
-              src="images/p14.png"
+              src="images/pc14.png"
               class="card-img"
               alt="Flavor Image"
               style="object-fit: cover" />
@@ -123,7 +145,7 @@
           <div
             class="card featured-flavor rounded-3 aspect-ratio-1x1 overflow-hidden">
             <img
-              src="images/f4.png"
+              src="images/fc4.png"
               class="card-img"
               alt="Flavor Image"
               style="object-fit: cover" />
