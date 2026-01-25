@@ -1,3 +1,11 @@
+<!-- 
+  Component: login.php
+  Description: HTML fragment for the Login Modal.
+  Flow:
+  1. Hidden initially; shown as a jQuery UI Dialog (see `js/authDialogs.js`).
+  2. Submits to `api/login_submit.php` via AJAX (handled by `js/authHandlers.js`).
+  3. Includes "Show Password" toggle button.
+-->
 <!-- Login dialog fragment (jQuery UI) -->
 <div id="loginDialog" title="Login to So Popped" style="display:none; max-height: calc(100vh - 160px); overflow:auto;">
   <form method="POST" action="api/login_submit.php" id="loginForm" novalidate>

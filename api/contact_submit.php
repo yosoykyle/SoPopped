@@ -6,10 +6,10 @@
  * Purpose: Handle 'Contact Us' form submissions.
  * =============================================================================
  * 
- * Logic:
- *   1. Validate inputs (name, email, message length).
- *   2. Insert into `contact_messages` table.
- *   3. Return JSON success.
+ * NOTE:
+ * A simple "Fire and Forget" endpoint.
+ * The user sends a message, we validte it, and save it to the database table 
+ * `contact_messages`.
  * =============================================================================
  */
 
@@ -22,12 +22,16 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 require_once __DIR__ . '/../db/sopoppedDB.php';
 
-// 1. Inputs
+// -----------------------------------------------------------------------------
+// STEP 1: SANITIZE INPUTS
+// -----------------------------------------------------------------------------
 $name = isset($_POST['name']) ? trim((string)$_POST['name']) : '';
 $email = isset($_POST['email']) ? trim((string)$_POST['email']) : '';
 $message = isset($_POST['message']) ? trim((string)$_POST['message']) : '';
 
-// 2. Validation
+// -----------------------------------------------------------------------------
+// STEP 2: VALIDATE
+// -----------------------------------------------------------------------------
 $errors = [];
 if ($name === '' || mb_strlen($name) < 2) $errors['name'] = 'Please enter your name (2+ characters).';
 if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors['email'] = 'Please enter a valid email address.';
@@ -38,7 +42,9 @@ if (!empty($errors)) {
 }
 
 try {
-    // 3. Database Insert
+    // -----------------------------------------------------------------------------
+    // STEP 3: SAVE MESSAGE
+    // -----------------------------------------------------------------------------
     $stmt = $pdo->prepare('INSERT INTO contact_messages (name, email, message) VALUES (:name, :email, :message)');
     $stmt->execute([
         ':name' => $name,

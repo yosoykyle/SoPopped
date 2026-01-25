@@ -1,36 +1,24 @@
 @charset "UTF-8";
 /**
- * So Popped - Custom Styles
- * 
- * Table of Contents:
- * 1. Bootstrap Import
- * 2. Navigation
- *    - Navbar Base
- *    - Navigation Links
- *    - Navbar Toggler
- * 3. Buttons
- *    - Base Button Styles
- *    - Button Interactions
- * 4. Cards
- *    - Product Cards
- *    - Card Hover Effects
- *    - Card Images
- *    - Featured Flavor Cards
- *    - Card Animations
- * 5. Forms
- *    - Auth & Contact Form Styling
- *    - Validation States
- * 6. Animations
- *    - Keyframe Animations
- * 7. Additional Components
- *    - Pagination
- *    - Other Elements
- * 8. Dialogs
- *    - Modal Styling
+ * =============================================================================
+ * File: styles.css
+ * Purpose: The "Wardrobe" (Visual Design).
+ * =============================================================================
+ *
+ * NOTE:
+ * This file controls how everything looks.
+ * It is built on top of "Bootstrap", which gives us a solid foundation (Grid, Buttons).
+ *
+ * We then add our own "Custom Flavor":
+ *   1. Glassmorphism: The "Frosted Glass" look on Modals and Navbars.
+ *   2. Animations: Things move, slide, and bounce to feel alive.
+ *   3. Interactions: Buttons and Cards react when you touch them.
+ * =============================================================================
  */
 /* ==========================================================================
-   1. Bootstrap Import
+   1. THE FOUNDATION
    ========================================================================== */
+/* We import Bootstrap first so we can override it later. */
 /*!
  * Bootstrap  v5.3.8 (https://getbootstrap.com/)
  * Copyright 2011-2025 The Bootstrap Authors
@@ -1343,35 +1331,51 @@ textarea.form-control-lg{min-height:calc(1.5em + 1rem + calc(var(--bs-border-wid
 @media (min-width:1200px){.fs-1{font-size:2.5rem!important}.fs-2{font-size:2rem!important}.fs-3{font-size:1.75rem!important}.fs-4{font-size:1.5rem!important}}
 @media print{.d-print-inline{display:inline!important}.d-print-inline-block{display:inline-block!important}.d-print-block{display:block!important}.d-print-grid{display:grid!important}.d-print-inline-grid{display:inline-grid!important}.d-print-table{display:table!important}.d-print-table-row{display:table-row!important}.d-print-table-cell{display:table-cell!important}.d-print-flex{display:flex!important}.d-print-inline-flex{display:inline-flex!important}.d-print-none{display:none!important}}
 /* ==========================================================================
-   2. Navigation - Frosted glass navbar with interactive elements
+   2. NAVIGATION (The Frosted Header)
    ========================================================================== */
-/* Navbar Base - Creates a frosted glass effect */
+/* 
+ * NOTE: The "Frosted Glass" Effect
+ * We use `backdrop-filter: blur` to make the implementation look like
+ * etched glass floating over the background content.
+ */
 .navbar {
   backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  background-color: rgba(255, 255, 255, 0.2) !important;
+  -webkit-backdrop-filter: blur(4px); /* For Safari */
+  background-color: rgba(
+    255,
+    255,
+    255,
+    0.2
+  ) !important; /* Semi-transparent white */
 }
-/* Navigation Links - Interactive hover effects */
+/* 
+ * NOTE: Interactive Links
+ * When you hover, the link shrinks slightly (scale 0.98) and glows.
+ * This gives "Tactile Feedback" - it feels like you are pressing a real button.
+ */
 .nav-link {
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   transform: scale(1);
 }
 .nav-link:hover {
   transform: scale(0.98);
-  color: var(--bs-primary) !important;
+  color: var(--bs-primary) !important; /* Blue */
   text-decoration: underline;
   text-shadow: 0px 3px 3px #0000007c;
   font-weight: 550;
 }
 .nav-link:active {
-  transform: scale(0.95);
+  transform: scale(0.95); /* Shrink more on click */
   font-style: italic;
-  font-family: pix;
-  color: var(--bs-warning) !important;
+  font-family: pix; /* Fun font */
+  color: var(--bs-warning) !important; /* Yellow */
   text-shadow: 0px 3px 3px #0000007c;
   text-decoration: underline;
 }
-/* Make dropdown menu items visually match navbar links */
+/* 
+ * NOTE: Dropdown Menus
+ * We copy the same logic to the dropdowns so they feel consistent with the main navbar.
+ */
 .dropdown-item {
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   transform: scale(1);
@@ -1390,27 +1394,26 @@ textarea.form-control-lg{min-height:calc(1.5em + 1rem + calc(var(--bs-border-wid
   font-style: italic;
   font-family: pix;
   color: var(--bs-warning) !important;
-  text-shadow: 0px 3px 3px #0000007c;
   text-decoration: underline;
   background: transparent;
 }
-/* Navbar Toggler - Mobile menu button */
+/* Navbar Toggler (The Hamburger Menu) */
 .navbar-toggler {
   transition: transform 0.15s ease-in-out;
 }
 .navbar-toggler:active {
-  transform: scale(0.97);
+  transform: scale(0.97); /* Press effect */
   font-style: italic;
 }
-/* Navbar Brand - Logo styling */
+/* Logo Styling */
 .navbar-brand img {
-  border-radius: 20%;
+  border-radius: 20%; /* Soft corners */
 }
 .navbar-brand:active {
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   transform: scale(0.87);
 }
-/* Navigation Home Link - Animated effect */
+/* Specialized Animation for the "Home" Link */
 #navHome {
   transition: all 0.3s ease;
   animation-name: slideUp;
@@ -1419,63 +1422,74 @@ textarea.form-control-lg{min-height:calc(1.5em + 1rem + calc(var(--bs-border-wid
   animation-play-state: running;
   animation-timing-function: cubic-bezier(0.18, 0.99, 0.88, 0.13);
 }
-/* Cart Icon - Styling */
+/* Cart Icon */
 .cart img {
   border-radius: 15%;
 }
 /* ==========================================================================
-   3. Buttons - Interactive button elements
+   3. BUTTONS (Tactile Feel)
    ========================================================================== */
-/* Button Base - Smooth transitions */
+/* Base Styles */
 .btn {
-  transition: all 0.3s ease; /* Smooth revert when button is released */
+  transition: all 0.3s ease; /* Smooth revert */
   transition-property:
     transform, box-shadow, font-weight, font-family, font-style, text-shadow;
 }
+/* 
+ * NOTE: The "Press" Effect
+ * When clicked (:active), the button shrinks and changes font to 'pix' (Italic/Fun).
+ * This confirms to the user that "Yes, you clicked me".
+ */
 .btn:active {
   transform: scale(0.95);
   font-weight: bolder;
   font-family: pix;
   font-style: italic;
   text-shadow: 0px 3px 3px #0000007c;
-  transition: all 0.1s ease; /* Quick pop when pressed */
+  transition: all 0.1s ease; /* Fast response */
 }
 /* ==========================================================================
-   4. Cards - Interactive product display cards
+   4. CARDS (The Product Grid)
    ========================================================================== */
-/* Card Base - Smooth transitions and border */
+/* 
+ * NOTE: Entrance State
+ * Cards start hidden (opacity: 0) and pushed down (translateY).
+ * Scroll animations will reveal them later.
+ */
 .card {
   transition: all 0.3s ease;
-  border: 2px solid transparent;
-  opacity: 0; /* hidden initially */
+  border: 2px solid transparent; /* Invisible border ready for hover color */
+  opacity: 0;
   transform: translateY(80px) scale(0.5);
 }
-/* Card Hover State - Lift effect */
+/* 
+ * NOTE: The "Lift" Effect
+ * When hovering, the card floats up (-5px) and casts a shadow.
+ * The border turns Yellow (Warning).
+ */
 .card:hover {
   transform: translateY(-5px) scale(1);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
   border-color: var(--bs-warning);
 }
-/* Card Active State - Press effect */
+/* Active (Click) State */
 .card:active {
   font-style: italic;
   color: var(--bs-warning);
-  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.05); /* Shadow shrinks (card goes down) */
   border-color: var(--bs-primary);
 }
-/* Card Images - Smooth image transitions */
+/* 
+ * NOTE: Product Images
+ * Images inside cards scale down slightly on hover to focus attention on the content.
+ */
 .card img {
   transition: transform 0.3s ease;
 }
-/* Card Image Hover - Scale effect */
 .card:hover img {
   transform: scale(0.95);
 }
-/* Card Image Active - Invert effect
-.card:active img {
-  filter: invert(100%);
-} */
-/* Featured Flavor Cards - Gradient overlay */
+/* Featured Gradients */
 .card-img-overlay {
   background: linear-gradient(
     180deg,
@@ -1484,7 +1498,6 @@ textarea.form-control-lg{min-height:calc(1.5em + 1rem + calc(var(--bs-border-wid
   );
   transition: background 0.3s ease;
 }
-/* Featured Flavor Hover - Enhanced overlay */
 .card:hover .card-img-overlay {
   background: linear-gradient(
     180deg,
@@ -1492,7 +1505,7 @@ textarea.form-control-lg{min-height:calc(1.5em + 1rem + calc(var(--bs-border-wid
     rgba(0, 0, 0, 0.1) 100%
   );
 }
-/* Image Fluid - Animated effect */
+/* Hero Image Animations */
 .img-fluid {
   transition: all 0.3s ease;
   animation-name: slideDown;
@@ -1503,12 +1516,15 @@ textarea.form-control-lg{min-height:calc(1.5em + 1rem + calc(var(--bs-border-wid
 }
 .img-fluid:active {
   transform: scale(0.2);
-
-  animation-name: roShrink;
+  animation-name: roShrink; /* Fun spinning animation when clicked */
   animation-duration: 6s;
   animation-iteration-count: infinite;
 }
-/* Card Animations - Scroll-driven animation for modern browsers */
+/* 
+ * NOTE: Scroll Animations
+ * Uses modern CSS Scroll Timelines (Chrome/Edge) to make cards appear as you scroll.
+ * We fallback to standard animations for other browsers.
+ */
 @keyframes cardAppear {
   0% {
     opacity: 0;
@@ -1529,7 +1545,6 @@ textarea.form-control-lg{min-height:calc(1.5em + 1rem + calc(var(--bs-border-wid
     filter: blur(0);
   }
 }
-/* Scroll-driven properties (only work in Chrome/Edge/Android) */
 .card {
   view-timeline-name: --card-timeline;
   view-timeline-axis: block;
@@ -1538,29 +1553,33 @@ textarea.form-control-lg{min-height:calc(1.5em + 1rem + calc(var(--bs-border-wid
   animation-range: entry 30% cover 30%;
   transform-origin: center bottom;
 }
-/* Dynamic card animation delays */
+/* Staggering: Delays animation based on --card-index variable set by JS */
 .col .card {
   animation-delay: calc(var(--card-index, 0) * 200ms + 100ms);
 }
-/* Fallback: animate class for iOS Safari */
+/* Fallback for iOS/Safari (triggered by JS adding .animate class) */
 .card.animate {
   animation: cardAppear 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 /* ==========================================================================
-   5. Forms - Auth & Contact Form Styling
+   5. FORMS (Inputs & Validation)
    ========================================================================== */
-/* AUTH & CONTACT FORMS - focus and validation styling */
+/* Focus State: Glows Yellow (Warning Tone) */
 .auth-form .form-control:focus,
 #contactForm .form-control:focus {
   border-color: var(--bs-warning) !important;
-  box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.15) !important; /* warning tone */
+  box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.15) !important;
 }
-/* Form Labels - ensure visibility in all themes (global) */
+/* Labels */
 .form-label {
   color: var(--bs-emphasis-color) !important;
   font-weight: 500;
 }
-/* Dialog-specific form labels - white text for dialogs only */
+.form-label label {
+  display: block;
+  cursor: pointer;
+}
+/* Dialog Labels are White (because Dialog background is dark/blur) */
 #loginDialog .form-label,
 #signupDialog .form-label {
   margin-bottom: 0.25rem !important;
@@ -1569,11 +1588,7 @@ textarea.form-control-lg{min-height:calc(1.5em + 1rem + calc(var(--bs-border-wid
   font-size: 1rem;
   line-height: 1.2;
 }
-.form-label label {
-  display: block;
-  cursor: pointer;
-}
-/* invalid state should use danger color */
+/* Error States: Red Border */
 .auth-form .form-control.is-invalid,
 #contactForm .form-control.is-invalid {
   border-color: var(--bs-danger) !important;
@@ -1582,30 +1597,28 @@ textarea.form-control-lg{min-height:calc(1.5em + 1rem + calc(var(--bs-border-wid
 .invalid-feedback {
   color: var(--bs-danger) !important;
 }
-/* Contact container border */
+/* Contact Form container */
 .contact-card {
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 0.5rem;
   background: var(--bs-body-bg);
 }
 /* ==========================================================================
-   6. Animations - Keyframe animations for various elements
+   6. ANIMATION KEYFRAMES (The Mechanics)
    ========================================================================== */
-/* Slide Down Animation */
 @keyframes slideDown {
   0% {
     transform: translateY(0);
-    filter: blur(0); /* no blur at start */
+    filter: blur(0);
   }
   50% {
-    filter: blur(5px); /* blur in middle of motion */
+    filter: blur(5px);
   }
   100% {
     transform: translateY(100%);
-    filter: blur(0); /* sharp again at end */
+    filter: blur(0);
   }
 }
-/* Slide Up Animation */
 @keyframes slideUp {
   0% {
     transform: translateY(0);
@@ -1619,7 +1632,6 @@ textarea.form-control-lg{min-height:calc(1.5em + 1rem + calc(var(--bs-border-wid
     filter: blur(0);
   }
 }
-/* Rotate and Shrink Animation */
 @keyframes roShrink {
   0% {
     transform: scale(0.9) rotate(0deg);
@@ -1641,9 +1653,9 @@ textarea.form-control-lg{min-height:calc(1.5em + 1rem + calc(var(--bs-border-wid
   }
 }
 /* ==========================================================================
-   7. Additional Components - Pagination and other elements
+   7. EXTRAS & FONTS
    ========================================================================== */
-/* Pagination Links - Match navbar interaction style */
+/* Pagination Links (Match Navbar) */
 .page-link {
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   transform: scale(1);
@@ -1660,19 +1672,18 @@ textarea.form-control-lg{min-height:calc(1.5em + 1rem + calc(var(--bs-border-wid
   text-decoration: underline;
   background-color: transparent;
 }
-/* Disabled state should not have hover effects */
 .page-item.disabled .page-link {
   transform: none;
   text-decoration: none;
 }
-/* Selection styling for the entire system */
+/* Text Selection Color (Brand Identity) */
 ::-moz-selection {
-  background-color: #dae139;
+  background-color: #dae139; /* Lime Yellow */
 }
 ::selection {
-  background-color: #dae139;
+  background-color: #dae139; /* Lime Yellow */
 }
-/* fonts */
+/* Custom Fonts */
 @font-face {
   font-family: pix;
   src: url(./fonts/RubikPuddles-Regular.ttf);
@@ -1681,18 +1692,18 @@ textarea.form-control-lg{min-height:calc(1.5em + 1rem + calc(var(--bs-border-wid
   font-family: snymo;
   src: url(./fonts/SyneMono-Regular.ttf);
 }
+/* Typography Overrides */
 h1.display-4 {
-  font-family: pix; /* Replace with your desired font */
+  font-family: pix;
   font-weight: bolder;
   font-size: 60px;
   font-style: italic;
-  color: #0d6dfd;
+  color: #0d6dfd; /* Primary Blue */
   text-shadow: 0px 3px 5px #00000014;
 }
 h2.display-4 {
-  font-family: pix; /* Replace with your desired font */
+  font-family: pix;
   font-weight: bolder;
-  /* font-style: italic; */
   color: #0d6dfd;
   text-shadow: 0px 3px 5px #0000007c;
 }
@@ -1701,14 +1712,19 @@ p {
   color: var(--bs-secondary);
 }
 /* ==========================================================================
-   8. Dialogs - Modal Styling
+   8. DIALOGS (Modals)
    ========================================================================== */
-/* This targets the jQuery UI modal overlay (the darkened layer behind the dialog) */
+/* 
+ * NOTE: jQuery UI Customization
+ * Existing jQuery UI styles look dated (Gray boxes).
+ * We override them to look like modern Glass Modals.
+ */
+/* The Dark Backdrop */
 body .ui-widget-overlay {
   background-color: rgba(0, 0, 0, 0.2) !important;
   opacity: 1 !important;
 }
-/* Ensure dialog remains clear and focused */
+/* The Popup Window (Glass Effect) */
 .ui-dialog {
   box-shadow:
     12px 12px 80px #ffffff3b,
@@ -1719,20 +1735,19 @@ body .ui-widget-overlay {
   backdrop-filter: blur(9px) !important;
   -webkit-backdrop-filter: blur(9px) !important;
 }
-/* Ensure dialog content adjustments */
 .ui-dialog .ui-dialog-content {
   background: rgba(255, 255, 255, 0) !important;
 }
-/* Ensure dialog title bar remains clear */
+/* Title Bar (Blue Header) */
 .ui-dialog .ui-dialog-titlebar {
   background: #0d6dfd !important;
-  color: #d7df23 !important;
+  color: #d7df23 !important; /* Brand Yellow Text */
   font-size: large;
   text-shadow: 0px 1px 3px #ffffff;
   border-bottom: 1px solid #ffffff !important;
   border-radius: 3px !important;
 }
-/* Close button styling */
+/* Close Action (X Button) */
 .ui-dialog .ui-dialog-titlebar-close {
   background: rgb(255, 255, 255) !important;
   border: 1px solid #ffffff !important;
@@ -1743,12 +1758,17 @@ body .ui-widget-overlay {
   background: #ffca2c !important;
   transform: scale(1.1) !important;
 }
-/* ==========================================================================
-   Modal image overrides
-   Keep images inside the product modal static (disable global img animations).
-   Layout and spacing are handled by Bootstrap grid and utilities (no custom
-   modal sizing rules here).
-   ========================================================================== */
+/* Recolor the X symbol */
+.ui-dialog .ui-dialog-titlebar-close .ui-button-text {
+  color: #0d6dfd !important;
+  font-weight: bold !important;
+  font-size: 1.2rem !important;
+}
+/* 
+ * NOTE: Product Modal Overrides
+ * The product modal uses Bootstrap (not jQuery UI), so we style it separately 
+ * to match the glass theme.
+ */
 #productModal .img-fluid,
 #productModal img {
   animation: none !important;
@@ -1756,7 +1776,7 @@ body .ui-widget-overlay {
   transform: none !important;
   filter: none !important;
 }
-/* Glassmorphism / blurred backdrop for product modal & admin modals */
+/* Glass Theme for Bootstrap Modals */
 #productModal .modal-content,
 #userModal .modal-content,
 .glass-modal .modal-content {
@@ -1771,7 +1791,9 @@ body .ui-widget-overlay {
   -webkit-backdrop-filter: blur(10px);
   color: var(--bs-body-color);
   overflow: hidden;
+  animation: modalGlassIn 120ms ease-out; /* Gentle Pop-up */
 }
+/* Invisible Headers (Let content float) */
 #productModal .modal-header,
 #userModal .modal-header,
 .glass-modal .modal-header {
@@ -1784,7 +1806,6 @@ body .ui-widget-overlay {
   padding-top: 0.6rem;
   padding-bottom: 0.8rem;
 }
-/* Gentle entrance for the modal content */
 @keyframes modalGlassIn {
   from {
     transform: translateY(8px) scale(0.995);
@@ -1795,23 +1816,13 @@ body .ui-widget-overlay {
     opacity: 1;
   }
 }
-#productModal .modal-content,
-.glass-modal .modal-content {
-  animation: modalGlassIn 120ms ease-out;
-}
-/* Constrain the modal to approximately 7 Bootstrap columns on large screens */
+/* Responsive Sizing */
 @media (min-width: 992px) {
   .modal-lg-7col {
-    max-width: 70% !important; /* roughly 7 of 12 columns */
+    max-width: 70% !important;
   }
 }
-/* Target the existing X symbol */
-.ui-dialog .ui-dialog-titlebar-close .ui-button-text {
-  color: #0d6dfd !important; /* Change X color to match your blue theme */
-  font-weight: bold !important;
-  font-size: 1.2rem !important;
-}
-/* Sign up link in login dialog - match navbar link animation */
+/* Links inside Login Dialog (Sign Up) */
 #loginDialog a {
   transition: all 0.3s ease !important;
   transform: scale(1) !important;

@@ -1,4 +1,16 @@
 <?php
+
+/**
+ * File: order_success.php
+ * Description: Order confirmation / Receipt page.
+ * Flow:
+ * 1. Checks for a valid `order_id` in the URL query string.
+ * 2. Fetches order details from the database (`orders` and `order_items` tables).
+ * 3. SECURITY: Verifies that the logged-in user owns the order (or is Admin).
+ *    - If unauthorized, hides details and shows error.
+ * 4. Helper function `statusClassFor` maps order status (e.g., 'paid', 'pending') to Bootstrap colors.
+ * 5. Renders the receipt view.
+ */
 // order_success.php
 require_once __DIR__ . '/db/sopoppedDB.php';
 session_start();
@@ -8,13 +20,13 @@ $order = null;
 $items = [];
 $forbidden = false;
 if ($orderId > 0) {
-    // Fetch order and items
+    // DB FETCH: Get primary order info
     $stmt = $pdo->prepare('SELECT id, user_id, total_amount, status, payment_method, shipping_address, created_at FROM orders WHERE id = :id');
     $stmt->execute([':id' => $orderId]);
     $order = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($order) {
-        // Enforce that only the owning user (or admin) can view this order
+        // AUTH CHECK: Enforce that only the owning user (or admin) can view this order
         $currentUserId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
         $isAdmin = isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin';
         if (!$isAdmin && $order['user_id'] !== $currentUserId) {
@@ -23,6 +35,7 @@ if ($orderId > 0) {
             $items = [];
             $forbidden = true;
         } else {
+            // DB FETCH: Get purchased items for this order
             $it = $pdo->prepare('SELECT oi.product_id, oi.price_at_purchase, oi.quantity, p.name, p.image_path FROM order_items oi JOIN products p ON p.id = oi.product_id WHERE oi.order_id = :order_id');
             $it->execute([':order_id' => $orderId]);
             $items = $it->fetchAll(PDO::FETCH_ASSOC);
@@ -30,7 +43,7 @@ if ($orderId > 0) {
     }
 }
 
-// PHP version of statusClassFor
+// Helper: Returns Bootstrap class (e.g., 'bg-success') based on status string
 function statusClassFor($status)
 {
     if (!$status) return 'bg-secondary';

@@ -1,3 +1,11 @@
+<!-- 
+  Component: signup.php
+  Description: HTML fragment for the Registration Modal.
+  Flow:
+  1. Hidden initially; shown as a jQuery UI Dialog (see `js/authDialogs.js`).
+  2. Submits to `api/signup_submit.php` via AJAX (handled by `js/authHandlers.js`).
+  3. Includes validation fields for name, email, phone, and password confirmation.
+-->
 <!-- Signup dialog fragment (jQuery UI) -->
 <div id="signupDialog" title="Create an account" style="display:none; max-height: calc(100vh - 120px); overflow:auto;">
   <form method="POST" action="api/signup_submit.php" id="signupForm" novalidate>

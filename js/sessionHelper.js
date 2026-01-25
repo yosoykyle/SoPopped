@@ -1,51 +1,42 @@
 /**
  * =============================================================================
  * File: js/sessionHelper.js
- * Purpose: Centralized session info fetcher for the SoPopped application.
+ * Purpose: The "Identifier".
  * =============================================================================
  *
- * This small utility provides a single point of access to fetch session info
- * from the server. Other scripts call `window.sopoppedSession.fetchInfo()` to
- * check login status without duplicating fetch logic.
+ * NOTE:
+ * How does the website know "Who am I?"
  *
- * Exports (window.sopoppedSession):
- *   - fetchInfo(): Returns Promise<Object|null> with session data or null on error
- *
- * Usage Example:
- *   const session = await window.sopoppedSession.fetchInfo();
- *   if (session && session.logged_in) {
- *     console.log('User is logged in:', session.user_name);
- *   }
- *
- * Dependencies:
- *   - fetchHelper.js (sopoppedFetch.json)
- *   - jQuery (passed but not heavily used)
+ * This script is responsible for asking that question.
+ * It provides a single function `fetchInfo()` that calls our API (`session_info.php`).
+ * The rest of the app calls this to check if it should show "Log In" or "My Account".
  * =============================================================================
  */
 
 (function ($) {
   try {
-    // Initialize global namespace if not exists
+    // ---------------------------------------------------------------------------
+    // STEP 1: DEFINE NAMESPACE
+    // ---------------------------------------------------------------------------
+    // Create a safe place to store our function so we don't conflict with others.
     window.sopoppedSession = window.sopoppedSession || {};
 
     /**
-     * Fetch session info from server API.
-     * @returns {Promise<Object|null>} Session info object or null on error
-     *   - logged_in: boolean - Whether user is logged in
-     *   - user_id: number - User ID (if logged in)
-     *   - user_name: string - User's name (if logged in)
-     *   - user_email: string - User's email (if logged in)
+     * METHOD: fetchInfo
+     * Purpose: ask the server "Is anyone logged in?"
+     * Returns: A Promise (a future answer) containing the User Info or null.
      */
     window.sopoppedSession.fetchInfo = async function () {
       try {
+        // "Waiter, go ask the kitchen who is sitting at this table."
         return await window.sopoppedFetch
           .json("./api/session_info.php")
-          .catch(() => null);
+          .catch(() => null); // If error, assume nobody is home.
       } catch (e) {
         return null;
       }
     };
   } catch (e) {
-    // Silent fail - noop
+    // Silent fail protection
   }
 })(jQuery);

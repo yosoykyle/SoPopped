@@ -9,24 +9,23 @@
       </button>
     </div>
 
-  <div class="table-responsive">
-  <table
-    class="table table-hover table-striped-columns table-bordered border-warning align-middle"
-  >
-    <thead>
-      <tr>
-        <th>Product #</th>
-        <th>Image</th>
-        <th>Name</th>
-        <th>Price</th>
-        <th>Stock</th>
-        <th>Status</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody id="productsTableBody"></tbody>
-  </table>
-</div>
+    <div class="table-responsive">
+      <table
+        class="table table-hover table-striped-columns table-bordered border-warning align-middle">
+        <thead>
+          <tr>
+            <th>Product #</th>
+            <th>Image</th>
+            <th>Name</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="productsTableBody"></tbody>
+      </table>
+    </div>
 
   </div>
 </div>
@@ -207,8 +206,7 @@
 
         if (typeof sopoppedAdminUI !== "undefined") {
           sopoppedAdminUI.populateModalFromButton(
-            btn,
-            {
+            btn, {
               id: "productId",
               name: "productName",
               description: "productDesc",
@@ -227,7 +225,7 @@
                 prev.src = "../" + displayPath;
                 prev.classList.remove("d-none");
                 if (dropZoneText) dropZoneText.classList.add("d-none");
-                prev.onerror = function () {
+                prev.onerror = function() {
                   this.src = "../images/default.png";
                 };
               }
@@ -248,8 +246,7 @@
   async function deleteProduct(id) {
     try {
       const res = await sopoppedFetch.postJSON(
-        "../api/admin/delete_product.php",
-        {
+        "../api/admin/delete_product.php", {
           id,
         }
       );

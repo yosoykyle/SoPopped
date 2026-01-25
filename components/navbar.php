@@ -1,4 +1,13 @@
 <?php
+
+/**
+ * Component: navbar.php
+ * Description: The global navigation bar.
+ * Flow:
+ * 1. Starts/Resumes the PHP session to check login state.
+ * 2. Determines the current page (`basename($_SERVER['SCRIPT_NAME'])`) to highlight the active menu item.
+ * 3. Renders the logo, navigation links, and the User Dropdown (or Login button).
+ */
 // navbar.php - server-side navbar with active link highlighting
 if (session_status() === PHP_SESSION_NONE) {
   session_start();
@@ -47,7 +56,9 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
             </button>
             <ul class="dropdown-menu">
               <li><a class="dropdown-item" href="orders.php">Orders</a></li>
-              <li><hr class="dropdown-divider"></li>
+              <li>
+                <hr class="dropdown-divider">
+              </li>
               <li><a class="dropdown-item" href="#" onclick="logout()">Logout</a></li>
             </ul>
           </div>

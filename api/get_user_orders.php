@@ -3,21 +3,17 @@
 /**
  * =============================================================================
  * File: api/get_user_orders.php
- * Purpose: Retrieve order history for the logged-in user.
+ * Purpose: Fetch Order History with Details.
  * =============================================================================
  * 
- * Returns a JSON list of past orders including order details and order items.
+ * NOTE:
+ * Retrieving orders is tricky because the data is split across two tables:
+ *   1. `orders`: The main receipt (Total, Date, Status).
+ *   2. `order_items`: The specific products in that receipt.
  * 
- * Inputs (GET):
- *   - limit (optional): Max number of orders to return (default 10, max 100).
- * 
- * Logic:
- *   1. Auth check.
- *   2. Fetch orders from `orders` table (DESC by date).
- *   3. Collect Order IDs.
- *   4. Fetch associated items from `order_items` table.
- *   5. Merge items into order objects.
- *   6. Return combined JSON.
+ * We have to fetch the Orders first, collecting their IDs, 
+ * and then run a second query to get the Items for those IDs.
+ * Then we "Stitch" them together in PHP.
  * =============================================================================
  */
 
@@ -25,7 +21,9 @@ require_once __DIR__ . '/_helpers.php';
 sp_json_header();
 sp_ensure_session();
 
-// 1. Auth Check
+// -----------------------------------------------------------------------------
+// STEP 1: WHO ARE YOU?
+// -----------------------------------------------------------------------------
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     sp_json_response(['success' => false, 'error' => 'Not authenticated'], 401);
 }
@@ -33,12 +31,15 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 $userId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
 $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
 if ($limit <= 0) $limit = 10;
-if ($limit > 100) $limit = 100;
+if ($limit > 100) $limit = 100; // Safety cap
 
 require_once __DIR__ . '/../db/sopoppedDB.php';
 
 try {
-    // 2. Fetch Orders
+    // -----------------------------------------------------------------------------
+    // STEP 2: GET THE RECEIPTS (Orders Table)
+    // -----------------------------------------------------------------------------
+    // First, we find the main order records for this user.
     $stmt = $pdo->prepare('
         SELECT id, total_amount, status, payment_method, shipping_address, created_at 
         FROM orders 
@@ -51,14 +52,21 @@ try {
     $stmt->execute();
     $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // 3. Fetch Items for these orders
+    // -----------------------------------------------------------------------------
+    // STEP 3: GET THE ITEMS (Items Table)
+    // -----------------------------------------------------------------------------
+    // We need to know specific Order IDs to find the matching items.
     $orderIds = array_map(function ($r) {
         return (int)$r['id'];
     }, $orders);
+
     $itemsMap = [];
 
     if (count($orderIds) > 0) {
+        // Create a list of placeholders like "?, ?, ?" based on how many orders we found.
         $placeholders = implode(',', array_fill(0, count($orderIds), '?'));
+
+        // This query joins `order_items` with `products` so we can get the Product Name too.
         $itemSql = "
             SELECT oi.order_id, oi.product_id, oi.price_at_purchase, oi.quantity, p.name AS product_name
             FROM order_items oi
@@ -68,6 +76,7 @@ try {
         $itemStmt = $pdo->prepare($itemSql);
         $itemStmt->execute($orderIds);
 
+        // Group items by their Order ID so we can attach them later.
         while ($row = $itemStmt->fetch(PDO::FETCH_ASSOC)) {
             $oid = (int)$row['order_id'];
             if (!isset($itemsMap[$oid])) $itemsMap[$oid] = [];
@@ -80,14 +89,21 @@ try {
         }
     }
 
-    // 4. Assemble Response
+    // -----------------------------------------------------------------------------
+    // STEP 4: STITCH IT TOGETHER (Assemble)
+    // -----------------------------------------------------------------------------
+    // Loop through the main orders and attach the 'items' list we found.
     foreach ($orders as &$o) {
         $o['id'] = (int)$o['id'];
         $o['total_amount'] = (float)$o['total_amount'];
         $o['shipping_address'] = $o['shipping_address'] ? json_decode($o['shipping_address'], true) : null;
+        // Attach the items here!
         $o['items'] = isset($itemsMap[$o['id']]) ? $itemsMap[$o['id']] : [];
     }
 
+    // -----------------------------------------------------------------------------
+    // STEP 5: SERVE
+    // -----------------------------------------------------------------------------
     sp_json_response(['success' => true, 'orders' => $orders], 200);
 } catch (PDOException $e) {
     error_log("get_user_orders error: " . $e->getMessage());

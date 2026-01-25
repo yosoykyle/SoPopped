@@ -1,67 +1,51 @@
 /**
  * =============================================================================
  * File: js/cartPrefetch.js
- * Purpose: Prefetch product metadata and synchronize cart data on page load.
+ * Purpose: The "Initializer" (Startup Sync).
  * =============================================================================
  *
- * This module runs on page load to:
- *   1. Fetch all product metadata (id, name, price, quantity) for inventory checks
- *   2. Check if user is logged in
- *   3. If logged in, merge server cart with localStorage cart
+ * NOTE:
+ * When the page first loads, we have two urgent tasks:
+ *   1. Get Product Data: We need to know prices and stock levels immediately.
+ *   2. Check User: Are they logged in? If yes, we need to fetch their saved cart.
  *
- * This enables:
- *   - Real-time stock validation before adding to cart
- *   - Cart synchronization between devices for logged-in users
- *   - Guest cart → logged-in cart merge on login
- *
- * Global Variables Set:
- *   - window.__sopopped_products: Array of product metadata
- *
- * Events Dispatched:
- *   - 'sopopped-products-loaded': When products are fetched
- *   - 'sopopped-server-cart-loaded': When cart is merged from server
- *
- * Dependencies:
- *   - jQuery
- *   - fetchHelper.js (sopoppedFetch.json)
- *
- * API Endpoints Used:
- *   - GET ./api/db_products.php - Fetch all products
- *   - GET ./api/session_info.php - Check login status
- *   - GET ./api/cart_load.php - Load server cart
+ * This script runs immediately on page load to handle these "Setup" tasks.
+ * It ensures the Cart and Product Modals work correctly from the very first second.
  * =============================================================================
  */
 
 $(document).ready(function () {
   // ---------------------------------------------------------------------------
-  // 1. FETCH PRODUCT METADATA
+  // STEP 1: FETCH PRODUCTS (Stock & Price)
   // ---------------------------------------------------------------------------
+  // We need this data globally to validate any "Add to Cart" actions.
 
-  // Cache-bust URL to ensure fresh data
-  const url = "./api/db_products.php?t=" + Date.now();
+  const url = "./api/db_products.php?t=" + Date.now(); // Add timestamp to prevent stale cache
 
   const _productsRequest = window.sopoppedFetch.json(url);
 
   Promise.resolve(_productsRequest)
     .then(function (data) {
-      // Normalize API response to consistent product format
+      // 1. Process Data
       const rows = Array.isArray(data?.products) ? data.products : [];
+
+      // Simplify the data structure for easier use
       const mapped = rows.map((p) => ({
         id: p.id,
         name: p.name,
         price: typeof p.price !== "undefined" ? Number(p.price) : 0,
-        quantity: typeof p.quantity !== "undefined" ? Number(p.quantity) : 0,
+        quantity: typeof p.quantity !== "undefined" ? Number(p.quantity) : 0, // Stock Level
         image: p.image || p.image_path || "",
       }));
 
-      // Store globally for access by other scripts
+      // 2. Store Globally
       window.__sopopped_products = mapped;
 
-      // Notify other scripts that products are loaded
+      // 3. Announce "Ready"
       $(document).trigger("sopopped-products-loaded", { count: mapped.length });
 
       // -----------------------------------------------------------------------
-      // 2. CHECK SESSION AND MERGE CART IF LOGGED IN
+      // STEP 2: CHECK SESSION & SYNC CART
       // -----------------------------------------------------------------------
 
       const _sessionReq = window.sopoppedFetch.json("./api/session_info.php");
@@ -69,90 +53,79 @@ $(document).ready(function () {
       Promise.resolve(_sessionReq)
         .then(function (sess) {
           if (sess && sess.logged_in) {
-            // User is logged in - load and merge server cart
+            // User IS logged in. We must fetch their saved cart.
             const _cartLoad = window.sopoppedFetch.json("./api/cart_load.php");
 
             Promise.resolve(_cartLoad)
               .then(function (resp) {
                 if (resp && resp.success && Array.isArray(resp.cart)) {
                   try {
-                    // -----------------------------------------------------------
-                    // 3. MERGE STRATEGY: Combine local and server carts
-                    // - Server items take priority for metadata
-                    // - Local-only items are added to preserve guest cart
-                    // - Duplicate IDs are NOT summed (server wins)
-                    // -----------------------------------------------------------
+                    // ---------------------------------------------------------
+                    // STEP 3: SYNC STRATEGY
+                    // ---------------------------------------------------------
+                    // Goal: Combine Local items with Server items appropriately.
 
                     const localJson =
                       localStorage.getItem("sopopped_cart_v1") || "[]";
                     const local = JSON.parse(localJson) || [];
                     const server = resp.cart || [];
 
-                    // Use Map for O(1) lookups by ID
                     const map = new Map();
 
-                    // Add all server items first
+                    // A. Prioritize Server Items (Trusted Source)
                     server.forEach((it) => {
                       const id = String(it.id);
-                      const qty =
-                        Number(it.quantity ?? it.qty ?? it.qty ?? 0) || 0;
-                      map.set(
-                        id,
-                        Object.assign({}, it, {
-                          id: Number(id),
-                          quantity: qty,
-                        }),
-                      );
+                      map.set(id, {
+                        ...it,
+                        id: Number(id),
+                        quantity: Number(it.quantity || it.qty || 0),
+                      });
                     });
 
-                    // Add local-only items (don't overwrite server items)
+                    // B. Add Local Items (Only if they are new)
+                    // Note: Here we DO NOT sum duplicates. In startup sync, we assume server is master.
+                    // Summing usually happens during "Login Event", not "Page Load".
                     local.forEach((it) => {
-                      const idRaw = it.id ?? it.product_id ?? it.productId;
-                      if (idRaw === undefined || idRaw === null) return;
-                      const id = String(idRaw);
-                      const qty = Number(it.quantity ?? it.qty ?? 0) || 0;
+                      const id = String(it.id ?? it.product_id ?? it.productId);
+                      if (!id || id === "undefined") return;
+
                       if (!map.has(id)) {
-                        // Only add if not already in server cart
-                        map.set(
-                          id,
-                          Object.assign({}, it, {
-                            id: Number(id),
-                            quantity: qty,
-                          }),
-                        );
+                        map.set(id, {
+                          ...it,
+                          id: Number(id),
+                          quantity: Number(it.quantity || it.qty || 0),
+                        });
                       }
                     });
 
-                    // Convert map to array and save
+                    // C. Save Merged Result Locally
                     const merged = Array.from(map.values());
                     localStorage.setItem(
                       "sopopped_cart_v1",
                       JSON.stringify(merged),
                     );
 
-                    // Notify cart UI to refresh
-                    try {
-                      document.dispatchEvent(
-                        new CustomEvent("sopopped-server-cart-loaded", {
-                          detail: { count: merged.length },
-                        }),
-                      );
-                    } catch (e) {}
+                    // D. Update UI
+                    document.dispatchEvent(
+                      new CustomEvent("sopopped-server-cart-loaded", {
+                        detail: { count: merged.length },
+                      }),
+                    );
                   } catch (e) {
-                    console.warn("Failed to merge carts", e);
+                    console.warn("Sync logic failed", e);
                   }
                 }
               })
               .catch(function (err) {
-                console.warn("[cartPrefetch] Failed to load saved cart", err);
+                console.warn("Failed to load saved cart", err);
               });
           }
         })
         .catch(function (err) {
-          console.warn("[cartPrefetch] Failed to fetch session info", err);
+          /* Not logged in or network error, ignore */
         });
     })
     .catch(function (err) {
-      console.warn("[cartPrefetch] Failed to load product metadata", err);
+      console.warn("Failed to load products", err);
     });
 });

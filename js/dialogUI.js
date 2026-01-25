@@ -1,18 +1,17 @@
 /**
  * =============================================================================
  * File: js/dialogUI.js
- * Purpose: Handles dialog sizing, positioning, and option factory.
+ * Purpose: The "Architect" for Pop-up Windows.
  * =============================================================================
  *
- * This utility provides helper functions for configuring jQuery UI dialogs to
- * be responsive and consistently styled across the application.
+ * NOTE:
+ * Managing popups (Modals/Dialogs) is tricky because screens come in different sizes.
+ * If a popup is too tall, the "Close" button might be off-screen.
  *
- * Exports (window.dialogUI):
- *   - dialogMaxHeightOffset(): Calculate max height based on viewport
- *   - dialogOptions(width): Factory for standard dialog config object
- *
- * Dependencies:
- *   - jQuery UI (implied usage for options)
+ * This file acts as an Architect. It calculates:
+ *   1. Max Height: "How tall can I be without covering user controls?"
+ *   2. Width: "Fit the content, but don't overflow mobile screens."
+ *   3. Position: "Open in the center, but respect the Navbar."
  * =============================================================================
  */
 
@@ -23,37 +22,42 @@
   window.dialogUI = window.dialogUI || {};
 
   /**
-   * Calculate maximum height for dialogs relative to viewport.
-   * Ensures dialog doesn't cover navbar or overflow bottom.
-   * @returns {number} Pixel offset to subtract from window height
+   * METHOD: dialogMaxHeightOffset
+   * Purpose: Calculate safe space from top.
+   * Logic: Measure the Navigation Bar + some breathing room.
    */
   window.dialogUI.dialogMaxHeightOffset = function () {
     const nav = document.querySelector(".navbar");
     const navHeight = nav ? nav.getBoundingClientRect().height : 0;
+    // Always leave at least 120px or (Nav + 40px), whichever is bigger.
     return Math.max(120, navHeight + 40);
   };
 
   /**
-   * Generate standard configuration object for jQuery UI Dialog.
-   * @param {number} width - Desired dialog width (max constrained by viewport)
-   * @returns {Object} jQuery UI Dialog options object
+   * METHOD: dialogOptions
+   * Purpose: Generate the Blueprints (Options Object) for a new Dialog.
+   * Inputs: Desired width.
+   * Outputs: A configuration object for jQuery UI.
    */
   window.dialogUI.dialogOptions = function (width) {
+    // Determine screen limits
     const maxH = window.innerHeight - window.dialogUI.dialogMaxHeightOffset();
+
     const opts = {
-      autoOpen: false,
-      modal: true,
-      width: Math.min(width, window.innerWidth - 40),
+      autoOpen: false, // Don't show immediately
+      modal: true, // "Grey out" the background
+      width: Math.min(width, window.innerWidth - 40), // Responsive width
       height: "auto",
-      maxHeight: maxH,
+      maxHeight: maxH, // Enforce height limit
       draggable: true,
       resizable: true,
       classes: {
         "ui-dialog": "rounded-3",
         "ui-widget-overlay": "custom-overlay",
       },
-      // Reposition on open to account for navbar
+      // Event: When opening...
       open: function () {
+        // ...Push it down below the Navbar so it's not hidden.
         const nav = document.querySelector(".navbar");
         const topOffset = nav ? nav.getBoundingClientRect().height + 10 : 10;
         try {
@@ -71,6 +75,6 @@
     return opts;
   };
 
-  // BACKWARDS COMPATIBILITY (Temporary alias)
+  // BACKWARDS COMPATIBILITY
   window.uiHelpers = window.dialogUI;
 })();

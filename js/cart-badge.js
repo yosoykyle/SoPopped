@@ -1,55 +1,43 @@
 /**
  * =============================================================================
  * File: js/cart-badge.js
- * Purpose: Updates the navbar cart badge count on load and when cart changes.
+ * Purpose: The "Messenger" (UI Updates).
  * =============================================================================
  *
- * This small utility keeps the cart item count in the navbar in sync with
- * the actual cart contents. It listens for 'cart-changed' events and updates
- * the badge accordingly.
+ * NOTE:
+ * When you add an item to the cart, the little number in the corner (Badge)
+ * needs to change immediately. It feels broken if it doesn't.
  *
- * Exports: None (self-executing, attaches event listeners)
- *
- * Dependencies:
- *   - jQuery
- *   - cart.js (optional, uses sopoppedCart.getCount if available)
- *
- * Event Listeners:
- *   - DOMContentLoaded: Initial badge update
- *   - cart-changed: Updates badge when cart is modified
+ * This script blindly listens for the "cart-changed" event.
+ * It doesn't care *how* the cart changed, or *what* is in it.
+ * It just asks: "What is the new number?" and paints it.
  * =============================================================================
  */
 
 (function ($) {
   // ---------------------------------------------------------------------------
-  // 1. BADGE UPDATE FUNCTION
+  // STEP 1: PAINTING THE BADGE
   // ---------------------------------------------------------------------------
 
-  /**
-   * Update the cart badge text with the item count.
-   * @param {number} count - Number of items in cart
-   */
   function updateBadge(count) {
+    // Find the element with class .flavorCoutCart (The Badge)
     $(".flavorCoutCart").text(String(count || 0));
   }
 
   // ---------------------------------------------------------------------------
-  // 2. CART COUNT REFRESH
+  // STEP 2: ASKING "HOW MANY?"
   // ---------------------------------------------------------------------------
 
-  /**
-   * Refresh the badge by reading current cart count.
-   * Uses sopoppedCart API if available, otherwise reads from localStorage.
-   */
   function refresh() {
-    // Try to use the cart API if it's loaded
+    // Option A: Ask the Cart Manager directly (Preferred)
     if (
       window.sopoppedCart &&
       typeof window.sopoppedCart.getCount === "function"
     ) {
       updateBadge(window.sopoppedCart.getCount());
-    } else {
-      // Fallback: read directly from localStorage
+    }
+    // Option B: Peek into the browser's storage (Fallback)
+    else {
       try {
         const items = JSON.parse(
           localStorage.getItem("sopopped_cart_v1") || "[]",
@@ -62,22 +50,26 @@
   }
 
   // ---------------------------------------------------------------------------
-  // 3. EVENT LISTENERS
+  // STEP 3: LISTENING FOR SIGNALS
   // ---------------------------------------------------------------------------
 
   $(function () {
-    // Initial badge update on page load
+    // 1. On Load: Paint the initial number
     refresh();
 
-    // Listen for cart-changed events (dispatched by cart.js)
+    // 2. On Change: Listen for the shout "cart-changed"!
     $(document).on("cart-changed", (e) => {
+      // Did the shouter tell us the new number?
       const c =
         e && e.detail && typeof e.detail.count === "number"
           ? e.detail.count
           : null;
-      // If event includes count, use it; otherwise refresh from source
-      if (c !== null) updateBadge(c);
-      else refresh();
+
+      if (c !== null) {
+        updateBadge(c); // Yes, use it.
+      } else {
+        refresh(); // No, go check manually.
+      }
     });
   });
 })(jQuery);

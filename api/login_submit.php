@@ -3,22 +3,17 @@
 /**
  * =============================================================================
  * File: api/login_submit.php
- * Purpose: Handle user login requests.
+ * Purpose: Authenticate a user and start a session.
  * =============================================================================
  * 
- * Supports both AJAX (JSON response) and classic form submission (Redirect).
+ * NOTE:
+ * This script is the "Doorway" to the site.
+ * It has one job: Prove the user is who they say they are.
  * 
- * Logic:
- *   1. Validate inputs (email/password).
- *   2. Fetch user from DB.
- *   3. Check if account is archived.
- *   4. Verify password hash.
- *   5. Set session variables.
- *   6. Return JSON or Redirect based on request type.
- * 
- * Response (AJAX):
- *   { "success": true, "user": {...}, "redirect": "..." }
- *   { "success": false, "error": "..." }
+ * Process:
+ *   1. Check if the email exists.
+ *   2. Check if the password matches the "Hash" (encrypted version).
+ *   3. If yes, give them a "Session Badge" (Cookie) so they stay logged in.
  * =============================================================================
  */
 
@@ -28,19 +23,26 @@ require_once __DIR__ . '/../db/sopoppedDB.php';
 sp_ensure_session();
 $isAjax = sp_is_ajax_request();
 
-// 1. Method Check
+// -----------------------------------------------------------------------------
+// STEP 1: METHOD CHECK
+// -----------------------------------------------------------------------------
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     if ($isAjax) sp_json_response(['success' => false, 'error' => 'Method not allowed'], 405);
     header('Location: ../home.php?login_result=error&login_message=Method not allowed');
     exit;
 }
 
-// 2. Input Gathering
+// -----------------------------------------------------------------------------
+// STEP 2: GATHER INPUTS
+// -----------------------------------------------------------------------------
 $email = trim($_POST['email'] ?? '');
 $password = $_POST['password'] ?? '';
 $errors = [];
 
-// 3. Validation
+// -----------------------------------------------------------------------------
+// STEP 3: BASIC VALIDATION
+// -----------------------------------------------------------------------------
+// Ensure fields aren't empty before bothering the database.
 if (empty($email)) {
     $errors[] = 'Email is required';
 } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -58,7 +60,10 @@ if (!empty($errors)) {
 }
 
 try {
-    // 4. User Lookup
+    // -----------------------------------------------------------------------------
+    // STEP 4: FIND THE USER
+    // -----------------------------------------------------------------------------
+    // ask the database: "Do you have anyone with this email?"
     $stmt = $pdo->prepare("SELECT id, email, password_hash, first_name, last_name, phone, role, is_archived FROM users WHERE email = ? LIMIT 1");
     $stmt->execute([$email]);
     $user = $stmt->fetch();
@@ -70,7 +75,10 @@ try {
         exit;
     }
 
-    // 5. Status Check (Archived)
+    // -----------------------------------------------------------------------------
+    // STEP 5: CHECK STATUS
+    // -----------------------------------------------------------------------------
+    // Even if they exist, are they allowed in? (e.g. Banned or Deleted accounts)
     $isArchived = isset($user['is_archived']) ? (int)$user['is_archived'] : 0;
     if ($isArchived) {
         $msg = 'This account has been deactivated. Please contact support to reactivate your account.';
@@ -79,7 +87,11 @@ try {
         exit;
     }
 
-    // 6. Password Verification
+    // -----------------------------------------------------------------------------
+    // STEP 6: VERIFY PASSWORD
+    // -----------------------------------------------------------------------------
+    // Compare the typed password with the "Hash" stored in the database.
+    // We use password_verify() because it handles the specialized encryption rules.
     if (!password_verify($password, $user['password_hash'])) {
         $msg = 'Invalid email or password';
         if ($isAjax) sp_json_response(['success' => false, 'error' => $msg], 200);
@@ -87,14 +99,21 @@ try {
         exit;
     }
 
-    // 7. Session Setup (Success)
+    // -----------------------------------------------------------------------------
+    // STEP 7: START SESSION (The Badge)
+    // -----------------------------------------------------------------------------
+    // Success! Store their info in the server's memory ($_SESSION).
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['user_email'] = $user['email'];
     $_SESSION['user_name'] = $user['first_name'] . ' ' . $user['last_name'];
     $_SESSION['user_role'] = $user['role'];
     $_SESSION['logged_in'] = true;
 
-    // 8. Response
+    // -----------------------------------------------------------------------------
+    // STEP 8: RESPOND
+    // -----------------------------------------------------------------------------
+    // Tell the frontend where to go next (Admin Dashboard or Home).
+
     $userInfo = [
         'id' => (int)$user['id'],
         'email' => $user['email'],
@@ -102,10 +121,7 @@ try {
         'role' => $user['role'] ?? 'customer'
     ];
 
-    // Determine target URL
-    // JSON redirect path is relative to frontend root
     $jsonRedirectUrl = ($user['role'] === 'admin') ? 'admin/dashboard.php' : 'home.php';
-    // Header redirect path is relative to current file (api/)
     $headerRedirectUrl = ($user['role'] === 'admin') ? '../admin/dashboard.php' : '../home.php';
 
     $successMsg = 'Welcome back, ' . $user['first_name'] . '!';

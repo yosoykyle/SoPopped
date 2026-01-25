@@ -1,32 +1,25 @@
 /**
  * =============================================================================
  * File: js/loadComponents.js
- * Purpose: Dynamic loading of optional UI dependencies (jQuery UI).
+ * Purpose: The "Loader" (Optimization).
  * =============================================================================
  *
- * This utility handles the lazy loading of heavy libraries like jQuery UI and
- * jQuery Validate. It ensures they are only loaded when needed, improving
- * initial page load performance.
+ * NOTE:
+ * Heavy scripts (like the Popup system) slow down the initial page load.
+ * We don't need them immediately.
  *
- * Features:
- *   - Checks if defined checkVar exists before loading
- *   - Returns Promise that resolves when loaded
- *   - Dispatches 'jquery-ui-loaded' event
- *   - Includes CSS loading helper
- *
- * Exports:
- *   - loadScript(url, checkVar)
- *   - loadStyle(url)
- *   - loadJqueryUI() - Main entry point
+ * This script is a "Lazy Loader".
+ * It waits until the page is ready, or until we need it, before fetching
+ * heavier files like jQuery UI. This makes the site feel faster.
  * =============================================================================
  */
 
+// Helper: Fetch a script file only if we haven't already.
 function loadScript(url, checkVar) {
   return new Promise((resolve, reject) => {
-    if (checkVar && window[checkVar]) return resolve(); // Already loaded
+    if (checkVar && window[checkVar]) return resolve(); // Already got it!
 
-    // Check if script tag already exists
-    if (document.querySelector(`script[src="${url}"]`)) return resolve();
+    if (document.querySelector(`script[src="${url}"]`)) return resolve(); // Already asking for it!
 
     const script = document.createElement("script");
     script.src = url;
@@ -36,6 +29,7 @@ function loadScript(url, checkVar) {
   });
 }
 
+// Helper: Fetch a CSS file.
 function loadStyle(url) {
   if (document.querySelector(`link[href="${url}"]`)) return;
   const link = document.createElement("link");
@@ -44,18 +38,22 @@ function loadStyle(url) {
   document.head.appendChild(link);
 }
 
-// Main loader function
+// ---------------------------------------------------------------------------
+// MAIN LOADER
+// ---------------------------------------------------------------------------
 function loadJqueryUI() {
   loadStyle("./node_modules/jquery-ui/dist/themes/base/jquery-ui.css");
 
-  // Helper to check deep existence
+  // Check what we already have
   const hasUI = window.jQuery && window.jQuery.ui;
   const hasValidate =
     window.jQuery && window.jQuery.fn && window.jQuery.fn.validate;
 
-  // Chain: Load UI -> Load Validate -> Dispatch
+  // A "Promise Chain" ensures order:
+  // 1. Load jQuery UI... THEN
+  // 2. Load Validation... THEN
+  // 3. Announce "We are Ready!".
 
-  // 1. Load UI (if missing)
   let uiPromise = Promise.resolve();
   if (!hasUI) {
     uiPromise = loadScript(
@@ -66,7 +64,7 @@ function loadJqueryUI() {
 
   return uiPromise
     .then(() => {
-      // 2. Load Validate (if missing)
+      // Step 2
       if (!hasValidate && (!window.jQuery || !window.jQuery.fn.validate)) {
         return loadScript(
           "./node_modules/jquery-validation/dist/jquery.validate.min.js",
@@ -76,11 +74,11 @@ function loadJqueryUI() {
       return Promise.resolve();
     })
     .then(() => {
-      // 3. Dispatch ready event
+      // Step 3: Broadcast event for other scripts (like authDialogs.js) to listen for.
       document.dispatchEvent(new Event("jquery-ui-loaded"));
     })
     .catch((err) => console.error("Failed to load components", err));
 }
 
-// Auto-load on page load (can be deferred if strictly needed)
+// Auto-run when the DOM is ready.
 document.addEventListener("DOMContentLoaded", loadJqueryUI);

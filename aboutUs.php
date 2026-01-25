@@ -1,3 +1,11 @@
+<!-- 
+  File: aboutUs.php
+  Description: The "About Us" page telling the brand story and providing a contact form.
+  Flow:
+  1. Displays the brand story and philosophy ("Flavor Has No Borders").
+  2. Renders a Contact Form that submits data to `api/contact_submit.php`.
+  3. Includes validation/success logic (handled by `js/validation.js` via `authHandlers` or similar).
+-->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -26,6 +34,10 @@
   <!-- NAV (server-side include) -->
   <?php include_once __DIR__ . '/components/navbar.php'; ?>
   <main>
+    <!-- 
+      SECTION: Our Story
+      - Static content telling the narrative of the brand.
+    -->
     <section class="py-5 border-bottom pb-2">
       <div class="container pt-5 mt-5">
         <div class="row align-items-center g-4">
@@ -76,6 +88,11 @@
     <section class="px-2">
       <div class="container contact-card pt-4 mt-2 pb-4">
         <h2 class="display-4 text-center">Contact Us</h2>
+        <!-- 
+          FORM: Contact Form
+          - Submits to `api/contact_submit.php`.
+          - Validation handled by jQuery Validate (see `js/validation.js`).
+        -->
         <form method="POST" action="./api/contact_submit.php" id="contactForm" class="auth-form" novalidate>
           <div class="row">
             <div class="col-lg-6">

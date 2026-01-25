@@ -3,21 +3,16 @@
 /**
  * =============================================================================
  * File: api/signup_submit.php
- * Purpose: Handle new user registration.
+ * Purpose: Create a completely new user account.
  * =============================================================================
  * 
- * Supports both AJAX (JSON) and Form (Redirect) responses.
- * 
- * Logic:
- *   1. Validate inputs (required fields, password match, etc).
- *   2. Check if email already exists (including archived checks).
- *   3. Hash password.
- *   4. Insert new user into database.
- *   5. Return success message.
- * 
- * Response (AJAX):
- *   { "success": true, "user": {...}, "message": "..." }
- *   { "success": false, "error": "..." }
+ * NOTE:
+ * Registration is about "Onboarding".
+ * We need to:
+ *   1. Clean the input (Sanitize).
+ *   2. Ensure the email is unique (Reference data).
+ *   3. Protect the password (Hash).
+ *   4. Save the new record (Insert).
  * =============================================================================
  */
 
@@ -27,23 +22,30 @@ require_once __DIR__ . '/../db/sopoppedDB.php';
 sp_ensure_session();
 $isAjax = sp_is_ajax_request();
 
-// 1. Method Check
+// -----------------------------------------------------------------------------
+// STEP 1: METHOD CHECK
+// -----------------------------------------------------------------------------
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     if ($isAjax) sp_json_response(['success' => false, 'error' => 'Method not allowed'], 405);
     header('Location: ../home.php?signup_result=error&signup_message=Method not allowed');
     exit;
 }
 
-// 2. Input Retrieval
+// -----------------------------------------------------------------------------
+// STEP 2: GATHER INFO
+// -----------------------------------------------------------------------------
 $name = trim($_POST['name'] ?? '');
 $middle = trim($_POST['middle'] ?? '');
 $last = trim($_POST['last'] ?? '');
-$email = strtolower(trim($_POST['email'] ?? ''));
+$email = strtolower(trim($_POST['email'] ?? '')); // Emails are always lowercase for consistency
 $phone = trim($_POST['phone'] ?? '');
 $password = $_POST['password'] ?? '';
 $password2 = $_POST['password2'] ?? '';
 
-// 3. Validation
+// -----------------------------------------------------------------------------
+// STEP 3: VALIDATION
+// -----------------------------------------------------------------------------
+// Check for empty fields and password strength rules.
 $errors = [];
 if (empty($name)) $errors[] = 'First name is required';
 if (empty($last)) $errors[] = 'Last name is required';
@@ -74,14 +76,17 @@ if (!empty($errors)) {
 }
 
 try {
-    // 4. Duplicate Check
+    // -----------------------------------------------------------------------------
+    // STEP 4: DUPLICATE CHECK
+    // -----------------------------------------------------------------------------
+    // We cannot have two users with the same email.
     $stmt = $pdo->prepare("SELECT id, is_archived FROM users WHERE email = ? LIMIT 1");
     $stmt->execute([$email]);
     $existing = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($existing) {
         $msg = !empty($existing['is_archived'])
-            ? 'An archived account already exists with this email. Creating a new account with the same email is not allowed.'
+            ? 'An archived account already exists with this email.'
             : 'An account with this email already exists';
 
         if ($isAjax) sp_json_response(['success' => false, 'error' => $msg], 409);
@@ -89,8 +94,15 @@ try {
         exit;
     }
 
-    // 5. Create User
+    // -----------------------------------------------------------------------------
+    // STEP 5: SECURE THE PASSWORD
+    // -----------------------------------------------------------------------------
+    // NEVER save plain text passwords. We turn "password123" into "$2y$10$..."
     $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+
+    // -----------------------------------------------------------------------------
+    // STEP 6: CREATE THE USER
+    // -----------------------------------------------------------------------------
     $stmt = $pdo->prepare("
         INSERT INTO users (email, password_hash, first_name, middle_name, last_name, phone, role) 
         VALUES (?, ?, ?, ?, ?, ?, 'customer')
@@ -108,7 +120,9 @@ try {
     $userId = $pdo->lastInsertId();
     $fullName = trim($name . ' ' . ($middle ?? '') . ' ' . $last);
 
-    // 6. Response
+    // -----------------------------------------------------------------------------
+    // STEP 7: DONE
+    // -----------------------------------------------------------------------------
     $successMsg = 'Account created successfully! You can now log in.';
     if ($isAjax) {
         sp_json_response([

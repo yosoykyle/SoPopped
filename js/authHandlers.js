@@ -1,32 +1,18 @@
 /**
  * =============================================================================
  * File: js/authHandlers.js
- * Purpose: Authentication handlers for login, signup, checkout, and user checks.
+ * Purpose: The "Brain" of Authentication.
  * =============================================================================
  *
- * This consolidated module manages all authentication-related form submissions
- * and interactions. It interacts with the backend APIs for user management
- * and integrates closely with the shopping cart to merge guest/user carts.
+ * NOTE:
+ * While `authDialogs.js` handles the "Looks", this file handles the "Thinking".
  *
- * Key Functionalities:
- *   1. User Existence Check: Verifies if email exists (for both login & signup).
- *   2. Login Handler: authenticates user, merges cart, and updates session UI.
- *   3. Signup Handler: creates new user, handles duplicate checks, auto-opens login.
- *   4. Checkout Handler: requires auth for checkout, submits order, clears cart.
+ * It answers questions like:
+ *   1. "Is this email already taken?" (User Check)
+ *   2. "What happens when they click Login?" (Submit Handler)
+ *   3. "How do we move their guest cart to their account?" (Cart Merge)
  *
- * Exports (window.sopoppedAuth):
- *   - checkUserExists(email, cb, opts)
- *   - waitForSessionReady(timeout, interval)
- *   - mergeCartAfterLoginAndUpdateUI()
- *   - createLoginSubmitHandler(opts)
- *   - createSignupSubmitHandler(opts)
- *   - createCheckoutSubmitHandler(opts)
- *
- * Dependencies:
- *   - fetchHelper.js (sopoppedFetch) - For API calls
- *   - sessionHelper.js (sopoppedSession) - For session status
- *   - validation.js (validationUI) - For showing error messages
- *   - cart.js (via localStorage 'sopopped_cart_v1')
+ * It connects the Forms to the API.
  * =============================================================================
  */
 
@@ -37,40 +23,24 @@
   window.sopoppedAuth = window.sopoppedAuth || {};
 
   // ==========================================================================
-  // PART 1: USER CHECK UTILITIES
+  // PART 1: PRE-FLIGHT CHECKS (User Existence)
   // ==========================================================================
 
   /**
-   * Check whether an email exists on the server and update field attributes.
-   * Used by both Login (to warn if not found) and Signup (to warn if exists).
-   *
-   * @param {string} email - Email address to check
-   * @param {function} cb - Callback function ({exists, is_archived})
-   * @param {object} opts - { $field, $form, context: 'login'|'signup' }
+   * ACTION: Check User Exists
+   * Purpose: Before they even click submit, tell them if the email is valid/invalid.
+   * Usage: Called when user tabs out of the email field.
    */
   window.sopoppedAuth.checkUserExists = function (email, cb, opts) {
     opts = opts || {};
     const $field = opts.$field || $(opts.selector || "#loginEmail");
     const $form =
       opts.$form || ($field && $field.closest ? $field.closest("form") : null);
-
     const context = opts.context || "login";
 
-    // Reset state if email is empty
-    if (!email) {
-      if ($field && $field.length) {
-        $field.data("exists", undefined);
-        $field.data("archived", undefined);
-      }
-      if ($form && $form.length) {
-        if (window.validationUI && window.validationUI.hideValidateMsg)
-          window.validationUI.hideValidateMsg($form);
-      }
-      if (typeof cb === "function") cb({});
-      return;
-    }
+    if (!email) return; // Don't check empty strings
 
-    // Check against API
+    // Ask the API
     const _checkUserExistsFetcher = window.sopoppedFetch.postForm(
       "./api/check_user_exists.php",
       new URLSearchParams({ email: email }),
@@ -81,193 +51,123 @@
         try {
           const exists =
             json && typeof json.exists === "boolean" ? json.exists : undefined;
-          const archived =
-            json && typeof json.is_archived !== "undefined"
-              ? !!json.is_archived
-              : false;
+          const archived = json && !!json.is_archived;
 
-          // Update data attributes on field for synchronous validation later
+          // Save the answer on the field itself (data attribute) so we can check it later instantly
           if (exists === true) {
-            if ($field && $field.length) {
-              $field.data("exists", true);
-              $field.data("archived", archived);
-            }
-            // Show inline warnings based on context
+            $field.data("exists", true);
+
+            // FEEDBACK: Signup (Bad) vs Login (Goodish)
             if (context === "signup") {
-              if (window.validationUI && window.validationUI.showValidateMsg) {
+              // If signing up, existence is BAD.
+              if (window.validationUI)
                 window.validationUI.showValidateMsg(
                   $form,
-                  archived
-                    ? "This email belongs to an archived account."
-                    : "An account already exists with that email.",
+                  archived ? "Archived account." : "Email already exists.",
                   "danger",
                 );
-              }
             } else if (context === "login" && archived) {
-              if (window.validationUI && window.validationUI.showValidateMsg) {
+              if (window.validationUI)
                 window.validationUI.showValidateMsg(
                   $form,
-                  "This account has been deactivated.",
+                  "Account deactivated.",
                   "danger",
                 );
-              }
             }
           } else {
-            // User does not exist
-            if ($field && $field.length) {
-              $field.data("exists", false);
-              $field.data("archived", false);
-            }
+            // User does nota exist
+            $field.data("exists", false);
             if (context === "login") {
-              if (window.validationUI && window.validationUI.showValidateMsg) {
+              // If logging in, non-existence is BAD.
+              if (window.validationUI)
                 window.validationUI.showValidateMsg(
                   $form,
-                  "No account found with that email address.",
+                  "No account found.",
                   "danger",
                 );
-              }
             } else {
-              if (window.validationUI && window.validationUI.hideValidateMsg)
+              // If signing up, non-existence is GOOD. Hide errors.
+              if (window.validationUI)
                 window.validationUI.hideValidateMsg($form);
             }
           }
         } catch (e) {
-          console.warn("check_user_exists processing failed", e);
+          console.warn("check_user_exists failed", e);
         }
         if (typeof cb === "function") cb(json || {});
       })
       .catch((err) => {
-        // Fail silently but clear flags
-        if ($field && $field.length) {
-          $field.data("exists", undefined);
-          $field.data("archived", undefined);
-        }
         if (typeof cb === "function") cb({});
       });
   };
 
   // ==========================================================================
-  // PART 2: LOGIN & CART MERGE LOGIC
+  // PART 2: THE MERGE (Guest -> User)
   // ==========================================================================
 
-  // --- Cart Data Helpers ---
-  function _getLocalCartArray() {
-    try {
-      const arr = JSON.parse(localStorage.getItem("sopopped_cart_v1") || "[]");
-      return Array.isArray(arr) ? arr : [];
-    } catch (e) {
-      return [];
-    }
-  }
-
-  function _setLocalCartArray(arr) {
-    try {
-      localStorage.setItem(
-        "sopopped_cart_v1",
-        JSON.stringify(Array.isArray(arr) ? arr : []),
-      );
-    } catch (e) {}
-  }
-
-  function _itemId(it) {
-    if (!it) return null;
-    return it.id || it.product_id || it.productId || null;
-  }
-
-  function _itemQty(it) {
-    return Number(it.quantity ?? it.qty ?? it.qt ?? 0) || 0;
-  }
-
-  // --- API Helpers ---
-  async function _fetchServerCart() {
-    const resp = await window.sopoppedFetch
-      .request("./api/cart_load.php", { method: "GET" })
-      .catch(() => null);
-    if (!resp || !resp.ok) return [];
-    const j = resp.json;
-    if (j && j.success && Array.isArray(j.cart)) return j.cart;
-    return [];
-  }
-
-  async function _saveServerCartArray(arr) {
-    return await window.sopoppedFetch
-      .postJSON("./api/cart_save.php", arr || [])
-      .catch(() => null);
-  }
+  // NOTE:
+  // This is a complex but crucial feature.
+  // If a guest adds items to their cart, THEN logs in, we shouldn't lose those items.
+  // We must "Merge" them with whatever is saved in their account.
 
   /**
-   * Poll for session to be ready (useful after login before redirect).
-   */
-  async function waitForSessionReady(timeout = 2000, interval = 200) {
-    const start = Date.now();
-    while (Date.now() - start < timeout) {
-      const si = await window.sopoppedSession.fetchInfo();
-      if (si && si.logged_in) return true;
-      await new Promise((r) => setTimeout(r, interval));
-    }
-    return false;
-  }
-  window.sopoppedAuth.waitForSessionReady = waitForSessionReady;
-
-  /**
-   * Merge local cart with server cart. Sums quantities for duplicates.
-   * @private
-   */
-  function _mergeCartsSumming(localArr, serverArr) {
-    const map = new Map();
-    // Add server items first
-    (serverArr || []).forEach((it) => {
-      const id = String(_itemId(it));
-      if (!id) return;
-      const qty = _itemQty(it);
-      map.set(id, Object.assign({}, it, { id: Number(id), quantity: qty }));
-    });
-    // Merge local items
-    (localArr || []).forEach((it) => {
-      const id = String(_itemId(it));
-      if (!id) return;
-      const qty = _itemQty(it);
-      if (map.has(id)) {
-        const existing = map.get(id);
-        existing.quantity += qty;
-        map.set(id, existing);
-      } else {
-        map.set(id, Object.assign({}, it, { id: Number(id), quantity: qty }));
-      }
-    });
-    return Array.from(map.values());
-  }
-
-  /**
-   * Core Post-Login Handler: Merges carts and updates UI.
-   * Called by login handler and successful logins.
+   * LOGIC: Merge Carts
+   * 1. Get Local Cart (Guest)
+   * 2. Get Server Cart (Saved Account)
+   * 3. Combine them (Sum quantities: 2 Guest + 1 Saved = 3 Total)
+   * 4. Save back to Server
+   * 5. Update Local Storage
    */
   async function mergeCartAfterLoginAndUpdateUI() {
     try {
-      const local = _getLocalCartArray();
+      // 1. Get Guest Cart
+      const local = JSON.parse(
+        localStorage.getItem("sopopped_cart_v1") || "[]",
+      );
 
-      // If no local cart, just refresh session UI
-      if (local.length === 0) {
+      // Optimization: If guest cart empty, nothing to merge. Just refresh UI.
+      if (!local.length) {
         document.dispatchEvent(
           new CustomEvent("cart-changed", { detail: { count: 0 } }),
         );
         return true;
       }
 
-      // Fetch server cart and merge
-      const server = await _fetchServerCart();
-      const merged = _mergeCartsSumming(local, server);
+      // 2. Fetch Server Cart
+      const resp = await window.sopoppedFetch
+        .request("./api/cart_load.php", { method: "GET" })
+        .catch(() => null);
+      const server = resp && resp.json && resp.json.cart ? resp.json.cart : [];
 
-      // Save merged cart to server
-      const saveResp = await _saveServerCartArray(merged);
-      if (!saveResp || !saveResp.success) {
-        console.warn("Server failed to save merged cart");
-      }
+      // 3. Combine (The Math)
+      const map = new Map();
 
-      // Update local storage matches merged state
-      _setLocalCartArray(merged);
+      // -- Add Server Items --
+      server.forEach((it) => {
+        const id = String(it.id);
+        map.set(id, { ...it, quantity: Number(it.quantity || 0) });
+      });
 
-      // Update UI
+      // -- Add/Sum Local Items --
+      local.forEach((it) => {
+        const id = String(it.id);
+        const qty = Number(it.quantity || it.qty || 0);
+        if (map.has(id)) {
+          const existing = map.get(id);
+          existing.quantity += qty; // Summing
+          map.set(id, existing);
+        } else {
+          map.set(id, { ...it, id: Number(id), quantity: qty });
+        }
+      });
+
+      const merged = Array.from(map.values());
+
+      // 4. Save Result to Server
+      await window.sopoppedFetch.postJSON("./api/cart_save.php", merged);
+
+      // 5. Update Local
+      localStorage.setItem("sopopped_cart_v1", JSON.stringify(merged));
       document.dispatchEvent(
         new CustomEvent("cart-changed", { detail: { count: merged.length } }),
       );
@@ -281,178 +181,173 @@
   window.sopoppedAuth.mergeCartAfterLoginAndUpdateUI =
     mergeCartAfterLoginAndUpdateUI;
 
-  // ==========================================================================
-  // PART 3: FORM HANDLERS (General Helpers)
-  // ==========================================================================
-
-  function showValidateMsg($form, msg, type) {
-    if (window.validationUI && window.validationUI.showValidateMsg) {
-      return window.validationUI.showValidateMsg($form, msg, type);
+  // Helper: Wait for session cookie to settle
+  async function waitForSessionReady(timeout = 2000) {
+    const start = Date.now();
+    while (Date.now() - start < timeout) {
+      const si = await window.sopoppedSession.fetchInfo();
+      if (si && si.logged_in) return true;
+      await new Promise((r) => setTimeout(r, 200));
     }
+    return false;
   }
-
-  function hideValidateMsg($form) {
-    if (window.validationUI && window.validationUI.hideValidateMsg) {
-      return window.validationUI.hideValidateMsg($form);
-    }
-  }
+  window.sopoppedAuth.waitForSessionReady = waitForSessionReady;
 
   // ==========================================================================
-  // PART 4: LOGIN SUBMIT HANDLER
+  // PART 3: SUBMIT HANDLERS
   // ==========================================================================
 
-  /**
-   * Factory for login form submit handler.
-   */
+  // --- LOGIN ---
   window.sopoppedAuth.createLoginSubmitHandler = function (opts) {
-    opts = opts || {};
     return function (form) {
       const $form = $(form);
-      const submitBtn = $(opts.submitBtnSelector || "#loginSubmit");
+      const submitBtn = $("#loginSubmit");
       const originalText = submitBtn.text();
 
+      // Lock UI
       submitBtn.prop("disabled", true).text("Logging in...");
-      hideValidateMsg($form);
+      if (window.validationUI) window.validationUI.hideValidateMsg($form);
 
-      // Pre-flight check from cached "checkUserExists" result
-      const emailExists = $form.find("#loginEmail").data("exists");
-      if (emailExists === false) {
-        showValidateMsg($form, "No account found with that email.", "danger");
-        submitBtn.prop("disabled", false).text(originalText);
-        return false;
-      }
-
-      const fd = new FormData(form);
-      const body = new URLSearchParams(fd);
+      const body = new URLSearchParams(new FormData(form));
 
       window.sopoppedFetch
         .postForm("./api/login_submit.php", body)
         .then(async (payload) => {
           if (payload && payload.success) {
-            // Success: Update UI, merge cart, redirect
-            showValidateMsg($form, "Login successful!", "success");
+            // Success!
+            if (window.validationUI)
+              window.validationUI.showValidateMsg(
+                $form,
+                "Login successful!",
+                "success",
+              );
 
-            await waitForSessionReady(); // Ensure cookie set
+            // Critical: Wait for session & Merge Carts
+            await waitForSessionReady();
             await mergeCartAfterLoginAndUpdateUI();
 
-            // Redirect or reload
+            // Go to destination
             if (payload.redirect) window.location.href = payload.redirect;
             else window.location.reload();
           } else {
             // Failure
             const msg = payload.error || "Invalid email or password.";
-            showValidateMsg($form, msg, "danger");
+            if (window.validationUI)
+              window.validationUI.showValidateMsg($form, msg, "danger");
             submitBtn.prop("disabled", false).text(originalText);
           }
         })
         .catch(() => {
-          showValidateMsg($form, "Network error. Try again.", "danger");
+          if (window.validationUI)
+            window.validationUI.showValidateMsg(
+              $form,
+              "Network error.",
+              "danger",
+            );
           submitBtn.prop("disabled", false).text(originalText);
         });
-
       return false;
     };
   };
 
-  // ==========================================================================
-  // PART 5: SIGNUP SUBMIT HANDLER
-  // ==========================================================================
-
-  /**
-   * Factory for signup form submit handler.
-   */
+  // --- SIGNUP ---
   window.sopoppedAuth.createSignupSubmitHandler = function (opts) {
-    opts = opts || {};
     return function (form) {
       const $form = $(form);
-      const submitBtn = $(opts.submitBtnSelector || "#signupSubmit");
+      const submitBtn = $("#signupSubmit");
       const originalText = submitBtn.text();
 
       submitBtn.prop("disabled", true).text("Creating Account...");
-      hideValidateMsg($form);
+      if (window.validationUI) window.validationUI.hideValidateMsg($form);
 
-      // Check duplicates again
-      const emailExists = $form.find("#signupEmail").data("exists");
-      if (emailExists === true) {
-        showValidateMsg($form, "Account already exists.", "danger");
-        submitBtn.prop("disabled", false).text(originalText);
-        return false;
-      }
-
-      const fd = new FormData(form);
-      const body = new URLSearchParams(fd);
+      const body = new URLSearchParams(new FormData(form));
 
       window.sopoppedFetch
         .postForm("./api/signup_submit.php", body)
         .then((payload) => {
           if (payload && payload.success) {
-            showValidateMsg(
-              $form,
-              "Account created! Please log in.",
-              "success",
-            );
+            if (window.validationUI)
+              window.validationUI.showValidateMsg(
+                $form,
+                "Account created! Please log in.",
+                "success",
+              );
 
-            // Switch to login dialog after delay
+            // UX: Close Signup, Open Login automatically
             setTimeout(() => {
-              try {
-                if ($("#signupDialog").length)
-                  $("#signupDialog").dialog("close");
-                if ($("#loginDialog").length) $("#loginDialog").dialog("open");
-              } catch (e) {}
+              if ($("#signupDialog").length) $("#signupDialog").dialog("close");
+              if ($("#loginDialog").length) $("#loginDialog").dialog("open");
             }, 1200);
 
             submitBtn.prop("disabled", false).text(originalText);
             form.reset();
           } else {
             const msg = payload.error || "Failed to create account.";
-            showValidateMsg($form, msg, "danger");
+            if (window.validationUI)
+              window.validationUI.showValidateMsg($form, msg, "danger");
             submitBtn.prop("disabled", false).text(originalText);
           }
         })
         .catch(() => {
-          showValidateMsg($form, "Network error.", "danger");
+          if (window.validationUI)
+            window.validationUI.showValidateMsg(
+              $form,
+              "Network error.",
+              "danger",
+            );
           submitBtn.prop("disabled", false).text(originalText);
         });
-
       return false;
     };
   };
 
-  // ==========================================================================
-  // PART 6: CHECKOUT SUBMIT HANDLER
-  // ==========================================================================
-
-  /**
-   * Factory for checkout form submit handler.
-   */
+  // --- CHECKOUT ---
   window.sopoppedAuth.createCheckoutSubmitHandler = function (opts) {
     return function (form) {
       const $form = $(form);
 
-      // 1. Check Cart Empty
-      const cartJson = localStorage.getItem("sopopped_cart_v1") || "[]";
-      const cart = JSON.parse(cartJson);
-      if (!cart.length) {
+      // 1. Is the cart empty?
+      const cartAll = JSON.parse(
+        localStorage.getItem("sopopped_cart_v1") || "[]",
+      );
+      if (!cartAll.length) {
         alert("Your cart is empty.");
         return false;
       }
 
-      // 2. Inject Cart Data
-      const cartInput = form.querySelector("#cart_items_input");
-      if (cartInput) cartInput.value = JSON.stringify(cart);
+      // 2. Attach cart data (Respect Selection)
+      let finalItems = cartAll;
+      if (
+        window.sopoppedCart &&
+        typeof window.sopoppedCart.getSelectedItems === "function"
+      ) {
+        const selected = window.sopoppedCart.getSelectedItems();
+        if (selected.length > 0) {
+          finalItems = selected;
+        }
+      }
 
-      // 3. Check Session
+      const cartJson = JSON.stringify(finalItems);
+      const cartInput = form.querySelector("#cart_items_input");
+      if (cartInput) cartInput.value = cartJson;
+
+      // 3. Are we logged in?
       window.sopoppedFetch.json("./api/session_info.php").then((sess) => {
         if (!sess || !sess.logged_in) {
-          showValidateMsg($form, "You must log in to checkout.", "danger");
+          if (window.validationUI)
+            window.validationUI.showValidateMsg(
+              $form,
+              "You must log in to checkout.",
+              "danger",
+            );
           return;
         }
 
-        // 4. Submit Order
+        // 4. Send the order!
         const fd = new FormData(form);
         window.sopoppedFetch.postFormData(form.action, fd).then((res) => {
           if (res && res.success) {
-            // Order success: Clear cart and redirect
+            // Success: Clear Cart & Show Receipt
             localStorage.removeItem("sopopped_cart_v1");
             const oid = res.order_id || res.id || "";
             window.location.href =
@@ -462,7 +357,6 @@
           }
         });
       });
-
       return false;
     };
   };

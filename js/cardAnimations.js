@@ -1,108 +1,66 @@
 /**
  * =============================================================================
  * File: js/cardAnimations.js
- * Purpose: Scroll-driven animations for product cards.
+ * Status: DEAD CODE / DEPRECATED
  * =============================================================================
  *
- * This script adds progressive entry animations to cards using CSS variables
- * for staggered delays. It uses `IntersectionObserver` as a fallback for
- * browsers that don't support CSS scroll-driven animations.
+ * NOTE:
+ * This file is NO LONGER USED.
+ * Animations are now handled efficiently via CSS in `styles.css`.
  *
- * Logic:
- *   1. Calculates and sets --card-index on each card in a row.
- *   2. Observes DOM mutations to handle dynamic content (e.g., pagination).
- *   3. Adds 'animate' class when cards scroll into view.
- *
- * Dependencies:
- *   - jQuery
+ * We are keeping this file here just for reference, but it is NOT loaded.
  * =============================================================================
  */
 
-// Constants
-const CARD_INDEX_PROP = "--card-index";
-const TIMELINE_SUPPORT_DECL = "animation-timeline: --card-timeline";
-const INTERSECTION_THRESHOLD = 0.2; // 20% visibility triggers animation
-const ANIMATE_CLASS = "animate";
+/*
+// -----------------------------------------------------------------------------
+// OLD CODE BELOW - DO NOT USE
+// -----------------------------------------------------------------------------
 
-// ---------------------------------------------------------------------------
-// 1. INDEX CALCULATION
-// ---------------------------------------------------------------------------
+// CONFIGURATION
+const ANIMATE_CLASS = "animate"; // The CSS class that triggers the motion
 
-/**
- * Set custom CSS property for staggered animation delay.
- * @param {HTMLElement} cardEl - Card element
- * @param {number} index - Index within the row
- */
-function setIndexOnCard(cardEl, index) {
-  cardEl.style.setProperty(CARD_INDEX_PROP, index);
-}
+(function ($) {
+  
+  // STEP 1: SET INDEXES (Staggering)
+  function initializeCardIndexes() {
+    $(".row").each(function () {
+      $(this).find(".card").each(function (index) {
+        this.style.setProperty("--card-index", index);
+      });
+    });
+  }
 
-/**
- * Calculate indexes for all cards in a row.
- * @param {jQuery} $row - Row container
- */
-function setIndexesForRow($row) {
-  const $cards = $row.find(".card");
-  $cards.each(function (index) {
-    setIndexOnCard(this, index);
-  });
-}
+  // STEP 2: WATCHING THE SCROLL (Observer)
+  function observeCards() {
+    // Check if browser supports modern CSS animations natively. If so, skip JS.
+    if (CSS.supports("animation-timeline: --card-timeline")) return;
 
-/**
- * Initialize indexes for all rows on the page.
- */
-function initializeCardIndexes() {
-  $(".row").each(function () {
-    setIndexesForRow($(this));
-  });
-}
-
-// ---------------------------------------------------------------------------
-// 2. INTERSECTION OBSERVER
-// ---------------------------------------------------------------------------
-
-function createFallbackObserver() {
-  // Trigger animation class when element enters viewport
-  return new IntersectionObserver(
-    (entries, observer) => {
+    const observer = new IntersectionObserver((entries, obs) => {
       entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add(ANIMATE_CLASS);
-          observer.unobserve(entry.target);
+        if (entry.isIntersecting) { // Is it visible?
+          entry.target.classList.add(ANIMATE_CLASS); // Add class
+          obs.unobserve(entry.target); // Stop watching (run only once)
         }
       });
-    },
-    { threshold: INTERSECTION_THRESHOLD },
-  );
-}
+    }, { threshold: 0.2 }); // Trigger when 20% visible
 
-/**
- * Initialize observer if browser lacks native timeline support.
- */
-function observeCardsWithFallback() {
-  if (CSS.supports(TIMELINE_SUPPORT_DECL)) return;
+    // Start watching all cards
+    $(".card").each(function () { observer.observe(this); });
+  }
 
-  const io = createFallbackObserver();
-  $(".card").each(function () {
-    io.observe(this);
+  // STEP 3: DYNAMIC CONTENT
+  function observeMutations() {
+    const mutationObserver = new MutationObserver(initializeCardIndexes);
+    mutationObserver.observe(document.body, { childList: true, subtree: true });
+  }
+
+  // Run
+  $(function () {
+    initializeCardIndexes();
+    observeCards();
+    observeMutations();
   });
-}
 
-// ---------------------------------------------------------------------------
-// 3. MUTATION OBSERVER (For dynamic content)
-// ---------------------------------------------------------------------------
-
-function observeMutationsForIndexes() {
-  const mutationObserver = new MutationObserver(initializeCardIndexes);
-  mutationObserver.observe(document.body, { childList: true, subtree: true });
-}
-
-// ---------------------------------------------------------------------------
-// 4. INITIALIZATION
-// ---------------------------------------------------------------------------
-
-$(function () {
-  initializeCardIndexes();
-  observeCardsWithFallback();
-  observeMutationsForIndexes();
-});
+})(jQuery);
+*/

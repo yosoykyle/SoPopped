@@ -13,7 +13,7 @@ require_once __DIR__ . '/check_auth.php';
 require_once __DIR__ . '/../../db/sopoppedDB.php';
 
 try {
-   $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
+    $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
     $id = isset($input['id']) ? (int)$input['id'] : 0;
     if (!$id) sp_json_response(['success' => false, 'error' => 'Invalid id'], 400);
 
@@ -41,7 +41,6 @@ try {
     }
 
     sp_json_response(['success' => true]);
-    
 } catch (PDOException $e) {
     sp_json_response(['success' => false, 'error' => $e->getMessage()], 500);
 }

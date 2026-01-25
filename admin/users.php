@@ -10,28 +10,27 @@
       </button>
     </div>
 
-  <div class="table-responsive">
-  <table
-    class="table table-hover table-striped-columns table-bordered border-warning align-middle"
-  >
-    <thead>
-      <tr>
-        <th>Updated At</th>
-        <th>Name</th>
-        <th>Email</th>
-        <th>Role</th>
-        <th>Status</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody id="usersTableBody"></tbody>
-  </table>
-</div>
-    
+    <div class="table-responsive">
+      <table
+        class="table table-hover table-striped-columns table-bordered border-warning align-middle">
+        <thead>
+          <tr>
+            <th>Updated At</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="usersTableBody"></tbody>
+      </table>
+    </div>
+
   </div>
 </div>
 
- <script>
+<script>
   document.addEventListener("DOMContentLoaded", () => {
     loadUsers();
 
@@ -142,8 +141,7 @@
 
         if (typeof sopoppedAdminUI !== "undefined") {
           sopoppedAdminUI.populateModalFromButton(
-            btn,
-            {
+            btn, {
               id: "userId",
               first_name: "firstName",
               middle_name: "middleName",

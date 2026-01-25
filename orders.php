@@ -1,3 +1,11 @@
+<!-- 
+  File: orders.php
+  Description: User's Order History page.
+  Flow:
+  1. Accessible only to logged-in users (via link in Navbar).
+  2. Main content is fetched and rendered dynamically by `js/userOrders.js` calling `api/get_user_orders.php`.
+  3. Displays a list of recent orders or a loading state.
+-->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -22,6 +30,11 @@
       </div>
 
       <div id="user-orders-list" class="row g-3">
+        <!-- 
+          SECTION: Orders List
+          - Empty container initially.
+          - `js/userOrders.js` injects cards here for each order fetched from API.
+        -->
         <!-- Orders will be rendered here by js/userOrders.js -->
         <div class="col-12 text-center text-muted">Loading orders…</div>
       </div>

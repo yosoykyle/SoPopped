@@ -1,32 +1,17 @@
 /**
  * =============================================================================
  * File: js/cart.js
- * Purpose: Main Shopping Cart Logic
+ * Purpose: The Shopping Cart Manager.
  * =============================================================================
  *
- * This module manages the client-side shopping cart operations. It handles:
- *   - Adding, removing, and updating item quantities
- *   - Persisting data to localStorage
- *   - Rendering the cart UI (list items, totals, empty state)
- *   - Syncing with the server when logged in
+ * NOTE:
+ * This script runs the Shopping Cart on the user's screen (Client-Side).
  *
- * Key Features:
- *   - LocalStorage Persistence: 'sopopped_cart_v1' key
- *   - Event Dispatching: 'cart-changed' for UI updates (badge, etc.)
- *   - Stock Validation: Prevents adding more than available stock
- *   - DOM Rendering: Dynamically builds the cart list and summary
- *
- * Exports (window.sopoppedCart):
- *   - add(product)
- *   - remove(id)
- *   - setQty(id, qty)
- *   - clear()
- *   - getCount()
- *
- * Dependencies:
- *   - cartPrefetch.js (for product metadata and server/session info)
- *   - fetchHelper.js (sopoppedFetch) for saving to server
- *   - validation.js (optional, for showing validation messages)
+ * It has 4 jobs:
+ *   1. Store: Keep the list of items safe in `localStorage` (The browser's memory).
+ *   2. Render: Draw the cart HTML list on the page.
+ *   3. Logic: Add/Remove items, and calculate Totals ($).
+ *   4. Sync: If logged in, auto-save changes to the server.
  * =============================================================================
  */
 
@@ -46,6 +31,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Check if we are on a page that actually has the cart DOM
   const hasCartDom = Boolean(cartList);
+
+  // State for selected items
+  let selectedItemIds = new Set();
+  const selectAllCheckbox = document.getElementById("selectAllCart");
+  const btnDeleteSelected = document.getElementById("btnDeleteSelected");
 
   // ---------------------------------------------------------------------------
   // 2. DATA UTILITIES (READ/WRITE)
@@ -122,6 +112,12 @@ document.addEventListener("DOMContentLoaded", () => {
       if (cartSummaryCol) cartSummaryCol.classList.add("d-none");
       if (billingFormCol) billingFormCol.classList.add("d-none");
 
+      // Hide/Disable select controls
+      if (selectAllCheckbox) {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.parentElement.parentElement.classList.add("d-none");
+      }
+
       const countEl = document.querySelector(".flavorCoutCart");
       if (countEl) countEl.textContent = "0";
 
@@ -138,7 +134,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (emptyCard) emptyCard.classList.add("d-none");
     if (cartSummaryBlock) cartSummaryBlock.classList.remove("d-none");
     if (cartSummaryCol) cartSummaryCol.classList.remove("d-none");
+
     if (billingFormCol) billingFormCol.classList.remove("d-none");
+
+    // Show select controls
+    if (selectAllCheckbox) {
+      selectAllCheckbox.parentElement.parentElement.classList.remove("d-none");
+    }
 
     let total = 0;
 
@@ -155,8 +157,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Build HTML for cart item
       li.innerHTML = `
+
       <div class="row align-items-center gx-3">
-            <div class="col-12 col-md-7">
+            <div class="col-1 d-flex justify-content-center">
+              <input class="form-check-input cart-item-check" type="checkbox" value="${prod.id}" ${selectedItemIds.has(String(prod.id)) ? "checked" : ""}>
+            </div>
+            <div class="col-11 col-md-6">
                 <h6 class="my-0 cart-prod-name" title="${escapeHtml(prod.name)}">${escapeHtml(prod.name)}</h6>
                 <small class="text-body-secondary d-block cart-prod-desc" style="white-space: normal;">${escapeHtml(prod.description || "")}</small>
             </div>
@@ -195,6 +201,31 @@ document.addEventListener("DOMContentLoaded", () => {
         }),
       );
     } catch (e) {}
+
+    // Update Select All and Delete Button State
+    updateSelectionUI(items);
+  }
+
+  function updateSelectionUI(items) {
+    if (!hasCartDom) return;
+
+    // Clean up IDs that might no longer exist
+    const currentIds = new Set(items.map((i) => String(i.id)));
+    // Create a new Set by filtering the existing selectedItemIds
+    const validSelectedIds = new Set();
+    selectedItemIds.forEach((id) => {
+      if (currentIds.has(id)) {
+        validSelectedIds.add(id);
+      }
+    });
+    selectedItemIds = validSelectedIds;
+
+    const allSelected =
+      items.length > 0 && items.every((i) => selectedItemIds.has(String(i.id)));
+    const anySelected = selectedItemIds.size > 0;
+
+    if (selectAllCheckbox) selectAllCheckbox.checked = allSelected;
+    if (btnDeleteSelected) btnDeleteSelected.disabled = !anySelected;
   }
 
   // ---------------------------------------------------------------------------
@@ -274,6 +305,24 @@ document.addEventListener("DOMContentLoaded", () => {
     getCount() {
       return readCart().length;
     },
+
+    bulkRemove(ids) {
+      let items = readCart();
+      const idsToRemove = new Set(ids.map(String));
+      items = items.filter((i) => !idsToRemove.has(String(i.id)));
+
+      // Also remove from selection
+      idsToRemove.forEach((id) => selectedItemIds.delete(id));
+
+      writeCart(items);
+      render();
+    },
+
+    getSelectedItems() {
+      const items = readCart();
+      if (selectedItemIds.size === 0) return [];
+      return items.filter((i) => selectedItemIds.has(String(i.id)));
+    },
   };
 
   // Helper to show errors
@@ -339,7 +388,42 @@ document.addEventListener("DOMContentLoaded", () => {
         const id = li.dataset.productId;
         window.sopoppedCart.remove(id);
       }
+
+      // Checkbox click
+      if (e.target.classList.contains("cart-item-check")) {
+        const id = e.target.value;
+        if (e.target.checked) {
+          selectedItemIds.add(id);
+        } else {
+          selectedItemIds.delete(id);
+        }
+        updateSelectionUI(readCart());
+      }
     });
+
+    // Select All Listener
+    if (selectAllCheckbox) {
+      selectAllCheckbox.addEventListener("change", (e) => {
+        const isChecked = e.target.checked;
+        const items = readCart();
+        if (isChecked) {
+          items.forEach((i) => selectedItemIds.add(String(i.id)));
+        } else {
+          selectedItemIds.clear();
+        }
+        render(); // Re-render to update all item checkboxes
+      });
+    }
+
+    // Delete Selected Listener
+    if (btnDeleteSelected) {
+      btnDeleteSelected.addEventListener("click", () => {
+        if (selectedItemIds.size === 0) return;
+        if (confirm("Are you sure you want to delete selected items?")) {
+          window.sopoppedCart.bulkRemove([...selectedItemIds]);
+        }
+      });
+    }
 
     // Handle manual input change
     cartList.addEventListener("change", (e) => {

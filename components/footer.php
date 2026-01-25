@@ -1,3 +1,14 @@
+<!-- 
+  Component: footer.php
+  Description: The global footer and Script Loader.
+  Flow:
+  1. Renders the footer links and copyright info.
+  2. LOADS ALL GLOBAL JAVASCRIPT:
+     - Libraries: jQuery, Bootstrap, jQuery Validation.
+     - Utilities: `fetchHelper`, `sessionHelper`, `dialogUI`.
+     - Logic: `cart.js`, `authHandlers.js`.
+  Note: This ensures all pages have access to core functionality.
+-->
 <!-- footer.html fragment -->
 <footer class="pt-3">
   <div class="container">
@@ -17,7 +28,7 @@
     </ul>
     <p class="text-center text-body-secondary">
       &copy; <?= date('Y') ?> So Popped, Inc
-      <a href="https://www.seobility.net/en/seocheck/check?url=https%3A%2F%2Fedgar-nonhabitable-inconsiderately.ngrok-free.dev%2Fsopopped%2F"><img src="https://app.seobility.net/widget/widget.png?url=https%3A%2F%2Fedgar-nonhabitable-inconsiderately.ngrok-free.dev%2Fsopopped%2F" 
+      <a href="https://www.seobility.net/en/seocheck/check?url=https%3A%2F%2Fedgar-nonhabitable-inconsiderately.ngrok-free.dev%2Fsopopped%2F"><img src="https://app.seobility.net/widget/widget.png?url=https%3A%2F%2Fedgar-nonhabitable-inconsiderately.ngrok-free.dev%2Fsopopped%2F"
           alt="Seobility Score for edgar-nonhabitable-inconsiderately.ngrok-free.dev"
           width="50"
           height="50" /></a>

@@ -3,20 +3,17 @@
 /**
  * =============================================================================
  * File: api/db_products.php
- * Purpose: JSON endpoint to fetch all products for the frontend.
+ * Purpose: Fetch Product Catalog for the Frontend.
  * =============================================================================
  * 
- * Logic:
- *   1. Fetch active products using `_products_service.php`.
- *   2. Normalize image paths (absolute vs relative).
- *   3. Return JSON payload.
+ * NOTE:
+ * This is the API version of our product catalog.
+ * It is used for "Lazy Loading" (AJAX) or when we need the product data as raw JSON.
  * 
- * Response:
- *   { 
- *     "success": true, 
- *     "products": [ { "id": 1, "name": "...", "image": "..." } ], 
- *     "count": 10 
- *   }
+ * Key Logic:
+ *   1. Ask the Database for all active products.
+ *   2. "Normalize" the images (fix the URL so it works from anywhere).
+ *   3. Send it to the browser.
  * =============================================================================
  */
 
@@ -27,15 +24,22 @@ require_once __DIR__ . '/_helpers.php';
 sp_json_header();
 
 try {
-    // 1. Fetch Products
+    // -----------------------------------------------------------------------------
+    // STEP 1: FETCH RAW DATA
+    // -----------------------------------------------------------------------------
+    // Uses a helper function to keep the SQL query clean and reusable.
     $products = getProducts($pdo);
 
-    // 2. Normalize Image Paths
-    // Determines the project root URL to correctly prefix relative image paths.
+    // -----------------------------------------------------------------------------
+    // STEP 2: FIX IMAGE PATHS (Normalization)
+    // -----------------------------------------------------------------------------
+    // The database might store "images/soda.png" or "/sopopped/images/soda.png".
+    // We need to make sure the frontend gets a Full, Valid URL like "http://site.com/images/..."
+
     $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
     $origin = $scheme . '://' . $_SERVER['HTTP_HOST'];
 
-    // Project base is one level up from /api/
+    // Calculate where the "Project Root" is relative to this file.
     $projectBase = rtrim(dirname(dirname($_SERVER['SCRIPT_NAME'])), '/\\');
     if ($projectBase === '' || $projectBase === '/') {
         $projectBase = '/' . basename(dirname(__DIR__));
@@ -47,23 +51,25 @@ try {
 
         if ($img !== '') {
             if (preg_match('#^https?://#i', $img)) {
-                // Absolute URL: Use as is
+                // It's already a full URL (e.g. from S3 or external site).
                 $p['image'] = $img;
             } elseif (strpos($img, '/') === 0) {
-                // Root-relative (e.g., /images/foo.png): Prefix origin + project base
+                // It starts with a slash, so it's absolute from server root.
                 $p['image'] = $origin . $projectBase . '/' . ltrim($img, '/\\');
             } else {
-                // Relative (e.g., images/foo.png): Prefix full project URL
+                // It's just a filename, so append it to our project Base URL.
                 $p['image'] = $projectBaseUrl . ltrim($img, '/\\');
             }
         } else {
-            // Default fallback
+            // Safety: If no image, show a placeholder.
             $p['image'] = $projectBaseUrl . 'images/default.png';
         }
     }
-    unset($p);
+    unset($p); // Break the reference
 
-    // 3. Response
+    // -----------------------------------------------------------------------------
+    // STEP 3: SEND RESPONSE
+    // -----------------------------------------------------------------------------
     sp_json_response([
         'success' => true,
         'products' => $products,

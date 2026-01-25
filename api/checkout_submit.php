@@ -3,33 +3,28 @@
 /**
  * =============================================================================
  * File: api/checkout_submit.php
- * Purpose: Process a new order (checkout).
+ * Purpose: Process a new order (Money and Inventory).
  * =============================================================================
  * 
- * Logic overview:
- *   1. Validate inputs (User, Shipping, Cart).
- *   2. Start DB Transaction.
- *   3. Lock and Verify Product Stock.
- *   4. Create Order and Order Items.
- *   5. Deduct Stock.
- *   6. Update/Clear User's Saved Cart.
- *   7. Commit Transaction.
+ * NOTE:
+ * This is the most critical file in the system. It handles the actual transaction.
+ * We must ensure three things happen together, or not at all (ACID):
+ *   1. We have enough stock.
+ *   2. The order is recorded.
+ *   3. The stock is reduced.
  * 
- * Inputs (POST):
- *   - firstName, lastName, email, address, province, city, barangay
- *   - paymentMethod
- *   - cart_items (JSON string of items to purchase)
- * 
- * Response:
- *   { "success": true, "order_id": 123, "purchased_ids": [1, 2] }
- *   { "success": false, "error": "..." }
+ * If any of these fail, we "Rollback" so we don't take money for items we don't have.
  * =============================================================================
  */
 
 require_once __DIR__ . '/_helpers.php';
 sp_json_header();
 
-// 1. Method & Auth Check
+// -----------------------------------------------------------------------------
+// STEP 1: THE BOUNCER (Security)
+// -----------------------------------------------------------------------------
+// We only accept POST requests because we are CHANGING data. 
+// GET requests (just visiting the link) should not create orders.
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     sp_json_response(['success' => false, 'error' => 'Method not allowed'], 405);
 }
@@ -37,7 +32,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 require_once __DIR__ . '/../db/sopoppedDB.php';
 sp_ensure_session();
 
-// 2. Data Sanitization
+// -----------------------------------------------------------------------------
+// STEP 2: PREPARE THE DATA (Sanitization)
+// -----------------------------------------------------------------------------
+// We receive raw text from the user. We must "Trim" it to remove accidental spaces.
 $firstName = isset($_POST['firstName']) ? trim((string)$_POST['firstName']) : '';
 $lastName = isset($_POST['lastName']) ? trim((string)$_POST['lastName']) : '';
 $email = isset($_POST['email']) ? trim((string)$_POST['email']) : '';
@@ -48,13 +46,17 @@ $barangay = isset($_POST['barangay']) ? trim((string)$_POST['barangay']) : '';
 $paymentMethod = isset($_POST['paymentMethod']) ? trim((string)$_POST['paymentMethod']) : 'cod';
 $cartItemsRaw = isset($_POST['cart_items']) ? trim((string)$_POST['cart_items']) : '[]';
 
-// 3. Validation
+// -----------------------------------------------------------------------------
+// STEP 3: VALIDATE INPUTS (Rules)
+// -----------------------------------------------------------------------------
+// Before we talk to the database, let's make sure the data makes sense.
 $errors = [];
 if ($firstName === '' || mb_strlen($firstName) < 2) $errors['firstName'] = 'Name required (2+ chars)';
 if ($lastName === '' || mb_strlen($lastName) < 2) $errors['lastName'] = 'Name required (2+ chars)';
 if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors['email'] = 'Valid email required';
 if ($address === '' || mb_strlen($address) < 3) $errors['address'] = 'Address required';
 
+// Verify the cart isn't empty
 $cart = json_decode($cartItemsRaw, true);
 if (!is_array($cart) || count($cart) === 0) {
     $errors['cart'] = 'Cart is empty.';
@@ -64,12 +66,18 @@ if (!empty($errors)) {
     sp_json_response(['success' => false, 'errors' => $errors], 400);
 }
 
-// 4. Order Processing (Transaction)
+// -----------------------------------------------------------------------------
+// STEP 4: START THE TRANSACTION (The Safety Lock)
+// -----------------------------------------------------------------------------
 try {
+    // "Freeze Time": We start a transaction. 
+    // Anything we do after this line isn't permanent until we say "commit".
     $pdo->beginTransaction();
 
-    // A. Verify Stock & Calc Total
+    // A. CHECK STOCK (The Inventory Lock)
     $total = 0.0;
+
+    // "FOR UPDATE" tells the database: "Lock these rows! Don't let anyone else buy them right now."
     $productStmt = $pdo->prepare('SELECT id, price, quantity FROM products WHERE id = :id FOR UPDATE');
     $updateQtyStmt = $pdo->prepare('UPDATE products SET quantity = quantity - :dec WHERE id = :id');
 
@@ -83,7 +91,10 @@ try {
         $productStmt->execute([':id' => $pid]);
         $prod = $productStmt->fetch(PDO::FETCH_ASSOC);
 
+        // Does product exist?
         if (!$prod) throw new Exception('Product not found: ' . $pid);
+
+        // Do we have enough?
         if ((int)$prod['quantity'] < $qty) throw new Exception('Insufficient stock for product id ' . $pid);
 
         $price = (float)$prod['price'];
@@ -96,15 +107,19 @@ try {
         ];
     }
 
-    // B. Check Auth (Requirement)
+    // B. VERIFY USER (Identity)
+    // We check this inside the transaction just to be safe, though we could do it earlier.
     $userId = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
     if (!$userId) {
+        // If they aren't logged in, we must ROLLBACK (Undo) any locks we created.
         if ($pdo->inTransaction()) $pdo->rollBack();
         sp_json_response(['success' => false, 'error' => 'You need an account to proceed with checkout.'], 401);
     }
 
-    // C. Insert Order
+    // C. CREATE THE RECEIPT (Insert Order)
     $insertOrder = $pdo->prepare('INSERT INTO orders (user_id, total_amount, status, payment_method, shipping_address) VALUES (:user_id, :total_amount, :status, :payment_method, :shipping_address)');
+
+    // We save the address exactly as it was today (Snapshot), in case they move house later.
     $shipping = json_encode([
         'first_name' => $firstName,
         'last_name' => $lastName,
@@ -124,19 +139,23 @@ try {
     ]);
     $orderId = (int)$pdo->lastInsertId();
 
-    // D. Insert Items & Decrement Stock
+    // D. DEDUCT INVENTORY (The Update)
+    // Now we physically remove the items from the stock count.
     $insertItem = $pdo->prepare('INSERT INTO order_items (order_id, product_id, price_at_purchase, quantity) VALUES (:order_id, :product_id, :price_at_purchase, :quantity)');
     foreach ($orderItemsData as $it) {
+        // 1. Link item to Order
         $insertItem->execute([
             ':order_id' => $orderId,
             ':product_id' => $it['product_id'],
             ':price_at_purchase' => $it['price_at_purchase'],
             ':quantity' => $it['quantity'],
         ]);
+        // 2. Reduce Stock
         $updateQtyStmt->execute([':dec' => $it['quantity'], ':id' => $it['product_id']]);
     }
 
-    // E. Clear Purchased Items from Saved Cart
+    // E. CLEAN UP (Clear Cart)
+    // The user has bought these items. We should remove them from their saved cart.
     $purchasedIds = array_map('intval', array_column($orderItemsData, 'product_id'));
     if ($userId) {
         try {
@@ -146,6 +165,7 @@ try {
 
             if ($cartRow && !empty($cartRow['cart_json'])) {
                 $saved = json_decode($cartRow['cart_json'], true) ?: [];
+                // Keep only items that were NOT part of this order
                 $remaining = array_values(array_filter($saved, function ($it) use ($purchasedIds) {
                     $id = isset($it['id']) ? (int)$it['id'] : null;
                     return $id === null ? true : !in_array($id, $purchasedIds, true);
@@ -159,14 +179,22 @@ try {
                     $del->execute([':uid' => $userId]);
                 }
             }
-        } catch (Exception $e) { /* Allow order to proceed even if cart clear fails */
+        } catch (Exception $e) {
+            /* If clearing the cart fails, it's not fatal. The order is strict, the cart is just convenience. */
         }
     }
 
+    // -----------------------------------------------------------------------------
+    // STEP 5: COMMIT (Save Forever)
+    // -----------------------------------------------------------------------------
     $pdo->commit();
 
     sp_json_response(['success' => true, 'order_id' => $orderId, 'purchased_ids' => $purchasedIds], 200);
 } catch (Exception $e) {
+    // -----------------------------------------------------------------------------
+    // ROLLBACK (Undo Button)
+    // -----------------------------------------------------------------------------
+    // If anything above failed (e.g., Error: "Insufficient Stock"), we undo everything.
     if ($pdo->inTransaction()) $pdo->rollBack();
     error_log("Checkout error: " . $e->getMessage());
     sp_json_response(['success' => false, 'error' => $e->getMessage()], 400);

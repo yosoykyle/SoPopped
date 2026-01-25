@@ -3,20 +3,15 @@
 /**
  * =============================================================================
  * File: api/cart_save.php
- * Purpose: Persist the user's cart state to the database.
+ * Purpose: Save the User's Cart to the Database.
  * =============================================================================
  * 
- * This endpoint accepts a JSON cart payload and saves it to the `user_carts`
- * table for the currently logged-in user using an UPSERT strategy.
+ * NOTE:
+ * When a user logs in, we want their cart to be "Persistent".
+ * If they add an item on their phone, it should appear on their laptop.
  * 
- * Input:
- *   - Raw JSON body OR `cart` POST parameter containing cart array.
- * 
- * Logic:
- *   1. Validates POST method and Authentication.
- *   2. Parses input data (JSON body or POST param).
- *   3. Executes INSERT ... ON DUPLICATE KEY UPDATE.
- *   4. Returns saved cart for confirmation.
+ * To do this, we verify who they are, then take the entire cart (as JSON),
+ * and save it into the `user_carts` table.
  * =============================================================================
  */
 
@@ -26,7 +21,10 @@ require_once __DIR__ . '/_helpers.php';
 sp_json_header();
 sp_ensure_session();
 
-// 1. Validation
+// -----------------------------------------------------------------------------
+// STEP 1: ARE YOU ALLOWED? (Auth Check)
+// -----------------------------------------------------------------------------
+// We only save carts for LOGGED IN users.
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     sp_json_response(['success' => false, 'error' => 'Method not allowed'], 405);
 }
@@ -37,7 +35,10 @@ if (!isset($_SESSION['user_id']) || !$_SESSION['user_id']) {
 
 require_once __DIR__ . '/../db/sopoppedDB.php';
 
-// 2. Payload Parsing
+// -----------------------------------------------------------------------------
+// STEP 2: GET THE PACKAGE (Input)
+// -----------------------------------------------------------------------------
+// We expect the cart data to be sent as a JSON string.
 $raw = file_get_contents('php://input');
 $data = [];
 
@@ -47,7 +48,7 @@ if ($raw) {
     if (is_array($maybe)) $data = $maybe;
 }
 
-// Fallback to form parameter if raw body failed or was empty
+// Fallback to form parameter if raw body failed
 if (empty($data) && isset($_POST['cart'])) {
     $maybe = json_decode($_POST['cart'], true);
     if (is_array($maybe)) $data = $maybe;
@@ -57,9 +58,13 @@ if (empty($data) && isset($_POST['cart'])) {
 if (!is_array($data)) $data = [];
 
 try {
-    // 3. Database Upsert
-    // We use parameters for both INSERT and UPDATE clauses.
-    // user_id is unique key.
+    // -----------------------------------------------------------------------------
+    // STEP 3: SAVE TO DATABASE (Upsert)
+    // -----------------------------------------------------------------------------
+    // We use "ON DUPLICATE KEY UPDATE". 
+    // This is a fancy SQL trick that means:
+    // "If this user already has a saved cart, UPDATE it. If not, CREATE a new one."
+
     $stmt = $pdo->prepare('
         INSERT INTO user_carts (user_id, cart_json, updated_at) 
         VALUES (:uid, :cj, NOW()) 
@@ -68,17 +73,17 @@ try {
 
     $json = json_encode($data, JSON_UNESCAPED_UNICODE);
 
-    // Bind parameters
     $stmt->execute([
         ':uid' => $_SESSION['user_id'],
         ':cj' => $json,
         ':cj2' => $json
     ]);
 
-    // 4. Response
+    // -----------------------------------------------------------------------------
+    // STEP 4: CONFIRMATION
+    // -----------------------------------------------------------------------------
     sp_json_response(['success' => true, 'cart' => $data]);
 } catch (Exception $e) {
-    // 5. Error Handling
     error_log('cart_save error: ' . $e->getMessage());
     sp_json_response(['success' => false, 'error' => 'Server error'], 500);
 }

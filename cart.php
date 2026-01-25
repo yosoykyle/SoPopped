@@ -1,3 +1,12 @@
+<!-- 
+  File: cart.php
+  Description: The Shopping Cart page.
+  Flow:
+  1. Checks if the cart is empty or populated.
+  2. Renders the list of items via `js/cart.js` (client-side rendering).
+  3. Displays the Checkout Form only if items exist.
+  4. Uses `js/countryState.js` for dynamic address dropdowns (Province/City/Barangay).
+-->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -38,12 +47,26 @@
       </div>
       <!-- Cart Content Container -->
       <div class="row g-5 mt-1 d-flex justify-content-center">
-        <!-- Cart Summary Column -->
+        <!-- 
+          SECTION: Cart Items Summary
+          - Populated by `js/cart.js` based on `localStorage` or session data.
+        -->
         <div id="cart-summary-col" class="col-lg-7">
           <h2 class="d-flex justify-content-between align-items-center mb-3">
             <span class="text-warning">Flavors</span>
             <span class="flavorCoutCart badge bg-warning rounded-pill">0</span>
           </h2>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="" id="selectAllCart">
+              <label class="form-check-label" for="selectAllCart">
+                Select All
+              </label>
+            </div>
+            <button id="btnDeleteSelected" class="btn btn-outline-danger btn-sm px-4" disabled>
+              Delete Selected
+            </button>
+          </div>
           <ul class="list-group mb-3" id="cart-items">
             <!-- cart items will be rendered here by js/cart.js -->
           </ul>
@@ -56,7 +79,11 @@
             </ul>
           </div>
         </div>
-        <!-- Billing Form Column -->
+        <!-- 
+          SECTION: Billing / Checkout Form
+          - Visible only when cart has items.
+          - Submits data to `api/checkout_submit.php`.
+        -->
         <div id="billing-col" class="col-lg-5">
           <h4 class="mb-3 text-warning">Billing address</h4>
           <!-- Add novalidate attribute -->

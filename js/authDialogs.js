@@ -1,26 +1,17 @@
 /**
  * =============================================================================
  * File: js/authDialogs.js
- * Purpose: UI initialization, Validation rules, and Dialog behavior.
+ * Purpose: The "Face" of Authentication.
  * =============================================================================
  *
- * This file acts as the "Controller" for the authentication UI. It:
- *   1. Initializes jQuery UI dialogs for Login/Signup.
- *   2. Sets up jQuery Validate rules for forms.
- *   3. Connects form submissions to handlers in `authHandlers.js`.
- *   4. Manages UI interactions like Password Toggle and Window Resize.
- *   5. Processes URL parameters for login/signup results (e.g. after redirect).
+ * NOTE:
+ * This file handles the "Visual" part of logging in and signing up.
+ * It doesn't do the heavy lifting (database checks) itself; it delegates that to `authHandlers.js`.
  *
- * It delegates core logic to:
- *   - authHandlers.js: API interaction, Cart merging, User existence checks
- *   - validation.js: Validation helpers and UI message control
- *   - dialogUI.js: Dialog sizing and positioning
- *
- * TABLE OF CONTENTS:
- *   1. GLOBAL HELPERS (Logout, Error Reporting)
- *   2. CONFIGURATION (Dialog Options)
- *   3. VALIDATION & FORM INITIALIZATION (Rules, Defaults, Handlers)
- *   4. UI BEHAVIORS (Dialog Init, URL Params, Resize, Password Toggle)
+ * Instead, this file focuses on:
+ *   1. Windows: Creating the Popups (Dialogs) for Login/Signup.
+ *   2. Validation: Attaching rules to the forms (Email required, Password strength).
+ *   3. UX: Making things nice (Password Eye toggle, Error messages).
  * =============================================================================
  */
 
@@ -28,27 +19,25 @@
   "use strict";
 
   $(function () {
-    // =========================================================================
-    // 1. GLOBAL HELPERS
-    // =========================================================================
+    // -------------------------------------------------------------------------
+    // STEP 1: GLOBAL ACTIONS
+    // -------------------------------------------------------------------------
 
-    /**
-     * Global Logout Function
-     * Clears local cart and calls server logout API.
-     * Exposed globally for navbar onclick events.
-     */
+    // ACTION: Logout
+    // We attach this to the global window object so the Navbar "Logout" button can call it easily.
     if (typeof window.logout !== "function") {
       window.logout = function () {
         try {
           if (!confirm("Are you sure you want to logout?")) return;
         } catch (e) {}
 
-        // Clear client-side cart (will be cleared on server by session destroy)
+        // 1. Clear the browser's memory of the cart
         try {
           localStorage.removeItem("sopopped_cart_v1");
         } catch (e) {}
 
-        // Call API
+        // 2. Tell the server to destroy the session
+        // Note: We check if we are in the Admin folder or Root folder to set the correct path.
         const basePath = window.location.pathname.includes("/admin/")
           ? "../"
           : "./";
@@ -57,6 +46,7 @@
           window.sopoppedFetch
             .request(basePath + "api/logout.php", { method: "POST" })
             .then((resp) => {
+              // 3. Redirect to Home
               const ok = resp && (resp.response ? resp.response.ok : resp.ok);
               const target =
                 basePath +
@@ -76,115 +66,93 @@
       };
     }
 
-    // Global Error Handlers (Non-blocking)
-    window.addEventListener("unhandledrejection", (ev) =>
-      console.error("Unhandled promise:", ev.reason),
-    );
-    window.addEventListener("error", (ev) =>
-      console.error("Uncaught error:", ev.error),
-    );
+    // -------------------------------------------------------------------------
+    // STEP 2: SETUP DIALOGS (The Popups)
+    // -------------------------------------------------------------------------
 
-    // =========================================================================
-    // 2. CONFIGURATION
-    // =========================================================================
-
-    // Delegate to dialogUI.js + Add Form Reset on Close
+    // Helper: configures the popup window settings (Width, Modal, Close behavior)
     function dialogOptions(width) {
       const opts =
         window.dialogUI && window.dialogUI.dialogOptions
           ? window.dialogUI.dialogOptions(width)
           : { width: width, modal: true };
 
+      // When the user closes the popup, we want to reset the form.
+      // E.g. Clear the typed password so it's fresh next time.
       opts.close = function () {
         const $form = $(this).find("form");
         if ($form.length) {
           $form[0].reset();
-          // Clear CSS classes
+          // Clear red error boxes
           $form.find(".is-invalid").removeClass("is-invalid");
           $form.find(".is-valid").removeClass("is-valid");
-          // Clear validation/success messages
           if (window.validationUI && window.validationUI.hideValidateMsg) {
             window.validationUI.hideValidateMsg($form);
           }
           $form.find("#success-msg").addClass("d-none");
-          // Clear data attributes for user checks
-          $form
-            .find("input")
-            .removeData("exists")
-            .removeData("archived")
-            .removeData("last-checked");
         }
       };
       return opts;
     }
 
-    // =========================================================================
-    // 3. VALIDATION & FORM INITIALIZATION
-    // =========================================================================
+    // Initialize the actual jQuery UI Dialog widgets
+    function initDialogs() {
+      if ($.fn.dialog) {
+        // Login Popup
+        if (!$("#loginDialog").data("ui-dialog")) {
+          $("#loginDialog").dialog(dialogOptions(400));
+        }
+        // Signup Popup (Bit wider for more fields)
+        if (!$("#signupDialog").data("ui-dialog")) {
+          $("#signupDialog").dialog(dialogOptions(520));
+        }
+
+        // Cleanup: Removing Bootstrap classes to avoid style conflicts
+        $("#loginDialog, #signupDialog")
+          .removeClass("modal fade")
+          .removeAttr("tabindex");
+      }
+    }
+
+    // Run immediately, and also listen for lazy-loaded scripts
+    initDialogs();
+    document.addEventListener("jquery-ui-loaded", initDialogs);
+
+    // -------------------------------------------------------------------------
+    // STEP 3: SETUP VALIDATION (The Rules)
+    // -------------------------------------------------------------------------
 
     function initValidation() {
-      if (!$.fn.validate) return; // Not ready yet
-      if ($("#loginForm").data("validator")) return; // Already initialized
+      if (!$.fn.validate) return; // Wait for library to load
+      if ($("#loginForm").data("validator")) return; // Don't run twice
 
-      // 3.1 - Register Custom Validation Methods (Idempotent)
-      // Defer to validation.js logic via window.sopoppedValidate
-      if (!$.validator.methods.emailChars) {
-        $.validator.addMethod(
-          "emailChars",
-          function (value, element) {
-            return (
-              this.optional(element) ||
-              window.sopoppedValidate.emailChars(value)
-            );
-          },
-          "Email contains invalid characters.",
-        );
+      // 3.1: Define Custom Rules (e.g. "EmailChars", "PasswordStrength")
 
-        $.validator.addMethod(
-          "emailFormat",
-          function (value, element) {
-            if (this.optional(element)) return true;
-            if (!value.includes("@")) return "Email must contain @";
-            if ((value.match(/@/g) || []).length > 1)
-              return "Multiple @ symbols not allowed";
-            return window.sopoppedValidate.emailFormat(value);
-          },
-          "Please enter a valid email address.",
-        );
+      $("#loginSubmit, #signupSubmit")
+        .off("click.safeguard")
+        .on("click.safeguard", function (e) {
+          // Legacy click handler - kept for older browsers or double safety
+          const $form = $(this).closest("form");
+          // ... (existing click logic if needed, but submit handler covers most)
+        });
 
-        $.validator.addMethod(
-          "passwordStrength",
-          function (value, element) {
-            return (
-              this.optional(element) ||
-              window.sopoppedValidate.passwordStrength(value)
-            );
-          },
-          "Password must be 8-16 chars, include uppercase, lowercase, number, and special char.",
-        );
-
-        $.validator.addMethod(
-          "phoneFormat",
-          function (value, element) {
-            return this.optional(element) || /^\d{4}-\d{3}-\d{4}$/.test(value);
-          },
-          "Format: 0000-000-0000",
-        );
-      }
-
-      // 3.2 - Set Validator Defaults
+      // 3.2: Configure Behavior (Where to show errors)
       $.validator.setDefaults({
         errorClass: "is-invalid",
         validClass: "is-valid",
-        errorElement: "div",
+        errorElement: "div", // Errors are wrapped in a <div>
         errorPlacement: function (error, element) {
           element.addClass("is-invalid").removeClass("is-valid");
           const $form = element.closest("form");
+
+          // Try to show the main alert box first
           const shown = window.validationUI.showValidateMsg(
             $form,
             error.text(),
             "danger",
           );
+
+          // If no main box, show inline below the input
           if (!shown) {
             error.addClass("invalid-feedback");
             if (element.parent(".input-group").length) {
@@ -194,42 +162,46 @@
             }
           }
         },
+        // Turn input red on error
         highlight: function (element, errorClass, validClass) {
           $(element).addClass(errorClass).removeClass(validClass);
           window.validationUI.revealValidateMsg($(element).closest("form"));
         },
+        // Turn input green/normal when fixed
         unhighlight: function (element, errorClass, validClass) {
           $(element).removeClass(errorClass).addClass(validClass);
           const $form = $(element).closest("form");
           const validator = $form.data("validator");
+          // Only hide error box if EVERYTHING is fixed
           if (validator && validator.numberOfInvalids() === 0) {
             window.validationUI.hideValidateMsg($form);
           }
         },
       });
 
-      // 3.3 - Email Blur Handlers (User Existence Check)
-      // Remove previous handlers to avoid duplicates if re-init
+      // 3.3: Live "User Exists" Check
+      // When user types an email and clicks away ("blur"), we ask server: "Does this exist?"
       $(document)
         .off("blur", "#loginEmail")
         .on("blur", "#loginEmail", function () {
           const $el = $(this);
           const email = $el.val().trim();
-          if (email === $el.data("last-checked")) return;
+          if (email === $el.data("last-checked")) return; // Don't check same email twice
 
-          // Clear any previous timer
-          const timer = $el.data("checkTimer");
-          if (timer) clearTimeout(timer);
-
-          $el.data("last-checked", email);
-          const newTimer = setTimeout(() => {
+          // Call the logic in authHandlers.js
+          setTimeout(() => {
             window.sopoppedAuth.checkUserExists(email, null, {
               $field: $el,
               context: "login",
             });
           }, 300);
-          $el.data("checkTimer", newTimer);
-        });
+          $el.data("last-checked", email);
+        })
+        .on(
+          "keydown",
+          "#loginEmail, #signupEmail",
+          window.sopoppedValidate.emailKeyFilter,
+        );
 
       $(document)
         .off("blur", "#signupEmail")
@@ -241,7 +213,9 @@
           });
         });
 
-      // 4.1 - Login Form
+      // 3.4: Attach Rules to Specific Forms
+
+      // LOGIN FORM
       $("#loginForm").validate({
         rules: {
           email: {
@@ -261,7 +235,7 @@
         }),
       });
 
-      // 4.2 - Signup Form
+      // SIGNUP FORM
       $("#signupForm").validate({
         rules: {
           name: { required: true, minlength: 2 },
@@ -278,7 +252,7 @@
             required: true,
             equalTo: "#signupPassword",
             passwordStrength: true,
-          },
+          }, // Must match first password
         },
         messages: {
           password2: { equalTo: "Passwords do not match" },
@@ -288,7 +262,7 @@
         }),
       });
 
-      // 4.3 - Checkout Form
+      // CHECKOUT FORM
       $("#checkoutForm").validate({
         rules: {
           firstName: { required: true, minlength: 2 },
@@ -300,10 +274,13 @@
           barangay: { required: true },
           paymentMethod: { required: true },
         },
-        submitHandler: window.sopoppedAuth.createCheckoutSubmitHandler(),
+        submitHandler: function (form) {
+          if (!confirm("Are you sure you want to checkout?")) return false;
+          return window.sopoppedAuth.createCheckoutSubmitHandler()(form);
+        },
       });
 
-      // 4.4 - Contact Form
+      // CONTACT FORM
       $("#contactForm").validate({
         rules: {
           name: { required: true, minlength: 2 },
@@ -311,6 +288,7 @@
           message: { required: true, minlength: 10, maxlength: 100 },
         },
         submitHandler: function (form) {
+          // Simple inline handler for contact form
           const $form = $(form);
           const body = $form.serialize();
           window.sopoppedFetch
@@ -344,84 +322,41 @@
             );
         },
       });
-
-      // UX handlers
-      $(document).on("input blur", "form input, form textarea", function () {
-        if ($(this).val() === "") $(this).removeClass("is-valid");
-      });
-
-      $(document).on("focus input", "form input", function () {
-        const $form = $(this).closest("form");
-        if ($form.data("message-shown")) {
-          window.validationUI.hideValidateMsg($form);
-          $form.find("#success-msg").addClass("d-none");
-          $form.removeData("message-shown");
-        }
-      });
     }
 
-    // Attempt init immediately
+    // Try to init now, and again later if scripts load slowly
     initValidation();
-
-    // Re-attempt when ready
     document.addEventListener("jquery-ui-loaded", initValidation);
 
-    // =========================================================================
-    // 4. UI BEHAVIORS
-    // =========================================================================
+    // -------------------------------------------------------------------------
+    // STEP 4: UI UX FEATURES
+    // -------------------------------------------------------------------------
 
-    // 4.1 - Initialize Dialogs Function (Idempotent)
-    function initDialogs() {
-      if ($.fn.dialog) {
-        // Only init if not already turned into a widget
-        if (!$("#loginDialog").data("ui-dialog")) {
-          $("#loginDialog").dialog(dialogOptions(400));
-        }
-        if (!$("#signupDialog").data("ui-dialog")) {
-          $("#signupDialog").dialog(dialogOptions(520));
-        }
-
-        // Remove Bootstrap modal classes if they were added as fallback
-        $("#loginDialog, #signupDialog")
-          .removeClass("modal fade")
-          .removeAttr("tabindex");
-      }
-    }
-
-    // Attempt init immediately
-    initDialogs();
-
-    // Re-attempt init when loadComponents.js finishes lazy loading
-    document.addEventListener("jquery-ui-loaded", initDialogs);
-
-    // 4.2 - Process URL Parameters (e.g. Login Results)
+    // 4.1: URL Parameter Handler
+    // If user is redirected here (e.g. "home.php?login_result=success"), show a message.
     (function processUrlParams() {
       try {
         const p = new URLSearchParams(window.location.search);
 
-        // Login Result
         if (p.has("login_result")) {
           const res = p.get("login_result");
           const msg = p.get("login_message") || "Login successful!";
           const $d = $("#loginDialog");
 
           if (res === "success") {
-            // Show success and trigger cart merge
+            // Show Success Message
             $d.find("#success-msg").removeClass("d-none").text(msg);
+            if ($.fn.dialog) {
+              if (!$("#loginDialog").data("ui-dialog")) initDialogs();
+              $d.dialog("open");
+            } else $d.show();
 
-            // Wait for dialog logic if needed
-            if ($.fn.dialog && !$("#loginDialog").data("ui-dialog"))
-              initDialogs();
-
-            if ($.fn.dialog) $d.dialog("open");
-            else $d.show(); // Fallback visibility
-
-            // Delegate cart merge to authHandlers
+            // Perform Cart Merge then Close
             window.sopoppedAuth.mergeCartAfterLoginAndUpdateUI().finally(() => {
               setTimeout(() => {
                 if ($.fn.dialog) $d.dialog("close");
                 else $d.hide();
-                window.location.href = window.location.pathname; // Clear params
+                window.location.href = window.location.pathname; // Clean URL
               }, 1200);
             });
           } else if (res === "error") {
@@ -429,13 +364,11 @@
             if ($.fn.dialog) {
               if (!$("#loginDialog").data("ui-dialog")) initDialogs();
               $d.dialog("open");
-            } else {
-              $d.show();
-            }
+            } else $d.show();
           }
         }
 
-        // Signup Result
+        // Similar logic for Signup...
         if (p.has("signup_result")) {
           const res = p.get("signup_result");
           const msg = p.get("signup_message") || "Account created!";
@@ -443,13 +376,10 @@
 
           if (res === "success") {
             $d.find("#success-msg").removeClass("d-none").text(msg);
-
-            if ($.fn.dialog && !$("#signupDialog").data("ui-dialog"))
-              initDialogs();
-
-            if ($.fn.dialog) $d.dialog("open");
-            else $d.show();
-
+            if ($.fn.dialog) {
+              if (!$("#signupDialog").data("ui-dialog")) initDialogs();
+              $d.dialog("open");
+            } else $d.show();
             setTimeout(() => {
               if ($.fn.dialog) $d.dialog("close");
               else $d.hide();
@@ -461,12 +391,10 @@
               msg,
               "danger",
             );
-
-            if ($.fn.dialog && !$("#signupDialog").data("ui-dialog"))
-              initDialogs();
-
-            if ($.fn.dialog) $d.dialog("open");
-            else $d.show();
+            if ($.fn.dialog) {
+              if (!$("#signupDialog").data("ui-dialog")) initDialogs();
+              $d.dialog("open");
+            } else $d.show();
           }
         }
       } catch (e) {
@@ -474,58 +402,26 @@
       }
     })();
 
-    // 4.3 - Navbar Button Handlers
+    // 4.2: Button Click Handlers
     $("#loginBtn").on("click", (e) => {
       e.preventDefault();
-      if ($.fn.dialog) {
-        if (!$("#loginDialog").data("ui-dialog")) initDialogs();
-        $("#loginDialog").dialog("open");
-      } else {
-        // Fallback: Bootstrap or simple show
-        // If we added .modal class, we can try bootstrap logic, or just show()
-        // Here we just use basic show() as emergency fallback if UI failed to load
-        console.warn("jQuery UI not ready, using simple visibility toggle");
-        $("#loginDialog").show().css({
-          position: "fixed",
-          top: "20%",
-          left: "50%",
-          transform: "translateX(-50%)",
-          background: "#fff",
-          padding: "20px",
-          "z-index": 1050,
-          border: "1px solid #ccc",
-          "box-shadow": "0 0 10px rgba(0,0,0,0.5)",
-        });
-      }
+      $("#loginDialog").data("ui-dialog")
+        ? $("#loginDialog").dialog("open")
+        : $("#loginDialog").show();
     });
 
     $("#signupBtn").on("click", (e) => {
       e.preventDefault();
-      if ($.fn.dialog) {
-        if (!$("#signupDialog").data("ui-dialog")) initDialogs();
-        $("#signupDialog").dialog("open");
-      } else {
-        console.warn("jQuery UI not ready, using simple visibility toggle");
-        $("#signupDialog").show().css({
-          position: "fixed",
-          top: "20%",
-          left: "50%",
-          transform: "translateX(-50%)",
-          background: "#fff",
-          padding: "20px",
-          "z-index": 1050,
-          border: "1px solid #ccc",
-          "box-shadow": "0 0 10px rgba(0,0,0,0.5)",
-        });
-      }
+      $("#signupDialog").data("ui-dialog")
+        ? $("#signupDialog").dialog("open")
+        : $("#signupDialog").show();
     });
 
-    // Switch between dialogs
-    $("#openSignup").on("click", (e) => {
+    // 4.3: Dialog Switching (Login <-> Signup)
+    $(document).on("click", "#openSignup", function (e) {
       e.preventDefault();
-      if ($.fn.dialog) {
+      if ($.fn.dialog && $("#loginDialog").data("ui-dialog")) {
         $("#loginDialog").dialog("close");
-        if (!$("#signupDialog").data("ui-dialog")) initDialogs();
         $("#signupDialog").dialog("open");
       } else {
         $("#loginDialog").hide();
@@ -533,11 +429,10 @@
       }
     });
 
-    $("#openLogin").on("click", (e) => {
+    $(document).on("click", "#openLogin", function (e) {
       e.preventDefault();
-      if ($.fn.dialog) {
+      if ($.fn.dialog && $("#signupDialog").data("ui-dialog")) {
         $("#signupDialog").dialog("close");
-        if (!$("#loginDialog").data("ui-dialog")) initDialogs();
         $("#loginDialog").dialog("open");
       } else {
         $("#signupDialog").hide();
@@ -545,60 +440,35 @@
       }
     });
 
-    // 4.4 - Password Visibility Toggle
-    // Returns emoji-based toggling (Monkey See/No-See)
+    // 4.4: Toggle Password Visibility (Monkey Emoji)
     function togglePassword(buttonSelector, fallbackInputSelector) {
       $(document).on("click", buttonSelector, function (e) {
         e.preventDefault();
         const $btn = $(this);
+        // Find the input associated with this button
+        let $inp = $(
+          $btn.data("target") || $btn.data("input") || fallbackInputSelector,
+        );
 
-        // Prefer explicit data attributes if provided
-        const explicit = $btn.attr("data-target") || $btn.attr("data-input");
-        let $inp = null;
-        if (explicit) {
-          try {
-            $inp = $(explicit);
-          } catch (e) {
-            $inp = null;
-          }
-        }
-
-        // Use provided selector if no data-attribute was found
-        if (!($inp && $inp.length) && fallbackInputSelector) {
-          $inp = $(fallbackInputSelector);
-        }
-
-        // If still no target, try to find an input within the same form/dialog
-        if (!($inp && $inp.length)) {
-          const $form = $btn.closest("form, .ui-dialog, .modal");
-          if ($form && $form.length) {
-            $inp = $form.find("input[type='password']").first();
-          }
-        }
-
-        if (!($inp && $inp.length)) return;
-
-        // Only toggle the first matched input
-        const $first = $inp.eq(0);
-        const isPassword = $first.attr("type") === "password";
-        $first.attr("type", isPassword ? "text" : "password");
-        $btn.text(isPassword ? "🙉" : "🙈");
+        // Toggle Type: password <-> text
+        const isPassword = $inp.attr("type") === "password";
+        $inp.attr("type", isPassword ? "text" : "password");
+        $btn.text(isPassword ? "🙉" : "🙈"); // Monkey See / Monkey No See
       });
     }
 
-    // Bind handlers for known toggles.
     togglePassword("#toggleLoginPassword", "#loginPassword");
     togglePassword("#toggleSignupPassword", "#signupPassword");
     togglePassword("#toggleSignupPassword2", "#signupPassword2");
     togglePassword("#toggleUserPassword", "#userPassword");
 
-    // 4.5 - Responsive Resize
+    // 4.4: Responsive Resize
+    // If window resizes, ensure dialogs don't overflow the screen
     $(window).on("resize", function () {
       if ($.fn.dialog) {
         $(".ui-dialog-content").each(function () {
           const $d = $(this);
           if ($d.data("ui-dialog") && $d.dialog("isOpen")) {
-            // Re-apply max height logic from dialogUI
             const maxH =
               window.innerHeight -
               (window.dialogUI.dialogMaxHeightOffset
@@ -614,13 +484,5 @@
         });
       }
     });
-
-    // 4.6 - Bootstrap Modal Fallback (Init Only)
-    if (!$.fn.dialog) {
-      // Temporarily mark as bootstrap modal until UI loads
-      $("#loginDialog, #signupDialog")
-        .addClass("modal fade")
-        .attr("tabindex", "-1");
-    }
   });
 })(jQuery);

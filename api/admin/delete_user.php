@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Archive User (Soft Delete)
  * 
@@ -63,8 +64,7 @@ try {
         sp_json_response(['success' => true]);
     } catch (Exception $e) {
         sp_json_response(['success' => false, 'error' => 'Failed to archive user'], 500);
-    } 
-    
+    }
 } catch (PDOException $e) {
     sp_json_response(['success' => false, 'error' => $e->getMessage()], 500);
 }

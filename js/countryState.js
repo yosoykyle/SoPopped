@@ -1,121 +1,63 @@
 /**
  * =============================================================================
  * File: js/countryState.js
- * Purpose: Handle dynamic address selectors for Philippines (Province/City/Barangay).
+ * Purpose: The "Address Selector" (Cascading Dropdowns).
  * =============================================================================
  *
- * This module manages the cascading dropdowns for address selection using the
- * Philippine Standard Geographic Code (PSGC) API.
+ * NOTE:
+ * Picking an address is a "Waterfall" (Cascade) process:
+ *   1. You pick a Province.
+ *   2. Based on that Province, we show only relevant Cities.
+ *   3. Based on that City, we show only relevant Barangays.
  *
- * Features:
- *   - Cascading logic: Province selection triggers Municipality/City load, which triggers Barangay load.
- *   - Caching: Responses are cached in localStorage for 30 days to minimize API calls.
- *   - Sorts all lists alphabetically by name.
- *   - Handles loading states and error fallback.
- *
- * Target Elements:
- *   - #province: <select> for provinces
- *   - #city: <select> for cities/municipalities
- *   - #barangay: <select> for barangays
- *
- * API Used:
- *   - https://psgc.gitlab.io/api/
- *
- * LocalStorage Keys:
- *   - psgc_provinces, psgc_municipalities, psgc_cities, psgc_barangays
+ * We use an API (PSGC) to get this data.
+ * Optimization: Since Provinces/Cities rarely change, we save them in
+ * `localStorage` (Cache) for 30 days so the dropdowns load instantly next time.
  * =============================================================================
  */
 
 (function ($) {
-  /* global jQuery */
   "use strict";
 
   // ---------------------------------------------------------------------------
-  // 1. SELECTORS & INITIALIZATION
+  // STEP 1: FIND THE DROPDOWNS
   // ---------------------------------------------------------------------------
-
   const $province = $("#province");
   const $city = $("#city");
   const $barangay = $("#barangay");
 
-  // Exit if province selector doesn't exist on page
+  // If this page acts as a "Checkout" (has these fields), run the script.
   if ($province.length === 0) return;
 
   // ---------------------------------------------------------------------------
-  // 2. UI UTILITIES
+  // STEP 2: CACHING (The "Memory")
   // ---------------------------------------------------------------------------
+  // We don't want to download the list of 81 provinces every single time.
+  const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 Days
 
-  /**
-   * Clear options from a select element and set default text.
-   * @param {jQuery} $select - The select element
-   * @param {string} txt - Default text (e.g., "Choose...")
-   */
-  function clear($select, txt) {
-    $select.empty();
-    $select.append(
-      $("<option>")
-        .attr("value", "")
-        .text(txt || "Choose..."),
-    );
-  }
-
-  /**
-   * Set loading state for a select element.
-   * @param {jQuery} $select - The select element
-   * @param {boolean} loading - True to disable and show loading text
-   */
-  function setLoading($select, loading) {
-    if (loading) {
-      $select.prop("disabled", true);
-      clear($select, "Loading...");
-    } else {
-      $select.prop("disabled", false);
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // 3. CACHING UTILITIES
-  // ---------------------------------------------------------------------------
-
-  const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
-
-  /**
-   * Load data from localStorage if valid and fresh.
-   * @param {string} key - Storage key
-   * @returns {Array|null} Parsed data or null
-   */
   function loadFromLocal(key) {
     try {
       const raw = localStorage.getItem(key);
       if (!raw) return null;
       const parsed = JSON.parse(raw);
-      if (!parsed || !parsed.ts || !parsed.data) return null;
-      // Check freshness
+      // Check Expiry
       if (Date.now() - parsed.ts > CACHE_TTL_MS) {
         localStorage.removeItem(key);
         return null;
       }
       return parsed.data;
     } catch (e) {
-      console.warn("local load err", key, e);
       return null;
     }
   }
 
-  /**
-   * Save data to localStorage with timestamp.
-   * @param {string} key - Storage key
-   * @param {Array} data - Data to save
-   */
   function saveToLocal(key, data) {
     try {
       localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data }));
-    } catch (e) {
-      console.warn("local save err", e);
-    }
+    } catch (e) {}
   }
 
-  // In-memory cache for current session
+  // Memory (RAM) Cache for this session
   const cache = {
     provinces: null,
     municipalities: null,
@@ -124,203 +66,176 @@
   };
 
   // ---------------------------------------------------------------------------
-  // 4. DATA FETCHING (PROVINCES)
+  // STEP 3: LOADING DATA (The "Fetch")
   // ---------------------------------------------------------------------------
 
+  // Helper: Visual feedback "Loading..."
+  function setLoading($select, loading) {
+    if (loading) {
+      $select
+        .prop("disabled", true)
+        .empty()
+        .append(new Option("Loading...", ""));
+    } else {
+      $select.prop("disabled", false);
+    }
+  }
+
+  // --- LOAD PROVINCES ---
   function loadProvinces() {
+    // 1. Check RAM
     if (cache.provinces) {
       populateProvinces(cache.provinces);
-      return $.Deferred().resolve(cache.provinces).promise();
+      return $.Deferred().resolve(cache.provinces);
     }
+
+    // 2. Check Disk
     const local = loadFromLocal("psgc_provinces");
     if (local) {
       cache.provinces = local;
       populateProvinces(local);
-      return $.Deferred().resolve(local).promise();
+      return $.Deferred().resolve(local);
     }
+
+    // 3. Fetch from Internet
     setLoading($province, true);
     return $.getJSON("https://psgc.gitlab.io/api/provinces.json")
-      .then(function (data) {
-        data.sort((a, b) => a.name.localeCompare(b.name));
+      .then((data) => {
+        data.sort((a, b) => a.name.localeCompare(b.name)); // A-Z Sort
         cache.provinces = data;
         saveToLocal("psgc_provinces", data);
         populateProvinces(data);
-        return data;
       })
-      .fail(function (err) {
-        console.error("Failed provinces", err);
-        clear($province, "Failed to load");
-        return [];
-      })
-      .always(function () {
-        setLoading($province, false);
-      });
+      .always(() => setLoading($province, false));
   }
 
   function populateProvinces(list) {
-    clear($province);
-    list.forEach((p) =>
-      $province.append($("<option>").val(p.code).text(p.name)),
-    );
+    $province.empty().append(new Option("Choose...", ""));
+    list.forEach((p) => $province.append(new Option(p.name, p.code)));
   }
 
-  // ---------------------------------------------------------------------------
-  // 5. DATA FETCHING (CITIES & MUNIS)
-  // ---------------------------------------------------------------------------
+  // --- LOAD CITIES & MUNICIPALITIES ---
+  // Note: PSGC separates "Cities" (Makati) and "Municipalities" (Pateros). We need both.
 
   function loadMunicipalities() {
-    if (cache.municipalities)
-      return $.Deferred().resolve(cache.municipalities).promise();
+    if (cache.municipalities) return $.Deferred().resolve(cache.municipalities);
     const local = loadFromLocal("psgc_municipalities");
     if (local) {
       cache.municipalities = local;
-      return $.Deferred().resolve(local).promise();
+      return $.Deferred().resolve(local);
     }
-    return $.getJSON("https://psgc.gitlab.io/api/municipalities.json")
-      .then(function (data) {
-        cache.municipalities = data;
-        saveToLocal("psgc_municipalities", data);
-        return data;
-      })
-      .catch(function (err) {
-        console.error("Failed municipalities", err);
-        cache.municipalities = [];
-        return [];
-      });
+    return $.getJSON("https://psgc.gitlab.io/api/municipalities.json").then(
+      (d) => {
+        saveToLocal("psgc_municipalities", d);
+        cache.municipalities = d;
+        return d;
+      },
+    );
   }
 
   function loadCities() {
-    if (cache.cities) return $.Deferred().resolve(cache.cities).promise();
+    if (cache.cities) return $.Deferred().resolve(cache.cities);
     const local = loadFromLocal("psgc_cities");
     if (local) {
       cache.cities = local;
-      return $.Deferred().resolve(local).promise();
+      return $.Deferred().resolve(local);
     }
-    return $.getJSON("https://psgc.gitlab.io/api/cities.json")
-      .then(function (data) {
-        cache.cities = data;
-        saveToLocal("psgc_cities", data);
-        return data;
-      })
-      .catch(function (err) {
-        console.error("Failed cities", err);
-        cache.cities = [];
-        return [];
-      });
+    return $.getJSON("https://psgc.gitlab.io/api/cities.json").then((d) => {
+      saveToLocal("psgc_cities", d);
+      cache.cities = d;
+      return d;
+    });
   }
 
-  // ---------------------------------------------------------------------------
-  // 6. DATA FETCHING (BARANGAYS)
-  // ---------------------------------------------------------------------------
-
+  // --- LOAD BARANGAYS ---
   function loadBarangays() {
-    if (cache.barangays) return $.Deferred().resolve(cache.barangays).promise();
+    if (cache.barangays) return $.Deferred().resolve(cache.barangays);
     const local = loadFromLocal("psgc_barangays");
     if (local) {
       cache.barangays = local;
-      return $.Deferred().resolve(local).promise();
+      return $.Deferred().resolve(local);
     }
-    return $.getJSON("https://psgc.gitlab.io/api/barangays.json")
-      .then(function (data) {
-        cache.barangays = data;
-        saveToLocal("psgc_barangays", data);
-        return data;
-      })
-      .catch(function (err) {
-        console.error("Failed barangays", err);
-        cache.barangays = [];
-        return [];
-      });
+    return $.getJSON("https://psgc.gitlab.io/api/barangays.json").then((d) => {
+      saveToLocal("psgc_barangays", d);
+      cache.barangays = d;
+      return d;
+    });
   }
 
   // ---------------------------------------------------------------------------
-  // 7. EVENT HANDLERS
+  // STEP 4: THE CASCADE (The Logic)
   // ---------------------------------------------------------------------------
 
-  // Handle Province Change -> Load Cities/Municipalities
+  // EVENT: User picked a Province
   $province.on("change", function () {
     const provinceCode = $(this).val();
-    clear($city);
-    clear($barangay);
-    $city.prop("disabled", true);
-    $barangay.prop("disabled", true);
+
+    // Reset Child Dropdowns
+    $city.empty().append(new Option("Choose...", "")).prop("disabled", true);
+    $barangay
+      .empty()
+      .append(new Option("Choose...", ""))
+      .prop("disabled", true);
 
     if (!provinceCode) return;
 
     setLoading($city, true);
 
-    $.when(loadMunicipalities(), loadCities()).then(
-      function (munList, cityList) {
-        // jQuery unwraps promises; actual arrays are first arg if multiple args returned
-        munList = Array.isArray(munList[0]) ? munList[0] : munList;
-        cityList = Array.isArray(cityList[0]) ? cityList[0] : cityList;
+    // Fetch both Cities and Municipalities, then combine them
+    $.when(loadMunicipalities(), loadCities()).then((munList, cityList) => {
+      // Unwrap jQuery promise arrays
+      const muns = (Array.isArray(munList) ? munList : munList[0]) || [];
+      const cits = (Array.isArray(cityList) ? cityList : cityList[0]) || [];
 
-        const munMatches = (munList || []).filter(
-          (m) => m.provinceCode === provinceCode,
-        );
-        const cityMatches = (cityList || []).filter(
-          (c) => c.provinceCode === provinceCode,
-        );
+      // Filter by selected Province
+      const available = muns
+        .filter((m) => m.provinceCode === provinceCode)
+        .concat(cits.filter((c) => c.provinceCode === provinceCode))
+        .sort((a, b) => a.name.localeCompare(b.name));
 
-        // Combine and sort
-        const matches = munMatches
-          .concat(cityMatches)
-          .sort((a, b) => a.name.localeCompare(b.name));
+      $city.empty().append(new Option("Choose...", ""));
+      if (!available.length) $city.append(new Option("N/A", ""));
+      else
+        available.forEach((it) => $city.append(new Option(it.name, it.code)));
 
-        if (!matches.length) {
-          clear($city, "N/A");
-          setLoading($city, false);
-          return;
-        }
-
-        matches.forEach((it) =>
-          $city.append($("<option>").val(it.code).text(it.name)),
-        );
-        $city.prop("disabled", false);
-        setLoading($city, false);
-      },
-    );
+      $city.prop("disabled", false);
+      setLoading($city, false);
+    });
   });
 
-  // Handle City Change -> Load Barangays
+  // EVENT: User picked a City
   $city.on("change", function () {
-    const placeCode = $(this).val();
-    clear($barangay);
-    $barangay.prop("disabled", true);
+    const cityCode = $(this).val();
+    $barangay
+      .empty()
+      .append(new Option("Choose...", ""))
+      .prop("disabled", true);
 
-    if (!placeCode) return;
+    if (!cityCode) return;
 
     setLoading($barangay, true);
-    loadBarangays().then(function (list) {
+
+    loadBarangays().then((list) => {
+      // Filter by City or Municipality Code
       const matches = (list || [])
         .filter(
-          (b) => b.municipalityCode === placeCode || b.cityCode === placeCode,
+          (b) => b.municipalityCode === cityCode || b.cityCode === cityCode,
         )
         .sort((a, b) => a.name.localeCompare(b.name));
 
-      if (!matches.length) {
-        clear($barangay, "N/A");
-        setLoading($barangay, false);
-        return;
-      }
-      matches.forEach((b) =>
-        $barangay.append($("<option>").val(b.code).text(b.name)),
-      );
+      $barangay.empty().append(new Option("Choose...", ""));
+      if (!matches.length) $barangay.append(new Option("N/A", ""));
+      else matches.forEach((b) => $barangay.append(new Option(b.name, b.code)));
+
       $barangay.prop("disabled", false);
       setLoading($barangay, false);
     });
   });
 
   // ---------------------------------------------------------------------------
-  // 8. INITIALIZE
+  // STEP 5: INITIALIZE
   // ---------------------------------------------------------------------------
-
-  clear($city);
-  clear($barangay);
-  setLoading($city, false);
-  setLoading($barangay, false);
-
   $(function () {
-    loadProvinces();
+    loadProvinces(); // Kickstart the process by loading provinces
   });
 })(jQuery);

@@ -1,14 +1,28 @@
 <?php
+
+/**
+ * File: products.php
+ * Description: The main catalog page displaying all available products.
+ * Flow:
+ * 1. Connects to the database (`sopoppedDB.php`).
+ * 2. Fetches all products via `getProducts()`.
+ * 3. Implements server-side pagination (manual slice) to limit items per page.
+ * 4. Renders the product grid.
+ * 5. Passes product data to Javascript (`window.__sopopped_products`) for the modal.
+ */
+
 // Include database connection
 require_once __DIR__ . '/db/sopoppedDB.php';
 
 // Include shared product service
 require_once __DIR__ . '/api/_products_service.php';
 
-// Get products from database
+// DATA FETCHING: Get all products from database
+// Note: In a larger app, we might fetch only the current page's items (LIMIT/OFFSET in SQL),
+// but here we fetch all and slice via PHP for simplicity.
 $products = getProducts($pdo);
 
-// Pagination settings
+// PAGINATION LOGIC:
 $itemsPerPage = 6;
 $currentPage = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 $totalProducts = count($products);
@@ -87,7 +101,8 @@ $pageProducts = array_slice($products, $offset, $itemsPerPage);
                 src="<?= htmlspecialchars($src) ?>"
                 alt="<?= htmlspecialchars($product['name']) ?>"
                 width="auto"
-                height="auto" />
+                height="auto"
+                onerror="this.onerror=null; this.src='images/default.png';" />
               <div class="card-body text-center mx-auto">
                 <h5 class="card-title display-7"><?= htmlspecialchars($product['name']) ?></h5>
               </div>
