@@ -1,6 +1,6 @@
 # So Popped - Flavor Has No Borders
 
-**BSIT 3 - 1 COMP 016 - Web Development - Group Activity**
+**BSIT 3 - 1 COMP 016 - Web Development - Group Activity - Group 8**
 
 ## Executive Summary
 
